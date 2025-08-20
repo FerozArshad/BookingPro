@@ -498,13 +498,14 @@ class BSP_Ajax {
         // Send notifications for the booking
         $this->send_booking_notifications($booking_id, $booking_data);
         
-        // Send the single booking to Google Sheets
-        $this->send_to_google_sheets($booking_id, $booking_data);
+        // Schedule background Google Sheets processing (60 seconds delay for better user experience)
+        wp_schedule_single_event(time() + 60, 'bsp_send_to_google_sheets_event', array($booking_id));
         
         if (function_exists('bsp_debug_log')) {
-            bsp_debug_log("Sent consolidated booking to Google Sheets", 'GOOGLE_SHEETS', [
+            bsp_debug_log("Scheduled background Google Sheets processing", 'GOOGLE_SHEETS', [
                 'booking_id' => $booking_id,
-                'companies_included' => $booking_data['company']
+                'companies_included' => $booking_data['company'],
+                'scheduled_time' => date('Y-m-d H:i:s', time() + 60)
             ]);
         }
 
@@ -738,9 +739,28 @@ class BSP_Ajax {
     }
 
     /**
+     * @deprecated 2.1.0 Use background processing with bsp_cron_send_to_google_sheets() instead
      * Send booking data to Google Sheets using centralized data manager
+     * 
+     * This method is deprecated and kept for backward compatibility.
+     * Google Sheets integration now uses background processing via WP-Cron.
      */
     private function send_to_google_sheets($booking_id, $booking_data) {
+        if (function_exists('bsp_debug_log')) {
+            bsp_debug_log('DEPRECATED: send_to_google_sheets() called. Use background processing instead.', 'DEPRECATED', [
+                'booking_id' => $booking_id
+            ]);
+        }
+        
+        // For backward compatibility, schedule the background event immediately
+        wp_schedule_single_event(time() + 5, 'bsp_send_to_google_sheets_event', array($booking_id));
+        
+        return;
+        
+        /* DEPRECATED CODE - Moved to background processing
+        $integration_settings = get_option('bsp_integration_settings', []);
+
+        /* DEPRECATED CODE - Moved to background processing
         $integration_settings = get_option('bsp_integration_settings', []);
 
         if (empty($integration_settings['google_sheets_enabled']) || empty($integration_settings['google_sheets_webhook_url'])) {
@@ -863,6 +883,7 @@ class BSP_Ajax {
                 }
             }
         }
+        */
     }
     
     /**

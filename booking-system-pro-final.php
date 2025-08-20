@@ -383,6 +383,9 @@ final class Booking_System_Pro_Final {
         add_action('wp_enqueue_scripts', [$this, 'frontend_assets']);
         add_action('admin_enqueue_scripts', [$this, 'admin_assets']);
         
+        // Register background Google Sheets processing cron hook
+        add_action('bsp_send_to_google_sheets_event', [$this, 'bsp_cron_send_to_google_sheets']);
+        
         // Debug hooks
         if (BSP_DEBUG_MODE) {
             add_action('wp_footer', [$this, 'debug_info_footer']);
@@ -730,6 +733,172 @@ final class Booking_System_Pro_Final {
             bsp_debug_log("Toast notification system initialized", 'TOAST');
         } else {
             bsp_debug_log("Toast notification init file not found: " . $toast_init_file, 'ERROR');
+        }
+    }
+    
+    /**
+     * Background processing function for Google Sheets integration
+     * Called by WP-Cron to send booking data to Google Sheets without blocking form submission
+     * 
+     * @param int $booking_id The booking ID to send to Google Sheets
+     */
+    public function bsp_cron_send_to_google_sheets($booking_id) {
+        if (function_exists('bsp_debug_log')) {
+            bsp_debug_log("Starting background Google Sheets processing", 'CRON', ['booking_id' => $booking_id]);
+        }
+        
+        // Validate booking ID
+        if (!$booking_id || !is_numeric($booking_id)) {
+            if (function_exists('bsp_debug_log')) {
+                bsp_debug_log('Invalid booking ID for Google Sheets background processing', 'CRON_ERROR', ['booking_id' => $booking_id]);
+            }
+            return;
+        }
+        
+        // Check if booking exists
+        $post = get_post($booking_id);
+        if (!$post || $post->post_type !== 'bsp_booking') {
+            if (function_exists('bsp_debug_log')) {
+                bsp_debug_log('Booking not found for Google Sheets background processing', 'CRON_ERROR', ['booking_id' => $booking_id]);
+            }
+            return;
+        }
+        
+        // Get integration settings
+        $integration_settings = get_option('bsp_integration_settings', []);
+        
+        if (empty($integration_settings['google_sheets_enabled']) || empty($integration_settings['google_sheets_webhook_url'])) {
+            if (function_exists('bsp_debug_log')) {
+                bsp_debug_log('Google Sheets sync disabled or webhook URL not set for background processing', 'CRON');
+            }
+            return;
+        }
+        
+        // Use centralized data manager to get all formatted booking data
+        if (!class_exists('BSP_Data_Manager')) {
+            require_once BSP_PLUGIN_DIR . 'includes/class-data-manager.php';
+        }
+        
+        $data_for_sheets = BSP_Data_Manager::get_formatted_booking_data($booking_id);
+        
+        if (!$data_for_sheets) {
+            if (function_exists('bsp_debug_log')) {
+                bsp_debug_log('Failed to get booking data for Google Sheets background processing', 'CRON_ERROR', ['booking_id' => $booking_id]);
+            }
+            return;
+        }
+        
+        $webhook_url = $integration_settings['google_sheets_webhook_url'];
+        
+        // Prepare payload for Google Sheets with all the data in the expected format
+        $payload = [
+            'id' => intval($data_for_sheets['id']),
+            'booking_id' => intval($data_for_sheets['id']),
+            'status' => sanitize_text_field($data_for_sheets['status']),
+            'customer_name' => sanitize_text_field($data_for_sheets['customer_name']),
+            'customer_email' => sanitize_email($data_for_sheets['customer_email']),
+            'customer_phone' => sanitize_text_field($data_for_sheets['customer_phone']),
+            'customer_address' => sanitize_text_field($data_for_sheets['customer_address']),
+            'zip_code' => sanitize_text_field($data_for_sheets['zip_code']),
+            'city' => sanitize_text_field($data_for_sheets['city']),
+            'state' => sanitize_text_field($data_for_sheets['state']),
+            'service_type' => sanitize_text_field($data_for_sheets['service_type']),
+            'service_name' => sanitize_text_field($data_for_sheets['service_name']),
+            'specifications' => sanitize_textarea_field($data_for_sheets['specifications']),
+            'company_name' => sanitize_text_field($data_for_sheets['company_name']),
+            'formatted_date' => sanitize_text_field($data_for_sheets['formatted_date']),
+            'formatted_time' => sanitize_text_field($data_for_sheets['formatted_time']),
+            'booking_date' => sanitize_text_field($data_for_sheets['booking_date']),
+            'booking_time' => sanitize_text_field($data_for_sheets['booking_time']),
+            'formatted_created' => sanitize_text_field($data_for_sheets['formatted_created']),
+            'created_at' => sanitize_text_field($data_for_sheets['created_at']),
+            'notes' => sanitize_textarea_field($data_for_sheets['notes']),
+            // Marketing/tracking data
+            'utm_source' => sanitize_text_field($data_for_sheets['utm_source']),
+            'utm_medium' => sanitize_text_field($data_for_sheets['utm_medium']),
+            'utm_campaign' => sanitize_text_field($data_for_sheets['utm_campaign']),
+            'utm_term' => sanitize_text_field($data_for_sheets['utm_term']),
+            'utm_content' => sanitize_text_field($data_for_sheets['utm_content']),
+            'referrer' => sanitize_url($data_for_sheets['referrer']),
+            'landing_page' => sanitize_url($data_for_sheets['landing_page']),
+            // Service-specific fields
+            'roof_action' => sanitize_text_field($data_for_sheets['roof_action']),
+            'roof_material' => sanitize_text_field($data_for_sheets['roof_material']),
+            'windows_action' => sanitize_text_field($data_for_sheets['windows_action']),
+            'windows_replace_qty' => sanitize_text_field($data_for_sheets['windows_replace_qty']),
+            'windows_repair_needed' => sanitize_text_field($data_for_sheets['windows_repair_needed']),
+            'bathroom_option' => sanitize_text_field($data_for_sheets['bathroom_option']),
+            'siding_option' => sanitize_text_field($data_for_sheets['siding_option']),
+            'siding_material' => sanitize_text_field($data_for_sheets['siding_material']),
+            'kitchen_action' => sanitize_text_field($data_for_sheets['kitchen_action']),
+            'kitchen_component' => sanitize_text_field($data_for_sheets['kitchen_component']),
+            'decks_action' => sanitize_text_field($data_for_sheets['decks_action']),
+            'decks_material' => sanitize_text_field($data_for_sheets['decks_material']),
+            // Handle multiple appointments - send as string to avoid JSON parsing issues
+            'appointments' => is_string($data_for_sheets['appointments']) ? 
+                $data_for_sheets['appointments'] : 
+                wp_json_encode($data_for_sheets['appointments'], JSON_UNESCAPED_UNICODE)
+        ];
+        
+        if (function_exists('bsp_debug_log')) {
+            bsp_debug_log('Google Sheets Background: Sending data via cron', 'CRON', ['booking_id' => $booking_id, 'payload_size' => count($payload)]);
+        }
+        
+        // Prepare the JSON payload
+        $json_payload = wp_json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        
+        // Send the request to Google Sheets with proper headers
+        $response = wp_remote_post($webhook_url, [
+            'method'      => 'POST',
+            'headers'     => [
+                'Content-Type' => 'application/json; charset=utf-8',
+                'Accept' => 'application/json',
+                'User-Agent' => 'BookingPro/2.1.0 (Background)'
+            ],
+            'body'        => $json_payload,
+            'data_format' => 'body',
+            'timeout'     => 30,
+            'blocking'    => true,
+            'sslverify'   => true
+        ]);
+        
+        // Log the response for debugging
+        if (is_wp_error($response)) {
+            if (function_exists('bsp_debug_log')) {
+                bsp_debug_log('Google Sheets Background API Error: ' . $response->get_error_message(), 'CRON_ERROR', ['booking_id' => $booking_id]);
+            }
+        } else {
+            $response_code = wp_remote_retrieve_response_code($response);
+            $response_body = wp_remote_retrieve_body($response);
+            
+            if (function_exists('bsp_debug_log')) {
+                bsp_debug_log('Google Sheets Background Response', 'CRON', [
+                    'booking_id' => $booking_id,
+                    'status_code' => $response_code,
+                    'response_body' => substr($response_body, 0, 200)
+                ]);
+            }
+            
+            // Update booking meta to track Google Sheets sync status
+            if ($response_code >= 200 && $response_code < 300) {
+                update_post_meta($booking_id, '_google_sheets_synced', current_time('mysql'));
+                update_post_meta($booking_id, '_google_sheets_sync_status', 'success');
+                
+                if (function_exists('bsp_debug_log')) {
+                    bsp_debug_log('Google Sheets Background: Successfully synced booking', 'CRON', ['booking_id' => $booking_id]);
+                }
+            } else {
+                update_post_meta($booking_id, '_google_sheets_sync_status', 'failed');
+                update_post_meta($booking_id, '_google_sheets_sync_error', $response_body);
+                
+                if (function_exists('bsp_debug_log')) {
+                    bsp_debug_log('Google Sheets Background: Sync failed', 'CRON_ERROR', [
+                        'booking_id' => $booking_id,
+                        'status_code' => $response_code,
+                        'error' => $response_body
+                    ]);
+                }
+            }
         }
     }
 }

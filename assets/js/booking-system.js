@@ -203,20 +203,6 @@ jQuery(document).ready(function($) {
         return serviceStepIndex !== -1 ? serviceStepIndex : 0;
     }
 
-    // ─── FIND FIRST SERVICE-SPECIFIC STEP (SKIP SERVICE SELECTION) ───
-    function findFirstServiceSpecificStep(service) {
-        // Find the first step that depends on this service (usually the ZIP code step)
-        const serviceStepIndex = CONFIG.steps.findIndex(step => 
-            step.depends_on && 
-            step.depends_on[0] === 'service' && 
-            step.depends_on[1] === service
-        );
-        
-        // For URL-based service selection, we skip the service selection step entirely
-        // If no service-specific step found, something is wrong - go to service selection
-        return serviceStepIndex !== -1 ? serviceStepIndex : 0;
-    }
-
     // ─── UPDATE STEP URL ──────────────────────────────
     function updateStepURL(step) {
         try {
@@ -265,9 +251,13 @@ jQuery(document).ready(function($) {
             // Auto-select service and skip service selection step
             formState.service = preselectedService;
             
-            // Skip directly to first service-specific step (ZIP code step)
-            const newStepIndex = findFirstServiceSpecificStep(preselectedService);
-            currentStepIndex = newStepIndex;
+            // Go to ZIP code step (step 1) instead of skipping it
+            // ZIP code step is always the step after service selection
+            const zipCodeStepIndex = CONFIG.steps.findIndex(step => 
+                step.id === 'zip_code' || 
+                (step.depends_on && step.depends_on.length === 1 && step.depends_on[0] === 'service')
+            );
+            currentStepIndex = zipCodeStepIndex !== -1 ? zipCodeStepIndex : 1; // Default to step 1 if not found
         }
         
         // Set default background
@@ -1775,14 +1765,19 @@ jQuery(document).ready(function($) {
             const serviceAutoSelected = getServiceFromURL() !== null;
             const currentStep = CONFIG.steps[currentStepIndex];
             
-            // If we're on the first service-specific step and service was auto-selected,
+            // If service was auto-selected and we're on zip code step or any service-dependent step,
             // go back to landing page instead of service selection
             if (serviceAutoSelected && formState.service && currentStep && 
-                currentStep.depends_on && currentStep.depends_on[0] === 'service') {
+                currentStep.depends_on && currentStep.depends_on.includes('service')) {
                 
-                // Check if this is the first service-specific step
-                const firstServiceStepIndex = findFirstServiceSpecificStep(formState.service);
-                if (currentStepIndex === firstServiceStepIndex) {
+                // Find zip code step index
+                const zipCodeStepIndex = CONFIG.steps.findIndex(step => 
+                    step.id === 'zip_code' || 
+                    (step.depends_on && step.depends_on.length === 1 && step.depends_on[0] === 'service')
+                );
+                
+                // If we're on zip code step or any later service-dependent step, go to landing page
+                if (currentStepIndex >= zipCodeStepIndex) {
                     // Go back to landing page
                     clearFormStateAndRedirect();
                     return;
