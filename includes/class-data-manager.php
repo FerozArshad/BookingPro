@@ -119,30 +119,46 @@ class BSP_Data_Manager {
             $booking_data['status'] = $status_terms[0]->slug;
         }
         
-        // Format dates and times properly - FIX THE DATE/TIME BUG
+        // Format dates and times properly - FIXED to handle multiple appointments
         // Handle comma-separated dates/times from multiple appointments
         $booking_date = $booking_data['booking_date'];
         $booking_time = $booking_data['booking_time'];
         
-        // If we have comma-separated values, use the first one
-        if (!empty($booking_date) && strpos($booking_date, ',') !== false) {
-            $dates = explode(',', $booking_date);
-            $booking_date = trim($dates[0]); // Use first date
-        }
-        
-        if (!empty($booking_time) && strpos($booking_time, ',') !== false) {
-            $times = explode(',', $booking_time);
-            $booking_time = trim($times[0]); // Use first time
-        }
-        
+        // Format ALL dates and times for Google Sheets
         if (!empty($booking_date)) {
-            $booking_data['formatted_date'] = date('F j, Y', strtotime($booking_date));
+            if (strpos($booking_date, ',') !== false) {
+                // Multiple dates - format each one
+                $dates = array_map('trim', explode(',', $booking_date));
+                $formatted_dates = [];
+                foreach ($dates as $date) {
+                    if (!empty($date)) {
+                        $formatted_dates[] = date('F j, Y', strtotime($date));
+                    }
+                }
+                $booking_data['formatted_date'] = implode(', ', $formatted_dates);
+            } else {
+                // Single date
+                $booking_data['formatted_date'] = date('F j, Y', strtotime($booking_date));
+            }
         } else {
             $booking_data['formatted_date'] = 'Not set';
         }
         
         if (!empty($booking_time)) {
-            $booking_data['formatted_time'] = date('g:i A', strtotime($booking_time));
+            if (strpos($booking_time, ',') !== false) {
+                // Multiple times - format each one
+                $times = array_map('trim', explode(',', $booking_time));
+                $formatted_times = [];
+                foreach ($times as $time) {
+                    if (!empty($time)) {
+                        $formatted_times[] = date('g:i A', strtotime($time));
+                    }
+                }
+                $booking_data['formatted_time'] = implode(', ', $formatted_times);
+            } else {
+                // Single time
+                $booking_data['formatted_time'] = date('g:i A', strtotime($booking_time));
+            }
         } else {
             $booking_data['formatted_time'] = 'Not set';
         }

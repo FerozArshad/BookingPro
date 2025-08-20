@@ -330,6 +330,14 @@ class BSP_Admin_Settings {
      */
     private function render_booking_settings() {
         $options = get_option('bsp_booking_settings', []);
+        
+        // Handle form submission for company standardization
+        if (isset($_POST['standardize_companies']) && wp_verify_nonce($_POST['_wpnonce'], 'bsp_standardize_companies')) {
+            $updated_count = $this->standardize_all_companies();
+            echo '<div class="notice notice-success is-dismissible"><p>' . 
+                 sprintf(__('Successfully standardized %d companies! All companies now have consistent Monday-Saturday availability with 30-minute time slots.', 'booking-system-pro'), $updated_count) . 
+                 '</p></div>';
+        }
         ?>
         <form method="post" action="options.php">
             <?php
@@ -337,13 +345,16 @@ class BSP_Admin_Settings {
             do_settings_sections('bsp_booking_settings');
             ?>
             
+            <h3><?php _e('Booking Behavior and Restrictions', 'booking-system-pro'); ?></h3>
+            <p><?php _e('Configure booking behavior and restrictions.', 'booking-system-pro'); ?></p>
+            
             <table class="form-table">
                 <tr>
                     <th scope="row"><?php _e('Advance Booking Days', 'booking-system-pro'); ?></th>
                     <td>
                         <input type="number" name="bsp_booking_settings[advance_days]" class="small-text" 
-                               value="<?php echo esc_attr($options['advance_days'] ?? 30); ?>" min="1" max="365">
-                        <p class="description"><?php _e('How many days in advance can customers book', 'booking-system-pro'); ?></p>
+                               value="<?php echo esc_attr($options['advance_days'] ?? 3); ?>" min="1" max="365">
+                        <p class="description"><?php _e('How many days in advance can customers book (enforces 72-hour booking window)', 'booking-system-pro'); ?></p>
                     </td>
                 </tr>
                 <tr>
@@ -358,8 +369,9 @@ class BSP_Admin_Settings {
                     <th scope="row"><?php _e('Default Service Duration', 'booking-system-pro'); ?></th>
                     <td>
                         <input type="number" name="bsp_booking_settings[default_duration]" class="small-text" 
-                               value="<?php echo esc_attr($options['default_duration'] ?? 60); ?>" min="15" step="15">
+                               value="<?php echo esc_attr($options['default_duration'] ?? 30); ?>" min="15" step="15">
                         <span><?php _e('minutes', 'booking-system-pro'); ?></span>
+                        <p class="description"><?php _e('Default duration for new services and appointments', 'booking-system-pro'); ?></p>
                     </td>
                 </tr>
                 <tr>
@@ -370,15 +382,17 @@ class BSP_Admin_Settings {
                             <option value="30" <?php selected($options['time_interval'] ?? 30, 30); ?>>30 <?php _e('minutes', 'booking-system-pro'); ?></option>
                             <option value="60" <?php selected($options['time_interval'] ?? 30, 60); ?>>60 <?php _e('minutes', 'booking-system-pro'); ?></option>
                         </select>
+                        <p class="description"><?php _e('Time interval between available booking slots', 'booking-system-pro'); ?></p>
                     </td>
                 </tr>
                 <tr>
                     <th scope="row"><?php _e('Auto Confirmation', 'booking-system-pro'); ?></th>
                     <td>
                         <label>
-                            <input type="checkbox" name="bsp_booking_settings[auto_confirm]" value="1" <?php checked($options['auto_confirm'] ?? false); ?>>
+                            <input type="checkbox" name="bsp_booking_settings[auto_confirm]" value="1" <?php checked($options['auto_confirm'] ?? true); ?>>
                             <?php _e('Automatically confirm bookings', 'booking-system-pro'); ?>
                         </label>
+                        <p class="description"><?php _e('When enabled, bookings are automatically confirmed instead of pending', 'booking-system-pro'); ?></p>
                     </td>
                 </tr>
                 <tr>
@@ -401,6 +415,34 @@ class BSP_Admin_Settings {
             </table>
             
             <?php submit_button(); ?>
+        </form>
+        
+        <hr>
+        
+        <h3><?php _e('Company Configuration', 'booking-system-pro'); ?></h3>
+        <p><?php _e('Standardize all companies to ensure consistent booking behavior.', 'booking-system-pro'); ?></p>
+        
+        <?php $this->display_company_status(); ?>
+        
+        <form method="post" action="">
+            <?php wp_nonce_field('bsp_standardize_companies'); ?>
+            <table class="form-table">
+                <tr>
+                    <th scope="row"><?php _e('Standardize All Companies', 'booking-system-pro'); ?></th>
+                    <td>
+                        <p><?php _e('This will update ALL companies to have consistent settings:', 'booking-system-pro'); ?></p>
+                        <ul style="list-style-type: disc; margin-left: 20px;">
+                            <li><?php _e('Available Days: Monday to Saturday (1,2,3,4,5,6)', 'booking-system-pro'); ?></li>
+                            <li><?php _e('Available Hours: 10:00 AM to 7:00 PM', 'booking-system-pro'); ?></li>
+                            <li><?php _e('Time Slot Duration: 30 minutes', 'booking-system-pro'); ?></li>
+                        </ul>
+                        <p style="color: #d63638;"><strong><?php _e('Warning: This will overwrite existing company configurations!', 'booking-system-pro'); ?></strong></p>
+                        <input type="submit" name="standardize_companies" class="button button-secondary" 
+                               value="<?php _e('Standardize All Companies', 'booking-system-pro'); ?>"
+                               onclick="return confirm('<?php _e('Are you sure? This will overwrite all company configurations.', 'booking-system-pro'); ?>');">
+                    </td>
+                </tr>
+            </table>
         </form>
         <?php
     }
@@ -794,5 +836,129 @@ class BSP_Admin_Settings {
         } else {
             wp_send_json_error('Failed to resend booking emails');
         }
+    }
+    
+    /**
+     * Display current company status
+     */
+    private function display_company_status() {
+        global $wpdb;
+        
+        // Initialize database tables
+        BSP_Database_Unified::init_tables();
+        $tables = BSP_Database_Unified::$tables;
+        
+        $companies = $wpdb->get_results("SELECT * FROM {$tables['companies']} ORDER BY id");
+        
+        if (empty($companies)) {
+            echo '<p>' . __('No companies found.', 'booking-system-pro') . '</p>';
+            return;
+        }
+        
+        echo '<h4>' . __('Current Company Configurations', 'booking-system-pro') . '</h4>';
+        echo '<table class="widefat striped">';
+        echo '<thead><tr>';
+        echo '<th>' . __('Company', 'booking-system-pro') . '</th>';
+        echo '<th>' . __('Available Days', 'booking-system-pro') . '</th>';
+        echo '<th>' . __('Available Hours', 'booking-system-pro') . '</th>';
+        echo '<th>' . __('Time Slot Duration', 'booking-system-pro') . '</th>';
+        echo '<th>' . __('Status', 'booking-system-pro') . '</th>';
+        echo '</tr></thead><tbody>';
+        
+        $standard_days = '1,2,3,4,5,6'; // Monday to Saturday
+        $standard_duration = 30;
+        
+        foreach ($companies as $company) {
+            $days_status = ($company->available_days === $standard_days) ? '✅' : '❌';
+            $duration_status = (intval($company->time_slot_duration) === $standard_duration) ? '✅' : '❌';
+            $overall_status = ($days_status === '✅' && $duration_status === '✅') ? 
+                '<span style="color: green;">✅ Standard</span>' : 
+                '<span style="color: red;">❌ Needs Update</span>';
+            
+            echo '<tr>';
+            echo '<td><strong>' . esc_html($company->name) . '</strong></td>';
+            echo '<td>' . $days_status . ' ' . esc_html($company->available_days ?: 'Not Set') . '</td>';
+            echo '<td>' . esc_html($company->available_hours_start . ' - ' . $company->available_hours_end) . '</td>';
+            echo '<td>' . $duration_status . ' ' . esc_html($company->time_slot_duration) . ' min</td>';
+            echo '<td>' . $overall_status . '</td>';
+            echo '</tr>';
+        }
+        
+        echo '</tbody></table>';
+        echo '<p><small>' . __('✅ = Matches standard configuration, ❌ = Needs standardization', 'booking-system-pro') . '</small></p>';
+    }
+    
+    /**
+     * Standardize all companies to consistent settings
+     */
+    private function standardize_all_companies() {
+        global $wpdb;
+        
+        // Initialize database tables
+        BSP_Database_Unified::init_tables();
+        $tables = BSP_Database_Unified::$tables;
+        
+        // Standard configuration
+        $standard_config = [
+            'available_days' => '1,2,3,4,5,6', // Monday to Saturday
+            'available_hours_start' => '10:00:00',
+            'available_hours_end' => '19:00:00',
+            'time_slot_duration' => 30
+        ];
+        
+        // Get all companies and update them individually (more reliable)
+        $companies = $wpdb->get_results("SELECT id FROM {$tables['companies']}");
+        
+        if (function_exists('bsp_debug_log')) {
+            bsp_debug_log("Starting company standardization", 'COMPANY_STANDARDIZATION', [
+                'companies_to_update' => count($companies),
+                'standard_config' => $standard_config
+            ]);
+        }
+        
+        $updated_count = 0;
+        foreach ($companies as $company) {
+            $result = $wpdb->update(
+                $tables['companies'],
+                $standard_config,
+                ['id' => $company->id],
+                ['%s', '%s', '%s', '%d'],
+                ['%d']
+            );
+            
+            if ($result !== false) {
+                $updated_count++;
+                if (function_exists('bsp_debug_log')) {
+                    bsp_debug_log("Updated company", 'COMPANY_STANDARDIZATION', [
+                        'company_id' => $company->id,
+                        'update_result' => $result
+                    ]);
+                }
+            } else {
+                if (function_exists('bsp_debug_log')) {
+                    bsp_debug_log("Failed to update company", 'COMPANY_STANDARDIZATION', [
+                        'company_id' => $company->id,
+                        'wpdb_error' => $wpdb->last_error
+                    ]);
+                }
+            }
+        }
+        
+        // Also update the default booking settings to match
+        $booking_settings = get_option('bsp_booking_settings', []);
+        $booking_settings['time_interval'] = 30;
+        $booking_settings['default_duration'] = 30;
+        $booking_settings['advance_days'] = 3; // 72-hour window
+        update_option('bsp_booking_settings', $booking_settings);
+        
+        if (function_exists('bsp_debug_log')) {
+            bsp_debug_log("Company standardization completed", 'COMPANY_STANDARDIZATION', [
+                'total_companies' => count($companies),
+                'successfully_updated' => $updated_count,
+                'booking_settings_updated' => true
+            ]);
+        }
+        
+        return $updated_count;
     }
 }

@@ -124,17 +124,24 @@ class BSP_Ajax {
     }
     
     /**
-     * Get company availability for frontend calendar
+     * Get company availability for frontend calendar (REFACTORED for performance and accuracy)
      */
     public function get_availability() {
         if (function_exists('bsp_debug_log')) {
-            bsp_debug_log("AJAX get_availability called", 'AJAX', $_POST);
+            bsp_debug_log("=== AVAILABILITY REQUEST RECEIVED ===", 'AVAILABILITY_DEBUG', [
+                'all_POST_data' => $_POST,
+                'server_time' => current_time('mysql'),
+                'request_method' => $_SERVER['REQUEST_METHOD'] ?? 'UNKNOWN'
+            ]);
         }
         
         // Verify nonce
         if (!wp_verify_nonce($_POST['nonce'], 'bsp_frontend_nonce')) {
             if (function_exists('bsp_debug_log')) {
-                bsp_debug_log("AJAX nonce verification failed for get_availability", 'AJAX');
+                bsp_debug_log("AJAX nonce verification failed for get_availability", 'AVAILABILITY_DEBUG', [
+                    'received_nonce' => $_POST['nonce'] ?? 'MISSING',
+                    'expected_action' => 'bsp_frontend_nonce'
+                ]);
             }
             wp_send_json_error('Security check failed.');
         }
@@ -161,7 +168,18 @@ class BSP_Ajax {
             wp_send_json_error('Missing required parameters.');
         }
         
-        // Get companies and generate availability data in the format frontend expects
+        // PERFORMANCE OPTIMIZATION: Single database query to fetch ALL booked slots
+        $all_booked_slots = $this->fetch_all_booked_slots($company_ids, $date_from, $date_to);
+        
+        if (function_exists('bsp_debug_log')) {
+            bsp_debug_log("Fetched booked slots for all companies", 'PERFORMANCE', [
+                'company_ids' => $company_ids,
+                'date_range' => $date_from . ' to ' . $date_to,
+                'booked_slots_count' => count($all_booked_slots)
+            ]);
+        }
+        
+        // Get companies and generate availability data using the fetched booked slots
         $db = BSP_Database_Unified::get_instance();
         $availability_data = [];
         
@@ -169,12 +187,126 @@ class BSP_Ajax {
             $company = $db->get_company($company_id);
             
             if ($company) {
-                // Generate availability for date range
-                $availability_data[$company_id] = $this->generate_date_range_availability($company, $date_from, $date_to);
+                // Generate availability for date range with pre-fetched booked slots
+                $company_booked_slots = isset($all_booked_slots[$company_id]) ? $all_booked_slots[$company_id] : [];
+                $availability_data[$company_id] = $this->generate_date_range_availability($company, $date_from, $date_to, $company_booked_slots);
+                
+                if (function_exists('bsp_debug_log')) {
+                    bsp_debug_log("Generated availability for company", 'AVAILABILITY_DEBUG', [
+                        'company_id' => $company_id,
+                        'company_name' => $company->name ?? 'UNKNOWN',
+                        'booked_slots_count' => count($company_booked_slots),
+                        'booked_slots' => $company_booked_slots,
+                        'availability_days_count' => count($availability_data[$company_id] ?? [])
+                    ]);
+                }
+            } else {
+                if (function_exists('bsp_debug_log')) {
+                    bsp_debug_log("Company not found in database", 'AVAILABILITY_DEBUG', [
+                        'company_id' => $company_id
+                    ]);
+                }
             }
         }
         
+        if (function_exists('bsp_debug_log')) {
+            bsp_debug_log("=== FINAL AVAILABILITY RESPONSE ===", 'AVAILABILITY_DEBUG', [
+                'response_data_structure' => array_keys($availability_data),
+                'total_companies' => count($availability_data)
+            ]);
+        }
+        
         wp_send_json_success($availability_data);
+    }
+    
+    /**
+     * PERFORMANCE CRITICAL: Fetch ALL booked slots in ONE database query
+     * Returns array like: [company_id => ['2025-08-21_09:00', '2025-08-22_14:30']]
+     */
+    private function fetch_all_booked_slots($company_ids, $date_from, $date_to) {
+        global $wpdb;
+        
+        if (empty($company_ids)) {
+            return [];
+        }
+        
+        // Convert company IDs to a safe SQL IN clause
+        $company_ids_sql = implode(',', array_map('intval', $company_ids));
+        
+        // Single, efficient database query to get ALL booked slots
+        $query = $wpdb->prepare("
+            SELECT 
+                pm1.meta_value as booking_date,
+                pm2.meta_value as booking_time,
+                pm3.meta_value as company_id,
+                pm4.meta_value as company_ids
+            FROM {$wpdb->posts} p
+            INNER JOIN {$wpdb->postmeta} pm1 ON p.ID = pm1.post_id AND pm1.meta_key = '_booking_date'
+            INNER JOIN {$wpdb->postmeta} pm2 ON p.ID = pm2.post_id AND pm2.meta_key = '_booking_time'
+            INNER JOIN {$wpdb->postmeta} pm3 ON p.ID = pm3.post_id AND pm3.meta_key = '_company_id'
+            LEFT JOIN {$wpdb->postmeta} pm4 ON p.ID = pm4.post_id AND pm4.meta_key = '_company_ids'
+            WHERE p.post_type = 'bsp_booking'
+            AND p.post_status IN ('publish', 'pending')
+            AND (
+                pm3.meta_value IN ({$company_ids_sql})
+                OR pm4.meta_value REGEXP CONCAT('(^|,)', pm3.meta_value, '(,|$)')
+            )
+            AND pm1.meta_value >= %s
+            AND pm1.meta_value <= %s
+        ", $date_from, $date_to);
+        
+        $results = $wpdb->get_results($query);
+        
+        // Organize results by company ID for fast lookup
+        $booked_slots = [];
+        foreach ($results as $row) {
+            // Handle both single company_id and comma-separated company_ids
+            $company_ids_to_check = [];
+            
+            // Add primary company ID
+            if (!empty($row->company_id)) {
+                $company_ids_to_check[] = intval($row->company_id);
+            }
+            
+            // Add all company IDs from comma-separated list
+            if (!empty($row->company_ids)) {
+                $additional_ids = array_map('trim', explode(',', $row->company_ids));
+                foreach ($additional_ids as $id) {
+                    if (is_numeric($id)) {
+                        $company_ids_to_check[] = intval($id);
+                    }
+                }
+            }
+            
+            // Remove duplicates
+            $company_ids_to_check = array_unique($company_ids_to_check);
+            
+            // Handle comma-separated dates and times (multiple appointments)
+            $dates = array_map('trim', explode(',', $row->booking_date));
+            $times = array_map('trim', explode(',', $row->booking_time));
+            
+            foreach ($company_ids_to_check as $company_id) {
+                foreach ($dates as $date) {
+                    foreach ($times as $time) {
+                        $slot_key = $date . '_' . $time;
+                        if (!isset($booked_slots[$company_id])) {
+                            $booked_slots[$company_id] = [];
+                        }
+                        $booked_slots[$company_id][] = $slot_key;
+                    }
+                }
+            }
+        }
+        
+        if (function_exists('bsp_debug_log')) {
+            bsp_debug_log("Single query fetched booked slots", 'PERFORMANCE', [
+                'query_execution' => 'SUCCESS',
+                'total_bookings_found' => count($results),
+                'companies_with_bookings' => array_keys($booked_slots)
+            ]);
+        }
+        
+        return $booked_slots;
     }
     
     /**
@@ -248,53 +380,62 @@ class BSP_Ajax {
             wp_send_json_error('Invalid email address.');
         }
         
-        // If multiple appointments, consolidate the data for the main meta fields
+        // Process multiple appointments into single booking with comma-separated values
         $appointments_json = $_POST['appointments'] ?? '';
         $appointments = json_decode(stripslashes($appointments_json), true);
 
         $company_ids = [];
+        $company_names = [];
+        $booking_dates = [];
+        $booking_times = [];
+        
         if (!empty($appointments) && is_array($appointments) && count($appointments) > 1) {
-            $company_names = array_column($appointments, 'company');
-            $dates = array_column($appointments, 'date');
-            $times = array_column($appointments, 'time');
+            // Multiple appointments - combine all into single booking
+            foreach ($appointments as $appointment) {
+                $company_name = $appointment['company'] ?? $booking_data['company'];
+                $appointment_date = $appointment['date'] ?? $booking_data['selected_date'];
+                $appointment_time = $appointment['time'] ?? $booking_data['selected_time'];
+                $company_id = $appointment['companyId'] ?? $this->get_company_id_by_name($company_name);
+                
+                $company_names[] = $company_name;
+                $company_ids[] = $company_id;
+                $booking_dates[] = $appointment_date;
+                $booking_times[] = $appointment_time;
+            }
             
-            // Extract company IDs if available
-            if (isset($appointments[0]['companyId'])) {
-                $company_ids = array_column($appointments, 'companyId');
-            } else {
-                // Fallback: look up company IDs by names
-                foreach ($company_names as $company_name) {
-                    $id = $this->get_company_id_by_name($company_name);
-                    if ($id) {
-                        $company_ids[] = $id;
-                    }
-                }
-            }
-
+            // Store comma-separated values for multiple companies
             $booking_data['company'] = implode(', ', $company_names);
-            $booking_data['selected_date'] = implode(', ', $dates);
-            $booking_data['selected_time'] = implode(', ', $times);
+            $booking_data['selected_date'] = implode(', ', $booking_dates);
+            $booking_data['selected_time'] = implode(', ', $booking_times);
+            
         } else {
-            // Single appointment
-            if (!empty($appointments) && is_array($appointments) && isset($appointments[0])) {
-                if (isset($appointments[0]['companyId'])) {
-                    $company_ids[] = $appointments[0]['companyId'];
-                }
+            // Single appointment or fallback
+            $single_appointment = !empty($appointments) && is_array($appointments) ? $appointments[0] : null;
+            if ($single_appointment && isset($single_appointment['companyId'])) {
+                $company_ids[] = $single_appointment['companyId'];
+            } else {
+                $company_ids[] = $this->get_company_id_by_name($booking_data['company']);
             }
+            $company_names[] = $booking_data['company'];
+            $booking_dates[] = $booking_data['selected_date'];
+            $booking_times[] = $booking_data['selected_time'];
         }
 
-        // For single company, use the first company ID; for multiple, we'll store them separately
+        // Get primary company ID for the main _company_id field
         $primary_company_id = !empty($company_ids) ? $company_ids[0] : $this->get_company_id_by_name($booking_data['company']);
         
         if (function_exists('bsp_debug_log')) {
-            bsp_debug_log("Company lookup for booking", 'BOOKING', [
-                'company_name' => $booking_data['company'],
+            bsp_debug_log("Creating single consolidated booking", 'BOOKING', [
+                'company_names' => $company_names,
+                'company_ids' => $company_ids,
                 'primary_company_id' => $primary_company_id,
-                'all_company_ids' => $company_ids
+                'booking_dates' => $booking_dates,
+                'booking_times' => $booking_times,
+                'appointment_count' => count($appointments ?: [])
             ]);
         }
 
-        // Create booking post
+        // Create single booking post with all appointment data consolidated
         $post_data = [
             'post_title' => sprintf('Booking - %s - %s', $booking_data['full_name'], $booking_data['selected_date']),
             'post_content' => $booking_data['service_details'],
@@ -308,17 +449,17 @@ class BSP_Ajax {
                 '_customer_email' => $booking_data['email'],
                 '_customer_phone' => $booking_data['phone'],
                 '_customer_address' => $booking_data['address'],
-                '_company_name' => $booking_data['company'],
-                '_company_id' => $primary_company_id, // Primary company ID for single company bookings
-                '_company_ids' => !empty($company_ids) ? implode(',', $company_ids) : $primary_company_id, // All company IDs for multiple bookings
+                '_company_name' => $booking_data['company'], // Comma-separated company names
+                '_company_id' => $primary_company_id, // Primary company ID for backward compatibility
+                '_company_ids' => implode(',', $company_ids), // All company IDs comma-separated
                 '_service_type' => $booking_data['service'],
-                '_booking_date' => $booking_data['selected_date'],
-                '_booking_time' => $booking_data['selected_time'],
-                '_appointments' => $booking_data['appointments'],
+                '_booking_date' => $booking_data['selected_date'], // Comma-separated dates
+                '_booking_time' => $booking_data['selected_time'], // Comma-separated times
+                '_appointments' => $booking_data['appointments'], // Original JSON data
                 '_specifications' => $this->_generate_specifications_string($_POST),
                 '_status' => 'pending',
                 '_created_at' => current_time('mysql'),
-                // Service-specific fields (keep for detailed data)
+                // Service-specific fields
                 '_roof_action' => isset($booking_data['roof_action']) ? $booking_data['roof_action'] : '',
                 '_roof_material' => isset($booking_data['roof_material']) ? $booking_data['roof_material'] : '',
                 '_windows_action' => isset($booking_data['windows_action']) ? $booking_data['windows_action'] : '',
@@ -338,23 +479,39 @@ class BSP_Ajax {
         
         $booking_id = wp_insert_post($post_data);
         
-        if (is_wp_error($booking_id)) {
-            wp_send_json_error('Failed to create booking: ' . $booking_id->get_error_message());
+        if (!$booking_id || is_wp_error($booking_id)) {
+            wp_send_json_error('Failed to create booking: ' . (is_wp_error($booking_id) ? $booking_id->get_error_message() : 'Unknown error'));
         }
         
         // Set taxonomies
         wp_set_object_terms($booking_id, 'pending', 'bsp_booking_status');
         wp_set_object_terms($booking_id, $booking_data['service'], 'bsp_service_type');
         
-        // Send notifications
+        if (function_exists('bsp_debug_log')) {
+            bsp_debug_log("Single consolidated booking created successfully", 'BOOKING', [
+                'booking_id' => $booking_id,
+                'companies_included' => $booking_data['company'],
+                'total_appointments' => count($appointments ?: [])
+            ]);
+        }
+        
+        // Send notifications for the booking
         $this->send_booking_notifications($booking_id, $booking_data);
         
-        // Send to Google Sheets
+        // Send the single booking to Google Sheets
         $this->send_to_google_sheets($booking_id, $booking_data);
+        
+        if (function_exists('bsp_debug_log')) {
+            bsp_debug_log("Sent consolidated booking to Google Sheets", 'GOOGLE_SHEETS', [
+                'booking_id' => $booking_id,
+                'companies_included' => $booking_data['company']
+            ]);
+        }
 
         wp_send_json_success([
             'message' => 'Booking submitted successfully!',
-            'booking_id' => $booking_id
+            'booking_id' => $booking_id,
+            'companies_included' => $booking_data['company']
         ]);
     }
     
@@ -426,174 +583,6 @@ class BSP_Ajax {
         }
         
         return $specifications;
-    }
-    
-    /**
-     * Get time slots for a specific company and date
-     */
-    public function get_time_slots() {
-        // Verify nonce
-        if (!wp_verify_nonce($_POST['nonce'], 'bsp_frontend_nonce')) {
-            wp_send_json_error('Security check failed.');
-        }
-        
-        $company_id = intval($_POST['company_id']);
-        $date = sanitize_text_field($_POST['date']);
-        
-        if (!$company_id || !$date) {
-            wp_send_json_error('Missing required parameters.');
-        }
-        
-        // Get company
-        $db = BSP_Database_Unified::get_instance();
-        $company = $db->get_company($company_id);
-        
-        if (!$company) {
-            wp_send_json_error('Company not found.');
-        }
-        
-        // Generate time slots
-        $slots = $this->generate_time_slots($company, $date);
-        
-        wp_send_json_success($slots);
-    }
-    
-    /**
-     * Generate availability for a company on a specific date
-     */
-    private function generate_availability($company, $date) {
-        // Parse available hours (e.g., "9:00 AM - 5:00 PM")
-        $hours = $company->available_hours ?? '9:00 AM - 5:00 PM';
-        
-        // Generate hourly slots (simplified)
-        $slots = [];
-        $start_hour = 9;
-        $end_hour = 17;
-        
-        for ($hour = $start_hour; $hour < $end_hour; $hour++) {
-            $time_24 = sprintf('%02d:00', $hour);
-            $time_12 = date('g:i A', strtotime($time_24));
-            
-            // Check if slot is booked
-            $is_booked = $this->is_slot_booked($company->id, $date, $time_24);
-            
-            $slots[] = [
-                'time' => $time_24,
-                'display' => $time_12,
-                'available' => !$is_booked
-            ];
-        }
-        
-        return $slots;
-    }
-    
-    /**
-     * Generate time slots for company
-     */
-    private function generate_time_slots($company, $date) {
-        return $this->generate_availability($company, $date);
-    }
-    
-    /**
-     * Check if a time slot is booked
-     */
-    private function is_slot_booked($company_id, $date, $time) {
-        // Convert to string for consistency
-        $company_id = strval($company_id);
-        $date = trim($date);
-        $time = trim($time);
-        
-        if (function_exists('bsp_debug_log')) {
-            bsp_debug_log("Checking if slot is booked", 'SLOT_CHECK', [
-                'company_id' => $company_id,
-                'date' => $date,
-                'time' => $time
-            ]);
-        }
-        
-        // Query for ALL bookings to check manually (more reliable than complex meta queries)
-        $all_bookings = get_posts([
-            'post_type' => 'bsp_booking',
-            'posts_per_page' => -1, // Get all bookings
-            'post_status' => ['publish'], // Only confirmed bookings
-            'fields' => 'ids' // Only get IDs for performance
-        ]);
-        
-        if (function_exists('bsp_debug_log')) {
-            bsp_debug_log("Total bookings found", 'SLOT_CHECK', [
-                'booking_count' => count($all_bookings)
-            ]);
-        }
-        
-        // Check each booking manually
-        foreach ($all_bookings as $booking_id) {
-            // Get booking meta data
-            $booking_dates = get_post_meta($booking_id, '_booking_date', true);
-            $booking_times = get_post_meta($booking_id, '_booking_time', true);
-            $booking_company_id = get_post_meta($booking_id, '_company_id', true);
-            $booking_company_ids = get_post_meta($booking_id, '_company_ids', true);
-            $booking_company_name = get_post_meta($booking_id, '_company_name', true);
-            
-            // Parse dates and times (could be comma-separated for multiple appointments)
-            $dates_array = array_map('trim', explode(',', $booking_dates));
-            $times_array = array_map('trim', explode(',', $booking_times));
-            
-            // Parse company IDs (multiple possible formats)
-            $company_ids_array = [];
-            if ($booking_company_ids) {
-                $company_ids_array = array_map('trim', explode(',', $booking_company_ids));
-            }
-            if ($booking_company_id) {
-                $company_ids_array[] = trim($booking_company_id);
-            }
-            
-            // Remove duplicates and empty values
-            $company_ids_array = array_filter(array_unique($company_ids_array));
-            
-            if (function_exists('bsp_debug_log')) {
-                bsp_debug_log("Checking booking", 'SLOT_CHECK', [
-                    'booking_id' => $booking_id,
-                    'booking_dates' => $dates_array,
-                    'booking_times' => $times_array,
-                    'booking_company_ids' => $company_ids_array,
-                    'booking_company_name' => $booking_company_name
-                ]);
-            }
-            
-            // Check if this booking conflicts with our slot
-            $date_match = in_array($date, $dates_array);
-            $time_match = in_array($time, $times_array);
-            $company_match = in_array($company_id, $company_ids_array);
-            
-            // Also check by company name as fallback
-            if (!$company_match && $booking_company_name) {
-                $company_name = $this->get_company_name_by_id($company_id);
-                $company_match = (trim($booking_company_name) === trim($company_name));
-            }
-            
-            // If all three match, the slot is booked
-            if ($date_match && $time_match && $company_match) {
-                if (function_exists('bsp_debug_log')) {
-                    bsp_debug_log("SLOT IS BOOKED - Match found", 'SLOT_CHECK', [
-                        'booking_id' => $booking_id,
-                        'company_id' => $company_id,
-                        'date' => $date,
-                        'time' => $time
-                    ]);
-                }
-                return true;
-            }
-        }
-        
-        if (function_exists('bsp_debug_log')) {
-            bsp_debug_log("Slot is available", 'SLOT_CHECK', [
-                'company_id' => $company_id,
-                'date' => $date,
-                'time' => $time
-            ]);
-        }
-        
-        return false;
     }
     
     /**
@@ -879,8 +868,9 @@ class BSP_Ajax {
     /**
      * Generate availability for a date range in the format expected by frontend
      * Enforces strict 72-hour (3-day) booking window from server time
+     * Uses pre-fetched booked slots for optimal performance
      */
-    private function generate_date_range_availability($company, $date_from, $date_to) {
+    private function generate_date_range_availability($company, $date_from, $date_to, $company_booked_slots = []) {
         $availability = [];
         
         // Convert company data to array if it's an object
@@ -895,7 +885,8 @@ class BSP_Ajax {
             bsp_debug_log("Generating availability for company", 'AVAILABILITY', [
                 'company_id' => $company_data['id'] ?? 'MISSING',
                 'company_name' => $company_data['name'] ?? 'MISSING',
-                'date_range' => $date_from . ' to ' . $date_to
+                'date_range' => $date_from . ' to ' . $date_to,
+                'pre_fetched_slots_count' => count($company_booked_slots)
             ]);
         }
         
@@ -932,7 +923,7 @@ class BSP_Ajax {
             // ALWAYS add the calendar day to ensure consistent calendar structure
             // If company isn't available on this day, show empty slots
             if (in_array($day_of_week, $available_days)) {
-                $slots = $this->generate_day_time_slots($company_data, $date_str, $start_time, $end_time);
+                $slots = $this->generate_day_time_slots($company_data, $date_str, $start_time, $end_time, $company_booked_slots);
             } else {
                 // Company not available on this day - show no slots but keep calendar day
                 $slots = [];
@@ -956,8 +947,9 @@ class BSP_Ajax {
     
     /**
      * Generate time slots for a specific day
+     * Uses pre-fetched booked slots for optimal performance
      */
-    private function generate_day_time_slots($company_data, $date, $start_time, $end_time) {
+    private function generate_day_time_slots($company_data, $date, $start_time, $end_time, $company_booked_slots = []) {
         $slots = [];
         
         // Parse start and end times
@@ -979,19 +971,17 @@ class BSP_Ajax {
             $time_24 = sprintf('%02d:%02d', $hour, $min);
             $time_12 = date('g:i A', strtotime($time_24));
             
-            // Check if slot is booked
-            $company_id = isset($company_data['id']) ? $company_data['id'] : 0;
+            // Check if slot is booked using pre-fetched data (FAST!)
+            $slot_key = $date . '_' . $time_24;
+            $is_booked = in_array($slot_key, $company_booked_slots);
             
             if (function_exists('bsp_debug_log')) {
-                bsp_debug_log("Checking slot availability", 'SLOT_CHECK', [
-                    'company_id' => $company_id,
-                    'date' => $date,
-                    'time' => $time_24,
-                    'company_data_keys' => array_keys($company_data)
+                bsp_debug_log("Fast slot check", 'SLOT_CHECK', [
+                    'slot_key' => $slot_key,
+                    'is_booked' => $is_booked,
+                    'method' => 'pre_fetched_array_lookup'
                 ]);
             }
-            
-            $is_booked = $this->is_slot_booked($company_id, $date, $time_24);
             
             $slots[] = [
                 'time' => $time_24,
