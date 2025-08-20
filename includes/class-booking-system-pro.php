@@ -197,7 +197,6 @@ class Booking_System_Pro {
             // JavaScript
             wp_enqueue_script( 'jquery' );
             wp_enqueue_script( 'bsp-js', BSP_PLUGIN_URL . 'assets/js/booking-system.js', ['jquery'], '1.0.0', true );
-            wp_enqueue_script( 'bsp-source-tracker', BSP_PLUGIN_URL . 'assets/js/source-tracker.js', [], BSP_VERSION, true );
             
             
             // Localize script

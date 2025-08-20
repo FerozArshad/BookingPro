@@ -758,3 +758,62 @@ if (BSP_DEBUG_MODE) {
         bsp_debug_log("Database query: {$query}", 'DATABASE', $params);
     }
 }
+
+/**
+ * Capture UTM parameters and set cookies on page load
+ * This ensures marketing tracking data is captured server-side before any JavaScript issues
+ */
+function bsp_capture_marketing_parameters() {
+    // UTM parameters and other marketing data to capture
+    $marketing_params = [
+        'utm_source',
+        'utm_medium', 
+        'utm_campaign',
+        'utm_term',
+        'utm_content',
+        'gclid'
+    ];
+    
+    // Check for each parameter in the URL
+    foreach ($marketing_params as $param) {
+        if (isset($_GET[$param]) && !empty($_GET[$param])) {
+            $cookie_name = 'bsp_' . $param;
+            $value = sanitize_text_field($_GET[$param]);
+            
+            // Only set cookie if it doesn't already exist (preserve original source)
+            if (!isset($_COOKIE[$cookie_name])) {
+                setcookie($cookie_name, $value, time() + (30 * 24 * 60 * 60), '/');
+                bsp_debug_log("Set marketing cookie: {$cookie_name} = {$value}", 'MARKETING');
+            }
+        }
+    }
+    
+    // Handle referrer separately
+    if (!isset($_COOKIE['bsp_referrer']) && isset($_SERVER['HTTP_REFERER'])) {
+        $referrer = sanitize_text_field($_SERVER['HTTP_REFERER']);
+        // Only set if referrer is from external domain
+        if (strpos($referrer, $_SERVER['HTTP_HOST']) === false) {
+            setcookie('bsp_referrer', $referrer, time() + (30 * 24 * 60 * 60), '/');
+            bsp_debug_log("Set referrer cookie: {$referrer}", 'MARKETING');
+        }
+    }
+    
+    // Set direct source if no marketing data exists
+    if (!isset($_COOKIE['bsp_utm_source'])) {
+        $has_marketing_data = false;
+        foreach ($marketing_params as $param) {
+            if (isset($_GET[$param]) && !empty($_GET[$param])) {
+                $has_marketing_data = true;
+                break;
+            }
+        }
+        
+        if (!$has_marketing_data && !isset($_COOKIE['bsp_utm_source'])) {
+            setcookie('bsp_utm_source', 'direct', time() + (30 * 24 * 60 * 60), '/');
+            bsp_debug_log("Set direct source cookie", 'MARKETING');
+        }
+    }
+}
+
+// Hook the marketing capture function to WordPress init
+add_action('init', 'bsp_capture_marketing_parameters');

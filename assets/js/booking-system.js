@@ -2344,7 +2344,9 @@ jQuery(document).ready(function($) {
             }
         });
 
-        console.log('Submitting booking data:', JSON.stringify(bookingData, null, 2));
+        console.log("Submitting Booking Data:", JSON.stringify(bookingData, null, 2));
+
+        console.log("Submitting Booking Data:", JSON.stringify(bookingData, null, 2));
         
         // Show loading state immediately
         $('.btn-submit').prop('disabled', true).html('Processing...');
