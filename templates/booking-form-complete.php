@@ -140,8 +140,6 @@
                 
                 $company_index = 0;
                 foreach ($companies as $company) {
-                    echo '<div class="company-card">';
-                    
                     // Company-specific badges and details
                     $badges = [
                         'BEST PRICES GUARANTEED',
@@ -157,6 +155,8 @@
                     
                     $badge_text = isset($badges[$company_index]) ? $badges[$company_index] : 'FEATURED PRO BY GOOGLE';
                     $display_name = isset($company_names[$company_index]) ? $company_names[$company_index] : $company->name;
+                    
+                    echo '<div class="company-card" data-company="' . esc_attr($display_name) . '" data-company-id="' . esc_attr($company->id) . '">';
                     
                     // Web icon mapping for each company
                     $web_icons = [
@@ -188,7 +188,7 @@
                     echo '<span class="section-title">Choose Your Date</span>';
                     echo '<span class="more-dates-link">more dates ></span>';
                     echo '</div>';
-                    echo '<div class="calendar-grid" data-company="' . esc_attr($display_name) . '">';
+                    echo '<div class="calendar-grid" data-company="' . esc_attr($display_name) . '" data-company-id="' . esc_attr($company->id) . '">';
                     echo '<!-- Calendar days populated by JavaScript -->';
                     echo '</div>';
                     echo '</div>';
@@ -196,7 +196,7 @@
                     // Time Selection Section
                     echo '<div class="time-selection-section">';
                     echo '<div class="section-title">Choose Your Time</div>';
-                    echo '<div class="time-slots" data-company="' . esc_attr($display_name) . '">';
+                    echo '<div class="time-slots" data-company="' . esc_attr($display_name) . '" data-company-id="' . esc_attr($company->id) . '">';
                     echo '<!-- Time slots populated by JavaScript -->';
                     echo '</div>';
                     echo '</div>';
@@ -211,7 +211,7 @@
                     
                     // Request Estimate Button
                     echo '<div class="estimate-button-container">';
-                    echo '<button class="btn-request-estimate" data-company="' . esc_attr($display_name) . '">REQUEST ESTIMATE</button>';
+                    echo '<button class="btn-request-estimate" data-company="' . esc_attr($display_name) . '" data-company-id="' . esc_attr($company->id) . '">REQUEST ESTIMATE</button>';
                     echo '</div>';
                     
                     echo '</div>';

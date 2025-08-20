@@ -52,19 +52,6 @@ jQuery(document).ready(function($) {
         companies: ['Top Remodeling Pro', 'RH Remodeling', 'Eco Green']
     };
 
-    // Company name mapping for display names to database names
-    const companyDisplayToDbMap = {
-        'RH Remodeling': 'Top Remodeling Pro',
-        'Eco Green': 'Home Improvement Experts',
-        'Top Remodeling Pro': 'Pro Remodeling Solutions'
-    };
-    
-    const companyDbToDisplayMap = {
-        'Top Remodeling Pro': 'RH Remodeling',
-        'Home Improvement Experts': 'Eco Green',
-        'Pro Remodeling Solutions': 'Top Remodeling Pro'
-    };
-
     // ─── STATE MANAGEMENT ─────────────────────────────
     let currentStepIndex = 0;
     let formState = {};
@@ -981,14 +968,26 @@ jQuery(document).ready(function($) {
         setTimeout(() => {
             const $companyCards = $('.company-card');
 
-            
             $companyCards.each(function(index) {
                 const $card = $(this);
-                const companyName = $card.find('.company-name-text').text().trim();
+                const companyId = $card.data('company-id');
+                const companyName = $card.data('company') || $card.find('.company-name').text().trim();
 
-                
-                // Initialize calendar for each company
-                initializeCompanyCalendar(companyName);
+                if (companyId) {
+                    // Use reliable ID-based initialization
+                    initializeCompanyCalendar(companyId);
+                } else if (companyName && CONFIG.companies) {
+                    // Fallback: find company by name and get ID
+                    const companyData = CONFIG.companies.find(c => c.name === companyName);
+                    if (companyData) {
+                        console.warn('Company card missing data-company-id attribute, using fallback lookup for:', companyName);
+                        initializeCompanyCalendar(companyData.id);
+                    } else {
+                        console.error('Company card missing data-company-id attribute and could not find company by name:', companyName, $card);
+                    }
+                } else {
+                    console.error('Company card missing both data-company-id and company name:', $card);
+                }
             });
         }, 100);
         
@@ -1146,8 +1145,8 @@ jQuery(document).ready(function($) {
         }
         
         CONFIG.companies.forEach(companyData => {
-            const $calendar = $(`.calendar-grid[data-company="${companyData.name}"]`);
-            const $timeSlots = $(`.time-slots[data-company="${companyData.name}"]`);
+            const $calendar = $(`.calendar-grid[data-company-id="${companyData.id}"]`);
+            const $timeSlots = $(`.time-slots[data-company-id="${companyData.id}"]`);
             
             // Update company display with phone number
             const $companySection = $calendar.closest('.company-card').find('.calendar-section h4');
@@ -1156,65 +1155,47 @@ jQuery(document).ready(function($) {
             }
             
             // Generate calendar days (next 30 days)
-            generateCalendarDays($calendar, companyData.name);
+            generateCalendarDays($calendar, companyData.id);
         });
         
         // Bind calendar interactions
         bindCalendarEvents();
     }
     
-    function initializeCompanyCalendar(companyName) {
-
-
-        
-        // Initialize calendar and time slots for a specific company
-        const $calendar = $(`.calendar-grid[data-company="${companyName}"]`);
-        const $timeSlots = $(`.time-slots[data-company="${companyName}"]`);
-        
-
-
-
-
+    function initializeCompanyCalendar(companyId) {
+        // Initialize calendar and time slots for a specific company using ID
+        const $calendar = $(`.calendar-grid[data-company-id="${companyId}"]`);
+        const $timeSlots = $(`.time-slots[data-company-id="${companyId}"]`);
         
         if ($calendar.length === 0) {
-            console.error('ERROR: Calendar element not found for company:', companyName);
-            console.error('Available companies:', $('.calendar-grid').map(function() {
-                return $(this).data('company'); 
+            console.error('ERROR: Calendar element not found for company ID:', companyId);
+            console.error('Available company IDs:', $('.calendar-grid').map(function() {
+                return $(this).data('company-id'); 
             }).get());
             return;
         }
         
         if ($timeSlots.length === 0) {
-            console.error('ERROR: Time slots element not found for company:', companyName);
-            console.error('Available time slot companies:', $('.time-slots').map(function() {
-                return $(this).data('company'); 
+            console.error('ERROR: Time slots element not found for company ID:', companyId);
+            console.error('Available time slot company IDs:', $('.time-slots').map(function() {
+                return $(this).data('company-id'); 
             }).get());
             return;
         }
         
-        // Check CONFIG.companies
-
-
-        
-        // Find company data
-        const companyData = CONFIG.companies ? CONFIG.companies.find(c => c.name === companyName) : null;
+        // Find company data using ID
+        const companyData = CONFIG.companies ? CONFIG.companies.find(c => c.id == companyId) : null;
         if (!companyData) {
-            console.error('ERROR: Company data not found for:', companyName);
-            
-            // Fallback: create basic company data
-            const fallbackCompanyData = { 
-                id: Math.floor(Math.random() * 1000), 
-                name: companyName,
-                phone: '(555) 123-4567',
-                address: 'Los Angeles, CA'
-            };
+            console.error('ERROR: Company data not found for ID:', companyId);
+            console.error('Available companies:', CONFIG.companies ? CONFIG.companies.map(c => ({id: c.id, name: c.name})) : 'No companies configured');
+            return;
         }
         
         // Generate calendar days if not already done
         const currentChildren = $calendar.children().length;
         
         if (currentChildren === 0) {
-            generateCalendarDays($calendar, companyName);
+            generateCalendarDays($calendar, companyId);
         }
         
         // Clear any existing time slots
@@ -1237,9 +1218,18 @@ jQuery(document).ready(function($) {
             }
             
             const date = $(this).data('date');
-            const companyName = $(this).closest('.calendar-grid').data('company');
-            const $timeSlots = $(`.time-slots[data-company="${companyName}"]`);
+            const companyId = $(this).closest('.calendar-grid').data('company-id');
             const $calendar = $(this).closest('.calendar-grid');
+            
+            // Find company data using ID
+            const companyData = CONFIG.companies ? CONFIG.companies.find(c => c.id == companyId) : null;
+            if (!companyData) {
+                console.error('Company not found for ID:', companyId);
+                return false;
+            }
+            const companyName = companyData.name;
+            
+            const $timeSlots = $(`.time-slots[data-company-id="${companyId}"]`);
             
 
             
@@ -1250,7 +1240,7 @@ jQuery(document).ready(function($) {
             $calendar.find('.calendar-day').removeClass('selected');
             
             // Clear any time slot selections for this company
-            $(`.time-slot[data-company="${companyName}"]:not(.disabled)`).removeClass('selected');
+            $(`.time-slot[data-company-id="${companyId}"]:not(.disabled)`).removeClass('selected');
             
             // Clear time slots container for this company
             $timeSlots.empty();
@@ -1278,37 +1268,16 @@ jQuery(document).ready(function($) {
         });
     }
 
-    function generateCalendarDays($calendar, company) {
-
-
-
-
-        
+    function generateCalendarDays($calendar, companyId) {
         $calendar.empty().append('<div class="loading-spinner">Loading availability...</div>');
         
-        // Convert display name to database name for AJAX call
-        const dbCompanyName = companyDisplayToDbMap[company] || company;
-
-
-
-        
-        // Get company ID from database company name
-
-        
-        // First try to find by display name (for demo mode)
-        let companyData = CONFIG.companies ? CONFIG.companies.find(c => c.name === company) : null;
-        
-        // If not found, try database name
-        if (!companyData) {
-            companyData = CONFIG.companies ? CONFIG.companies.find(c => c.name === dbCompanyName) : null;
-        }
-        
-
+        // Find company data using ID
+        const companyData = CONFIG.companies ? CONFIG.companies.find(c => c.id == companyId) : null;
         
         if (!companyData) {
-            const errorMsg = '<div class="error-message">Company not found: ' + dbCompanyName + '</div>';
+            const errorMsg = '<div class="error-message">Company not found for ID: ' + companyId + '</div>';
             $calendar.html(errorMsg);
-            console.error('Company not found:', dbCompanyName, 'Available companies:', CONFIG.companies);
+            console.error('Company not found for ID:', companyId, 'Available companies:', CONFIG.companies);
             return;
         }
         
@@ -1337,7 +1306,7 @@ jQuery(document).ready(function($) {
             },
             success: function(response) {
                 if (response.success && response.data[companyData.id]) {
-                    renderCalendarDays($calendar, response.data[companyData.id], company);
+                    renderCalendarDays($calendar, response.data[companyData.id], companyData.name);
                 } else {
                     $calendar.html('<div class="error-message">No availability found for this provider</div>');
                 }
@@ -1369,10 +1338,13 @@ jQuery(document).ready(function($) {
     }
 
     function renderCalendarDays($calendar, availabilityData, company) {
-
-
-
-
+        // Find company data by name
+        const companyData = CONFIG.companies ? CONFIG.companies.find(c => c.name === company) : null;
+        if (!companyData) {
+            console.error('Company data not found for:', company);
+            $calendar.html('<div class="error-message">Company not found</div>');
+            return;
+        }
         
         $calendar.empty();
         
@@ -1422,7 +1394,8 @@ jQuery(document).ready(function($) {
             const $day = $(`
                 <div class="calendar-day ${cssClass} ${hasExistingAppointment ? 'selected' : ''}" 
                      data-date="${dateStr}" 
-                     data-company="${company}"
+                     data-company="${companyData.name}"
+                     data-company-id="${companyData.id}"
                      data-available-slots="${availableSlots}"
                      data-total-slots="${totalSlots}"
                      ${shouldDisableDay ? 'data-disabled="true"' : ''}
@@ -1549,7 +1522,7 @@ jQuery(document).ready(function($) {
                         dayData.slots.forEach(slot => {
                             if (slot.available) {
                                 const $slot = $(`
-                                    <div class="time-slot" data-time="${slot.time}" data-company="${company}" data-date="${date}">
+                                    <div class="time-slot" data-time="${slot.time}" data-company="${company}" data-company-id="${companyData.id}" data-date="${date}">
                                         ${slot.formatted}
                                     </div>
                                 `);
@@ -1598,6 +1571,7 @@ jQuery(document).ready(function($) {
             
             const time = $(this).data('time');
             const appointmentCompany = $(this).data('company');
+            const appointmentCompanyId = $(this).data('company-id');
             const appointmentDate = $(this).data('date');
             
             // Check unique companies currently selected
@@ -1633,6 +1607,7 @@ jQuery(document).ready(function($) {
                 // Add new appointment
                 const appointment = {
                     company: appointmentCompany,
+                    companyId: appointmentCompanyId,
                     date: appointmentDate,
                     time: time
                 };
@@ -2301,6 +2276,7 @@ jQuery(document).ready(function($) {
     $(document).on('click', '.btn-request-estimate', function() {
         const $button = $(this);
         const company = $button.data('company');
+        const companyId = $button.data('company-id');
         
         // Check if user has any appointments selected (not necessarily for this specific company)
         if (selectedAppointments.length === 0) {
@@ -2309,9 +2285,19 @@ jQuery(document).ready(function($) {
         }
         
         // Check if user has selected date and time for this specific company
-        const companyAppointment = selectedAppointments.find(apt => apt.company === company);
+        // Try to match by company ID first (more reliable), then fall back to company name
+        let companyAppointment = null;
+        if (companyId) {
+            companyAppointment = selectedAppointments.find(apt => apt.companyId == companyId);
+        }
+        if (!companyAppointment && company) {
+            companyAppointment = selectedAppointments.find(apt => apt.company === company);
+        }
+        
         if (!companyAppointment) {
             alert('Please select a date and time for ' + company + ' before requesting an estimate.');
+            console.log('Debug - Company:', company, 'CompanyId:', companyId);
+            console.log('Debug - Selected appointments:', selectedAppointments);
             return;
         }
         

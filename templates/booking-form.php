@@ -164,7 +164,7 @@
         <div class="step-card">
             <h2 class="step-title">Select dates and times (you can choose up to 3 companies)</h2>
             <div class="company-grid">
-                <div class="company-card" data-company="Top Remodeling Pro">
+                <div class="company-card" data-company="Top Remodeling Pro" data-company-id="1">
                     <div class="company-header">
                         <div class="company-name">Top Remodeling Pro</div>
                         <div class="company-rating">★★★★★ MOST RECOMMENDED BY CUSTOMERS</div>
@@ -173,20 +173,20 @@
                     <div class="calendar-container">
                         <div class="calendar-section">
                             <h4>Choose a date</h4>
-                            <div class="calendar-grid" data-company="Top Remodeling Pro">
+                            <div class="calendar-grid" data-company="Top Remodeling Pro" data-company-id="1">
                                 <!-- Calendar days populated by JavaScript -->
                             </div>
                         </div>
                         <div class="time-section">
                             <h4>Choose a time</h4>
-                            <div class="time-slots" data-company="Top Remodeling Pro">
+                            <div class="time-slots" data-company="Top Remodeling Pro" data-company-id="1">
                                 <!-- Time slots populated by JavaScript -->
                             </div>
                         </div>
                     </div>
                 </div>
                 
-                <div class="company-card" data-company="RH Remodeling">
+                <div class="company-card" data-company="RH Remodeling" data-company-id="2">
                     <div class="company-header">
                         <div class="company-name">RH Remodeling</div>
                         <div class="company-rating">★★★★★ PREVIOUS GUARANTEED</div>
@@ -195,20 +195,20 @@
                     <div class="calendar-container">
                         <div class="calendar-section">
                             <h4>Choose a date</h4>
-                            <div class="calendar-grid" data-company="RH Remodeling">
+                            <div class="calendar-grid" data-company="RH Remodeling" data-company-id="2">
                                 <!-- Calendar days populated by JavaScript -->
                             </div>
                         </div>
                         <div class="time-section">
                             <h4>Choose a time</h4>
-                            <div class="time-slots" data-company="RH Remodeling">
+                            <div class="time-slots" data-company="RH Remodeling" data-company-id="2">
                                 <!-- Time slots populated by JavaScript -->
                             </div>
                         </div>
                     </div>
                 </div>
                 
-                <div class="company-card" data-company="Eco Green">
+                <div class="company-card" data-company="Eco Green" data-company-id="3">
                     <div class="company-header">
                         <div class="company-name">Eco Green</div>
                         <div class="company-rating">★★★★★ MOST RECOMMENDED BY CUSTOMERS</div>
@@ -217,13 +217,13 @@
                     <div class="calendar-container">
                         <div class="calendar-section">
                             <h4>Choose a date</h4>
-                            <div class="calendar-grid" data-company="Eco Green">
+                            <div class="calendar-grid" data-company="Eco Green" data-company-id="3">
                                 <!-- Calendar days populated by JavaScript -->
                             </div>
                         </div>
                         <div class="time-section">
                             <h4>Choose a time</h4>
-                            <div class="time-slots" data-company="Eco Green">
+                            <div class="time-slots" data-company="Eco Green" data-company-id="3">
                                 <!-- Time slots populated by JavaScript -->
                             </div>
                         </div>
