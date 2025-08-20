@@ -386,7 +386,8 @@ class BSP_Admin_Bookings {
         $action = $_GET['action'] ?? 'edit';
         $is_view_mode = ($action === 'view');
         
-        $booking = $this->db->get_booking($booking_id);
+        // Use the centralized data manager to get all booking data
+        $booking = BSP_Data_Manager::get_formatted_booking_data($booking_id);
         
         if (!$booking) {
             wp_die(__('Booking not found.', 'booking-system-pro'));
@@ -492,29 +493,16 @@ class BSP_Admin_Bookings {
                     </tr>
                     <tr>
                         <th scope="row"><?php _e('ZIP Code', 'booking-system-pro'); ?></th>
-                        <td><div class="bsp-highlight-value"><?php 
-                            // Get ZIP code - check main field first, then service-specific fields
-                            $zip_code = $booking['zip_code'];
-                            if (empty($zip_code)) {
-                                $zip_fields = ['roof_zip', 'windows_zip', 'bathroom_zip', 'siding_zip', 'kitchen_zip', 'decks_zip'];
-                                foreach ($zip_fields as $field) {
-                                    if (!empty($booking[$field])) {
-                                        $zip_code = $booking[$field];
-                                        break;
-                                    }
-                                }
-                            }
-                            echo esc_html($zip_code); 
-                        ?></div></td>
+                        <td><div class="bsp-highlight-value"><?php echo esc_html($booking['zip_code'] ?? ''); ?></div></td>
                     </tr>
-                        <tr>
-                            <th scope="row"><?php _e('City', 'booking-system-pro'); ?></th>
-                            <td><div class="bsp-highlight-value"><?php echo esc_html($booking['city'] ?? ''); ?></div></td>
-                        </tr>
-                        <tr>
-                            <th scope="row"><?php _e('State', 'booking-system-pro'); ?></th>
-                            <td><div class="bsp-highlight-value"><?php echo esc_html($booking['state'] ?? ''); ?></div></td>
-                        </tr>
+                    <tr>
+                        <th scope="row"><?php _e('City', 'booking-system-pro'); ?></th>
+                        <td><div class="bsp-highlight-value"><?php echo esc_html($booking['city'] ?? ''); ?></div></td>
+                    </tr>
+                    <tr>
+                        <th scope="row"><?php _e('State', 'booking-system-pro'); ?></th>
+                        <td><div class="bsp-highlight-value"><?php echo esc_html($booking['state'] ?? ''); ?></div></td>
+                    </tr>
                 </table>
 
                 <div class="bsp-section-header"><?php _e('Marketing Source', 'booking-system-pro'); ?></div>
@@ -546,24 +534,29 @@ class BSP_Admin_Bookings {
                         <th scope="row"><?php _e('Company', 'booking-system-pro'); ?></th>
                         <td><div class="bsp-highlight-value"><?php echo esc_html($booking['company_name'] ?: 'Not selected'); ?></div></td>
                     </tr>
+                    <?php if (!empty($booking['specifications'])): ?>
+                    <tr>
+                        <th scope="row"><?php _e('Specifications', 'booking-system-pro'); ?></th>
+                        <td><div class="bsp-highlight-value"><?php echo nl2br(esc_html($booking['specifications'])); ?></div></td>
+                    </tr>
+                    <?php endif; ?>
                     <tr>
                         <th scope="row"><?php _e('Appointment Date', 'booking-system-pro'); ?> <?php if (!$is_view_mode): ?><span class="required">*</span><?php endif; ?></th>
-                        <td><div class="bsp-highlight-value"><?php echo $booking['appointment_date'] ? date('F j, Y', strtotime($booking['appointment_date'])) : 'Not set'; ?></div></td>
+                        <td><div class="bsp-highlight-value"><?php echo esc_html($booking['formatted_date']); ?></div></td>
                     </tr>
                     <tr>
                         <th scope="row"><?php _e('Appointment Time', 'booking-system-pro'); ?> <?php if (!$is_view_mode): ?><span class="required">*</span><?php endif; ?></th>
-                        <td><div class="bsp-highlight-value"><?php echo $booking['appointment_time'] ? date('g:i A', strtotime($booking['appointment_time'])) : 'Not set'; ?></div></td>
+                        <td><div class="bsp-highlight-value"><?php echo esc_html($booking['formatted_time']); ?></div></td>
                     </tr>
-                    <?php if (!empty($booking['appointments'])): ?>
+                    <?php if ($booking['has_multiple_appointments']): ?>
                     <tr>
                         <th scope="row"><?php _e('Multiple Appointments', 'booking-system-pro'); ?></th>
                         <td>
                             <div class="bsp-json-data">
                                 <?php 
-                                $appointments = json_decode($booking['appointments'], true);
-                                if ($appointments && is_array($appointments)) {
+                                if ($booking['parsed_appointments'] && is_array($booking['parsed_appointments'])) {
                                     echo '<strong>Scheduled Appointments:</strong><br>';
-                                    foreach ($appointments as $i => $apt) {
+                                    foreach ($booking['parsed_appointments'] as $i => $apt) {
                                         echo ($i + 1) . '. ' . esc_html($apt['company']) . ' - ' . 
                                              date('F j, Y', strtotime($apt['date'])) . ' at ' . 
                                              date('g:i A', strtotime($apt['time'])) . '<br>';
@@ -598,7 +591,7 @@ class BSP_Admin_Bookings {
                 <table class="form-table bsp-section-table">
                     <tr>
                         <th scope="row"><?php _e('Booking Created', 'booking-system-pro'); ?></th>
-                        <td><div class="bsp-highlight-value"><?php echo esc_html(date('F j, Y \a\t g:i A', strtotime($booking['created_at']))); ?></div></td>
+                        <td><div class="bsp-highlight-value"><?php echo esc_html($booking['formatted_created']); ?></div></td>
                     </tr>
                     <tr>
                         <th scope="row"><?php _e('Booking ID', 'booking-system-pro'); ?></th>
@@ -615,6 +608,59 @@ class BSP_Admin_Bookings {
                     </tr>
                     <?php endif; ?>
                 </table>
+                
+                <?php 
+                // Display marketing/tracking information if it exists
+                $has_marketing_data = !empty($booking['utm_source']) || !empty($booking['utm_medium']) || 
+                                     !empty($booking['utm_campaign']) || !empty($booking['referrer']);
+                if ($has_marketing_data): 
+                ?>
+                <div class="bsp-section-header"><?php _e('Marketing & Tracking Information', 'booking-system-pro'); ?></div>
+                <table class="form-table bsp-section-table">
+                    <?php if (!empty($booking['utm_source'])): ?>
+                    <tr>
+                        <th scope="row"><?php _e('UTM Source', 'booking-system-pro'); ?></th>
+                        <td><div class="bsp-highlight-value"><?php echo esc_html($booking['utm_source']); ?></div></td>
+                    </tr>
+                    <?php endif; ?>
+                    <?php if (!empty($booking['utm_medium'])): ?>
+                    <tr>
+                        <th scope="row"><?php _e('UTM Medium', 'booking-system-pro'); ?></th>
+                        <td><div class="bsp-highlight-value"><?php echo esc_html($booking['utm_medium']); ?></div></td>
+                    </tr>
+                    <?php endif; ?>
+                    <?php if (!empty($booking['utm_campaign'])): ?>
+                    <tr>
+                        <th scope="row"><?php _e('UTM Campaign', 'booking-system-pro'); ?></th>
+                        <td><div class="bsp-highlight-value"><?php echo esc_html($booking['utm_campaign']); ?></div></td>
+                    </tr>
+                    <?php endif; ?>
+                    <?php if (!empty($booking['utm_term'])): ?>
+                    <tr>
+                        <th scope="row"><?php _e('UTM Term', 'booking-system-pro'); ?></th>
+                        <td><div class="bsp-highlight-value"><?php echo esc_html($booking['utm_term']); ?></div></td>
+                    </tr>
+                    <?php endif; ?>
+                    <?php if (!empty($booking['utm_content'])): ?>
+                    <tr>
+                        <th scope="row"><?php _e('UTM Content', 'booking-system-pro'); ?></th>
+                        <td><div class="bsp-highlight-value"><?php echo esc_html($booking['utm_content']); ?></div></td>
+                    </tr>
+                    <?php endif; ?>
+                    <?php if (!empty($booking['referrer'])): ?>
+                    <tr>
+                        <th scope="row"><?php _e('Referrer', 'booking-system-pro'); ?></th>
+                        <td><div class="bsp-highlight-value"><?php echo esc_html($booking['referrer']); ?></div></td>
+                    </tr>
+                    <?php endif; ?>
+                    <?php if (!empty($booking['landing_page'])): ?>
+                    <tr>
+                        <th scope="row"><?php _e('Landing Page', 'booking-system-pro'); ?></th>
+                        <td><div class="bsp-highlight-value"><?php echo esc_html($booking['landing_page']); ?></div></td>
+                    </tr>
+                    <?php endif; ?>
+                </table>
+                <?php endif; ?>
                 
                 <p class="submit">
                     <?php if (!$is_view_mode): ?>

@@ -188,25 +188,20 @@ class BSP_Ajax {
             'meta_input' => [
                 '_city' => $booking_data['city'],
                 '_state' => $booking_data['state'],
+                '_zip_code' => $booking_data['zip_code'],
                 '_customer_name' => $booking_data['full_name'],
                 '_customer_email' => $booking_data['email'],
                 '_customer_phone' => $booking_data['phone'],
                 '_customer_address' => $booking_data['address'],
-                '_zip_code' => $booking_data['zip_code'],
                 '_company_name' => $booking_data['company'],
                 '_service_type' => $booking_data['service'],
                 '_booking_date' => $booking_data['selected_date'],
                 '_booking_time' => $booking_data['selected_time'],
                 '_appointments' => $booking_data['appointments'],
+                '_specifications' => $this->_generate_specifications_string($_POST),
                 '_status' => 'pending',
                 '_created_at' => current_time('mysql'),
-                // Service-specific fields
-                '_roof_zip' => isset($booking_data['roof_zip']) ? $booking_data['roof_zip'] : '',
-                '_windows_zip' => isset($booking_data['windows_zip']) ? $booking_data['windows_zip'] : '',
-                '_bathroom_zip' => isset($booking_data['bathroom_zip']) ? $booking_data['bathroom_zip'] : '',
-                '_siding_zip' => isset($booking_data['siding_zip']) ? $booking_data['siding_zip'] : '',
-                '_kitchen_zip' => isset($booking_data['kitchen_zip']) ? $booking_data['kitchen_zip'] : '',
-                '_decks_zip' => isset($booking_data['decks_zip']) ? $booking_data['decks_zip'] : '',
+                // Service-specific fields (keep for detailed data)
                 '_roof_action' => isset($booking_data['roof_action']) ? $booking_data['roof_action'] : '',
                 '_roof_material' => isset($booking_data['roof_material']) ? $booking_data['roof_material'] : '',
                 '_windows_action' => isset($booking_data['windows_action']) ? $booking_data['windows_action'] : '',
@@ -219,6 +214,7 @@ class BSP_Ajax {
                 '_kitchen_component' => isset($booking_data['kitchen_component']) ? $booking_data['kitchen_component'] : '',
                 '_decks_action' => isset($booking_data['decks_action']) ? $booking_data['decks_action'] : '',
                 '_decks_material' => isset($booking_data['decks_material']) ? $booking_data['decks_material'] : '',
+                // Marketing attribution data
                 '_marketing_source' => $booking_data['source_data']
             ]
         ];
@@ -243,6 +239,76 @@ class BSP_Ajax {
             'message' => 'Booking submitted successfully!',
             'booking_id' => $booking_id
         ]);
+    }
+    
+    /**
+     * Generate specifications string from service-specific data
+     */
+    private function _generate_specifications_string($data) {
+        $service = sanitize_text_field($data['service'] ?? '');
+        $specifications = '';
+        
+        switch ($service) {
+            case 'Roof':
+                $action = sanitize_text_field($data['roof_action'] ?? '');
+                $material = sanitize_text_field($data['roof_material'] ?? '');
+                $parts = [];
+                if (!empty($action)) $parts[] = "Action: {$action}";
+                if (!empty($material)) $parts[] = "Material: {$material}";
+                $specifications = implode(', ', $parts);
+                break;
+                
+            case 'Windows':
+                $action = sanitize_text_field($data['windows_action'] ?? '');
+                $qty = sanitize_text_field($data['windows_replace_qty'] ?? '');
+                $repair = sanitize_text_field($data['windows_repair_needed'] ?? '');
+                $parts = [];
+                if (!empty($action)) $parts[] = "Action: {$action}";
+                if (!empty($qty)) $parts[] = "Quantity: {$qty}";
+                if (!empty($repair)) $parts[] = "Repair Needed: {$repair}";
+                $specifications = implode(', ', $parts);
+                break;
+                
+            case 'Bathroom':
+                $option = sanitize_text_field($data['bathroom_option'] ?? '');
+                if (!empty($option)) {
+                    $specifications = "Option: {$option}";
+                }
+                break;
+                
+            case 'Siding':
+                $option = sanitize_text_field($data['siding_option'] ?? '');
+                $material = sanitize_text_field($data['siding_material'] ?? '');
+                $parts = [];
+                if (!empty($option)) $parts[] = "Option: {$option}";
+                if (!empty($material)) $parts[] = "Material: {$material}";
+                $specifications = implode(', ', $parts);
+                break;
+                
+            case 'Kitchen':
+                $action = sanitize_text_field($data['kitchen_action'] ?? '');
+                $component = sanitize_text_field($data['kitchen_component'] ?? '');
+                $parts = [];
+                if (!empty($action)) $parts[] = "Action: {$action}";
+                if (!empty($component)) $parts[] = "Component: {$component}";
+                $specifications = implode(', ', $parts);
+                break;
+                
+            case 'Decks':
+                $action = sanitize_text_field($data['decks_action'] ?? '');
+                $material = sanitize_text_field($data['decks_material'] ?? '');
+                $parts = [];
+                if (!empty($action)) $parts[] = "Action: {$action}";
+                if (!empty($material)) $parts[] = "Material: {$material}";
+                $specifications = implode(', ', $parts);
+                break;
+                
+            default:
+                $specifications = '';
+                break;
+        }
+        
+        return $specifications;
     }
     
     /**

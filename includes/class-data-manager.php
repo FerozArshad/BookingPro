@@ -22,6 +22,137 @@ class BSP_Data_Manager {
     }
     
     /**
+     * Get formatted booking data for admin display
+     * Centralized method to retrieve and format all booking data
+     * 
+     * @param int $booking_id
+     * @return array|false Formatted booking data or false if not found
+     */
+    public static function get_formatted_booking_data($booking_id) {
+        if (!$booking_id) {
+            return false;
+        }
+        
+        $post = get_post($booking_id);
+        if (!$post || $post->post_type !== 'bsp_booking') {
+            return false;
+        }
+        
+        // Get all meta data for the booking
+        $meta_data = get_post_meta($booking_id);
+        
+        // Helper function to get meta value safely
+        $get_meta = function($key) use ($meta_data) {
+            return isset($meta_data[$key][0]) ? $meta_data[$key][0] : '';
+        };
+        
+        // Prepare formatted booking data
+        $booking_data = [
+            // Basic info
+            'id' => $post->ID,
+            'status' => 'pending', // Default, will be overridden below
+            'created_at' => $post->post_date,
+            'notes' => $post->post_content,
+            
+            // Customer information
+            'customer_name' => $get_meta('_customer_name'),
+            'customer_email' => $get_meta('_customer_email'),
+            'customer_phone' => $get_meta('_customer_phone'),
+            'customer_address' => $get_meta('_customer_address'),
+            
+            // Location information (new fields)
+            'zip_code' => $get_meta('_zip_code'),
+            'city' => $get_meta('_city'),
+            'state' => $get_meta('_state'),
+            
+            // Service information
+            'service_type' => $get_meta('_service_type'),
+            'service_name' => $get_meta('_service_type'), // Alias for compatibility
+            'specifications' => $get_meta('_specifications'),
+            
+            // Company information
+            'company_name' => $get_meta('_company_name'),
+            'company_id' => $get_meta('_company_name'), // Alias for compatibility
+            
+            // Appointment information - FIX DATE/TIME BUG
+            'booking_date' => $get_meta('_booking_date'),
+            'booking_time' => $get_meta('_booking_time'),
+            'appointment_date' => $get_meta('_booking_date'), // Alias for compatibility
+            'appointment_time' => $get_meta('_booking_time'), // Alias for compatibility
+            'appointments' => $get_meta('_appointments'),
+            
+            // Marketing/tracking information
+            'utm_source' => $get_meta('_utm_source'),
+            'utm_medium' => $get_meta('_utm_medium'),
+            'utm_campaign' => $get_meta('_utm_campaign'),
+            'utm_term' => $get_meta('_utm_term'),
+            'utm_content' => $get_meta('_utm_content'),
+            'referrer' => $get_meta('_referrer'),
+            'landing_page' => $get_meta('_landing_page'),
+            
+            // Legacy service-specific ZIP codes (for backward compatibility)
+            'roof_zip' => $get_meta('_roof_zip'),
+            'windows_zip' => $get_meta('_windows_zip'),
+            'bathroom_zip' => $get_meta('_bathroom_zip'),
+            'siding_zip' => $get_meta('_siding_zip'),
+            'kitchen_zip' => $get_meta('_kitchen_zip'),
+            'decks_zip' => $get_meta('_decks_zip'),
+            
+            // Service-specific details
+            'roof_action' => $get_meta('_roof_action'),
+            'roof_material' => $get_meta('_roof_material'),
+            'windows_action' => $get_meta('_windows_action'),
+            'windows_replace_qty' => $get_meta('_windows_replace_qty'),
+            'windows_repair_needed' => $get_meta('_windows_repair_needed'),
+            'bathroom_option' => $get_meta('_bathroom_option'),
+            'siding_option' => $get_meta('_siding_option'),
+            'siding_material' => $get_meta('_siding_material'),
+            'kitchen_action' => $get_meta('_kitchen_action'),
+            'kitchen_component' => $get_meta('_kitchen_component'),
+            'decks_action' => $get_meta('_decks_action'),
+            'decks_material' => $get_meta('_decks_material'),
+        ];
+        
+        // Get status from taxonomy
+        $status_terms = wp_get_post_terms($booking_id, 'bsp_booking_status');
+        if (!is_wp_error($status_terms) && !empty($status_terms)) {
+            $booking_data['status'] = $status_terms[0]->slug;
+        }
+        
+        // Format dates and times properly - FIX THE DATE/TIME BUG
+        if (!empty($booking_data['booking_date'])) {
+            $booking_data['formatted_date'] = date('F j, Y', strtotime($booking_data['booking_date']));
+        } else {
+            $booking_data['formatted_date'] = 'Not set';
+        }
+        
+        if (!empty($booking_data['booking_time'])) {
+            $booking_data['formatted_time'] = date('g:i A', strtotime($booking_data['booking_time']));
+        } else {
+            $booking_data['formatted_time'] = 'Not set';
+        }
+        
+        if (!empty($booking_data['created_at'])) {
+            $booking_data['formatted_created'] = date('F j, Y \a\t g:i A', strtotime($booking_data['created_at']));
+        }
+        
+        // Parse multiple appointments if they exist
+        if (!empty($booking_data['appointments'])) {
+            $appointments = json_decode($booking_data['appointments'], true);
+            if ($appointments && is_array($appointments)) {
+                $booking_data['parsed_appointments'] = $appointments;
+                $booking_data['has_multiple_appointments'] = true;
+            } else {
+                $booking_data['has_multiple_appointments'] = false;
+            }
+        } else {
+            $booking_data['has_multiple_appointments'] = false;
+        }
+        
+        return $booking_data;
+    }
+    
+    /**
      * Export bookings data
      */
     public function export_bookings($format = 'csv', $filters = []) {
