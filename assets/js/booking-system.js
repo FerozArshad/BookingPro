@@ -1519,20 +1519,36 @@ jQuery(document).ready(function($) {
                         const dayData = response.data[companyData.id][date];
                         $timeSlots.empty();
                         
+                        let slotsAdded = 0;
                         dayData.slots.forEach(slot => {
-                            if (slot.available) {
-                                const $slot = $(`
-                                    <div class="time-slot" data-time="${slot.time}" data-company="${company}" data-company-id="${companyData.id}" data-date="${date}">
-                                        ${slot.formatted}
-                                    </div>
-                                `);
-                                
-                                $timeSlots.append($slot);
-                            }
+                            const isAvailable = slot.available;
+                            const slotClass = isAvailable ? 'time-slot' : 'time-slot disabled';
+                            const slotTitle = isAvailable ? 'Click to select this time' : 'This time slot is already booked';
+                            
+                            const $slot = $(`
+                                <div class="${slotClass}" 
+                                     data-time="${slot.time}" 
+                                     data-company="${company}" 
+                                     data-company-id="${companyData.id}" 
+                                     data-date="${date}"
+                                     ${!isAvailable ? 'data-disabled="true"' : ''}
+                                     title="${slotTitle}">
+                                    ${slot.formatted}
+                                    ${!isAvailable ? '<span class="booked-indicator">Booked</span>' : ''}
+                                </div>
+                            `);
+                            
+                            $timeSlots.append($slot);
+                            if (isAvailable) slotsAdded++;
                         });
                         
-                        if ($timeSlots.find('.time-slot').length === 0) {
-                            $timeSlots.html('<div class="no-slots">No available time slots for this date</div>');
+                        // Add warning messages based on availability
+                        if (slotsAdded === 0) {
+                            $timeSlots.html('<div class="no-slots">❌ All time slots are booked for this date</div>');
+                        } else if (slotsAdded === 1) {
+                            $timeSlots.prepend(`<div class="limited-slots-warning">⚠️ Only 1 slot remaining - book now!</div>`);
+                        } else if (slotsAdded <= 3) {
+                            $timeSlots.prepend(`<div class="limited-slots-warning">⚠️ Limited availability - only ${slotsAdded} slots remaining</div>`);
                         }
                     } else {
                         $timeSlots.html('<div class="error-message">No time slots available</div>');

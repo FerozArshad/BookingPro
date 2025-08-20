@@ -52,23 +52,53 @@ class BSP_Ajax {
             $company_name = $company_names[0]; // Use first company for primary ID
         }
         
+        // Clean the company name
+        $company_name = trim($company_name);
+        
         // Initialize database tables
         BSP_Database_Unified::init_tables();
         $tables = BSP_Database_Unified::$tables;
         
+        // First try exact match
         $company_id = $wpdb->get_var($wpdb->prepare(
             "SELECT id FROM {$tables['companies']} WHERE name = %s LIMIT 1",
             $company_name
         ));
         
+        // If no exact match, try case-insensitive match
+        if (!$company_id) {
+            $company_id = $wpdb->get_var($wpdb->prepare(
+                "SELECT id FROM {$tables['companies']} WHERE LOWER(name) = LOWER(%s) LIMIT 1",
+                $company_name
+            ));
+        }
+        
+        // If still no match, create default mapping based on common names
+        if (!$company_id) {
+            $default_mappings = [
+                'Top Remodeling Pro' => 1,
+                'RH Remodeling' => 2,
+                'Eco Green' => 3
+            ];
+            
+            $company_id = isset($default_mappings[$company_name]) ? $default_mappings[$company_name] : 1;
+            
+            if (function_exists('bsp_debug_log')) {
+                bsp_debug_log("Using default company mapping", 'DATABASE', [
+                    'input_name' => $company_name,
+                    'mapped_id' => $company_id
+                ]);
+            }
+        }
+        
         if (function_exists('bsp_debug_log')) {
-            bsp_debug_log("Company ID lookup", 'DATABASE', [
+            bsp_debug_log("Company ID lookup result", 'DATABASE', [
                 'input_name' => $company_name,
                 'found_id' => $company_id
             ]);
         }
         
-        return $company_id ? intval($company_id) : null;
+        return $company_id ? intval($company_id) : 1; // Default to 1 if nothing found
     }
     
     /**
@@ -222,23 +252,45 @@ class BSP_Ajax {
         $appointments_json = $_POST['appointments'] ?? '';
         $appointments = json_decode(stripslashes($appointments_json), true);
 
+        $company_ids = [];
         if (!empty($appointments) && is_array($appointments) && count($appointments) > 1) {
             $company_names = array_column($appointments, 'company');
             $dates = array_column($appointments, 'date');
             $times = array_column($appointments, 'time');
+            
+            // Extract company IDs if available
+            if (isset($appointments[0]['companyId'])) {
+                $company_ids = array_column($appointments, 'companyId');
+            } else {
+                // Fallback: look up company IDs by names
+                foreach ($company_names as $company_name) {
+                    $id = $this->get_company_id_by_name($company_name);
+                    if ($id) {
+                        $company_ids[] = $id;
+                    }
+                }
+            }
 
             $booking_data['company'] = implode(', ', $company_names);
             $booking_data['selected_date'] = implode(', ', $dates);
             $booking_data['selected_time'] = implode(', ', $times);
+        } else {
+            // Single appointment
+            if (!empty($appointments) && is_array($appointments) && isset($appointments[0])) {
+                if (isset($appointments[0]['companyId'])) {
+                    $company_ids[] = $appointments[0]['companyId'];
+                }
+            }
         }
 
-        // Look up company ID from company name for accurate availability checking
-        $company_id = $this->get_company_id_by_name($booking_data['company']);
+        // For single company, use the first company ID; for multiple, we'll store them separately
+        $primary_company_id = !empty($company_ids) ? $company_ids[0] : $this->get_company_id_by_name($booking_data['company']);
         
         if (function_exists('bsp_debug_log')) {
             bsp_debug_log("Company lookup for booking", 'BOOKING', [
                 'company_name' => $booking_data['company'],
-                'company_id' => $company_id
+                'primary_company_id' => $primary_company_id,
+                'all_company_ids' => $company_ids
             ]);
         }
 
@@ -257,7 +309,8 @@ class BSP_Ajax {
                 '_customer_phone' => $booking_data['phone'],
                 '_customer_address' => $booking_data['address'],
                 '_company_name' => $booking_data['company'],
-                '_company_id' => $company_id, // Store company ID for accurate availability checks
+                '_company_id' => $primary_company_id, // Primary company ID for single company bookings
+                '_company_ids' => !empty($company_ids) ? implode(',', $company_ids) : $primary_company_id, // All company IDs for multiple bookings
                 '_service_type' => $booking_data['service'],
                 '_booking_date' => $booking_data['selected_date'],
                 '_booking_time' => $booking_data['selected_time'],
@@ -445,52 +498,102 @@ class BSP_Ajax {
      * Check if a time slot is booked
      */
     private function is_slot_booked($company_id, $date, $time) {
-        // Handle multiple company scenario - check each company in comma-separated list
-        $meta_query = [
-            'relation' => 'AND',
-            [
-                'key' => '_booking_date',
-                'value' => $date,
-                'compare' => 'LIKE' // Use LIKE to handle comma-separated dates
-            ],
-            [
-                'key' => '_booking_time', 
-                'value' => $time,
-                'compare' => 'LIKE' // Use LIKE to handle comma-separated times
-            ]
-        ];
-        
-        // For company_id, check both exact match and comma-separated values
-        $meta_query[] = [
-            'relation' => 'OR',
-            [
-                'key' => '_company_id',
-                'value' => $company_id,
-                'compare' => '='
-            ],
-            [
-                'key' => '_company_name',
-                'value' => $this->get_company_name_by_id($company_id),
-                'compare' => 'LIKE'
-            ]
-        ];
-        
-        $bookings = get_posts([
-            'post_type' => 'bsp_booking',
-            'posts_per_page' => 1,
-            'meta_query' => $meta_query
-        ]);
+        // Convert to string for consistency
+        $company_id = strval($company_id);
+        $date = trim($date);
+        $time = trim($time);
         
         if (function_exists('bsp_debug_log')) {
-            bsp_debug_log("Slot booking check", 'AVAILABILITY', [
+            bsp_debug_log("Checking if slot is booked", 'SLOT_CHECK', [
                 'company_id' => $company_id,
                 'date' => $date,
-                'time' => $time,
-                'found_bookings' => count($bookings)
+                'time' => $time
             ]);
         }
         
-        return !empty($bookings);
+        // Query for ALL bookings to check manually (more reliable than complex meta queries)
+        $all_bookings = get_posts([
+            'post_type' => 'bsp_booking',
+            'posts_per_page' => -1, // Get all bookings
+            'post_status' => ['publish'], // Only confirmed bookings
+            'fields' => 'ids' // Only get IDs for performance
+        ]);
+        
+        if (function_exists('bsp_debug_log')) {
+            bsp_debug_log("Total bookings found", 'SLOT_CHECK', [
+                'booking_count' => count($all_bookings)
+            ]);
+        }
+        
+        // Check each booking manually
+        foreach ($all_bookings as $booking_id) {
+            // Get booking meta data
+            $booking_dates = get_post_meta($booking_id, '_booking_date', true);
+            $booking_times = get_post_meta($booking_id, '_booking_time', true);
+            $booking_company_id = get_post_meta($booking_id, '_company_id', true);
+            $booking_company_ids = get_post_meta($booking_id, '_company_ids', true);
+            $booking_company_name = get_post_meta($booking_id, '_company_name', true);
+            
+            // Parse dates and times (could be comma-separated for multiple appointments)
+            $dates_array = array_map('trim', explode(',', $booking_dates));
+            $times_array = array_map('trim', explode(',', $booking_times));
+            
+            // Parse company IDs (multiple possible formats)
+            $company_ids_array = [];
+            if ($booking_company_ids) {
+                $company_ids_array = array_map('trim', explode(',', $booking_company_ids));
+            }
+            if ($booking_company_id) {
+                $company_ids_array[] = trim($booking_company_id);
+            }
+            
+            // Remove duplicates and empty values
+            $company_ids_array = array_filter(array_unique($company_ids_array));
+            
+            if (function_exists('bsp_debug_log')) {
+                bsp_debug_log("Checking booking", 'SLOT_CHECK', [
+                    'booking_id' => $booking_id,
+                    'booking_dates' => $dates_array,
+                    'booking_times' => $times_array,
+                    'booking_company_ids' => $company_ids_array,
+                    'booking_company_name' => $booking_company_name
+                ]);
+            }
+            
+            // Check if this booking conflicts with our slot
+            $date_match = in_array($date, $dates_array);
+            $time_match = in_array($time, $times_array);
+            $company_match = in_array($company_id, $company_ids_array);
+            
+            // Also check by company name as fallback
+            if (!$company_match && $booking_company_name) {
+                $company_name = $this->get_company_name_by_id($company_id);
+                $company_match = (trim($booking_company_name) === trim($company_name));
+            }
+            
+            // If all three match, the slot is booked
+            if ($date_match && $time_match && $company_match) {
+                if (function_exists('bsp_debug_log')) {
+                    bsp_debug_log("SLOT IS BOOKED - Match found", 'SLOT_CHECK', [
+                        'booking_id' => $booking_id,
+                        'company_id' => $company_id,
+                        'date' => $date,
+                        'time' => $time
+                    ]);
+                }
+                return true;
+            }
+        }
+        
+        if (function_exists('bsp_debug_log')) {
+            bsp_debug_log("Slot is available", 'SLOT_CHECK', [
+                'company_id' => $company_id,
+                'date' => $date,
+                'time' => $time
+            ]);
+        }
+        
+        return false;
     }
     
     /**
@@ -783,6 +886,19 @@ class BSP_Ajax {
         // Convert company data to array if it's an object
         $company_data = is_object($company) ? (array) $company : $company;
         
+        // CRITICAL: Ensure company ID is available for slot checking
+        if (!isset($company_data['id']) && isset($company->id)) {
+            $company_data['id'] = $company->id;
+        }
+        
+        if (function_exists('bsp_debug_log')) {
+            bsp_debug_log("Generating availability for company", 'AVAILABILITY', [
+                'company_id' => $company_data['id'] ?? 'MISSING',
+                'company_name' => $company_data['name'] ?? 'MISSING',
+                'date_range' => $date_from . ' to ' . $date_to
+            ]);
+        }
+        
         // Parse start and end times from database format
         $start_time = isset($company_data['available_hours_start']) ? 
             substr($company_data['available_hours_start'], 0, 5) : '09:00';
@@ -804,6 +920,7 @@ class BSP_Ajax {
             ]);
         }
         
+        // Create a fresh date object for each iteration to prevent reference issues
         while ($current_date <= $end_date) {
             $date_str = $current_date->format('Y-m-d');
             $day_of_week = $current_date->format('N'); // 1 = Monday, 7 = Sunday
@@ -812,18 +929,25 @@ class BSP_Ajax {
             $available_days = isset($company_data['available_days']) ? 
                 explode(',', $company_data['available_days']) : [1,2,3,4,5,6,7];
             
+            // ALWAYS add the calendar day to ensure consistent calendar structure
+            // If company isn't available on this day, show empty slots
             if (in_array($day_of_week, $available_days)) {
                 $slots = $this->generate_day_time_slots($company_data, $date_str, $start_time, $end_time);
-                
-                // Format exactly as frontend expects
-                $availability[$date_str] = [
-                    'slots' => $slots,
-                    'day_number' => $current_date->format('j'),
-                    'day_name' => $current_date->format('D'),
-                    'full_date' => $current_date->format('l, F j, Y')
-                ];
+            } else {
+                // Company not available on this day - show no slots but keep calendar day
+                $slots = [];
             }
             
+            // Format exactly as frontend expects
+            $availability[$date_str] = [
+                'slots' => $slots,
+                'day_number' => $current_date->format('j'),
+                'day_name' => $current_date->format('D'),
+                'full_date' => $current_date->format('l, F j, Y')
+            ];
+            
+            // Create a new DateTime object for the next iteration to avoid reference issues
+            $current_date = clone $current_date;
             $current_date->add(new DateInterval('P1D'));
         }
         
@@ -857,6 +981,16 @@ class BSP_Ajax {
             
             // Check if slot is booked
             $company_id = isset($company_data['id']) ? $company_data['id'] : 0;
+            
+            if (function_exists('bsp_debug_log')) {
+                bsp_debug_log("Checking slot availability", 'SLOT_CHECK', [
+                    'company_id' => $company_id,
+                    'date' => $date,
+                    'time' => $time_24,
+                    'company_data_keys' => array_keys($company_data)
+                ]);
+            }
+            
             $is_booked = $this->is_slot_booked($company_id, $date, $time_24);
             
             $slots[] = [
