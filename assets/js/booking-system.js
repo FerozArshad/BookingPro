@@ -1276,60 +1276,6 @@ jQuery(document).ready(function($) {
                 loadTimeSlots($timeSlots, companyName, date);
             }
         });
-        
-        // Bind "More Dates" button
-        $(document).off('click', '.more-dates-button button').on('click', '.more-dates-button button', function() {
-            const $button = $(this);
-            const $calendar = $button.closest('.calendar-grid');
-            const company = $calendar.data('company');
-            const remainingDates = $calendar.data('remaining-dates') || [];
-            const availabilityData = $calendar.data('availability-data') || {};
-            
-            if (remainingDates.length === 0) {
-                $button.text('No more dates').prop('disabled', true);
-                return;
-            }
-            
-            // Add next 7 dates (1 row)
-            const nextDates = remainingDates.slice(0, 7);
-            const updatedRemaining = remainingDates.slice(7);
-            
-            // Remove the more button temporarily
-            $button.parent().remove();
-            
-            // Add new dates
-            nextDates.forEach(dateStr => {
-                if (availabilityData[dateStr]) {
-                    const dayData = availabilityData[dateStr];
-                    const hasSlots = dayData.slots.some(slot => slot.available);
-                    
-                    const $day = $(`
-                        <div class="calendar-day ${hasSlots ? 'available' : 'unavailable'}" 
-                             data-date="${dateStr}" 
-                             data-company="${company}"
-                             ${!hasSlots ? 'data-disabled="true"' : ''}>
-                            <div class="day-number">${dayData.day_number}</div>
-                            <div class="day-name">${dayData.day_name}</div>
-                        </div>
-                    `);
-                    
-                    $calendar.append($day);
-                }
-            });
-            
-            // Update stored remaining dates
-            $calendar.data('remaining-dates', updatedRemaining);
-            
-            // Re-add more button if there are still dates left
-            if (updatedRemaining.length > 0) {
-                const $newMoreButton = $(`
-                    <div class="more-dates-button" data-company="${company}">
-                        <button type="button">More Dates</button>
-                    </div>
-                `);
-                $calendar.append($newMoreButton);
-            }
-        });
     }
 
     function generateCalendarDays($calendar, company) {
@@ -1433,12 +1379,8 @@ jQuery(document).ready(function($) {
         // Sort dates to ensure chronological order
         const sortedDates = Object.keys(availabilityData).sort();
 
-        
-        // Display first 5 days initially (changed from 7 to match reference)
-        const initialDates = sortedDates.slice(0, 5);
-
-        
-        initialDates.forEach(dateStr => {
+        // Display all available dates (limited to 3 days by backend)
+        sortedDates.forEach(dateStr => {
             const dayData = availabilityData[dateStr];
             
             // Calculate availability metrics
@@ -1495,108 +1437,7 @@ jQuery(document).ready(function($) {
         });
         
 
-        
-        // Store remaining dates for "more dates" functionality
-        if (sortedDates.length > 5) {
-            $calendar.data('remaining-dates', sortedDates.slice(5));
-            $calendar.data('availability-data', availabilityData);
-
-        }
-        
-
     }
-
-    // Add "More Dates" button functionality
-    $(document).on('click', '.more-dates-button button', function() {
-        const $button = $(this).closest('.more-dates-button');
-        const $calendar = $button.closest('.calendar-grid');
-        const company = $button.data('company');
-        const remainingDates = $calendar.data('remaining-dates') || [];
-        const availabilityData = $calendar.data('availability-data') || {};
-        
-        if (remainingDates.length === 0) {
-            $button.remove();
-            return;
-        }
-        
-        // Show next 7 dates or remaining dates, whichever is smaller
-        const nextBatch = remainingDates.slice(0, 7);
-        const stillRemaining = remainingDates.slice(7);
-        
-        // Remove the button temporarily
-        $button.remove();
-        
-        // Add the new date elements
-        nextBatch.forEach(dateStr => {
-            const dayData = availabilityData[dateStr];
-            const hasSlots = dayData.slots.some(slot => slot.available);
-            
-            const $day = $(`
-                <div class="calendar-day ${hasSlots ? 'available' : 'unavailable'}" 
-                     data-date="${dateStr}" 
-                     data-company="${company}"
-                     ${!hasSlots ? 'data-disabled="true"' : ''}>
-                    <div class="day-number">${dayData.day_number}</div>
-                    <div class="day-name">${dayData.day_name}</div>
-                </div>
-            `);
-            $calendar.append($day);
-        });
-        
-        // Re-add the button if there are still more dates
-        if (stillRemaining.length > 0) {
-            const $newButton = $(`
-                <div class="more-dates-button" data-company="${company}">
-                    <button type="button">More Dates (${stillRemaining.length} remaining)</button>
-                </div>
-            `);
-            $calendar.append($newButton);
-            $calendar.data('remaining-dates', stillRemaining);
-        }
-    });
-
-    // Add "More Dates" link functionality (new reference design)
-    $(document).on('click', '.more-dates-link', function() {
-        const $link = $(this);
-        const $calendar = $link.closest('.date-selection-section').find('.calendar-grid');
-        const remainingDates = $calendar.data('remaining-dates') || [];
-        const availabilityData = $calendar.data('availability-data') || {};
-        
-        if (remainingDates.length === 0) {
-            $link.hide();
-            return;
-        }
-        
-        // Show next 5 dates (to fill the grid)
-        const nextBatch = remainingDates.slice(0, 5);
-        const stillRemaining = remainingDates.slice(5);
-        
-        // Add the new date elements
-        nextBatch.forEach(dateStr => {
-            const dayData = availabilityData[dateStr];
-            const hasSlots = dayData.slots.some(slot => slot.available);
-            
-            const $day = $(`
-                <div class="calendar-day ${hasSlots ? 'available' : 'unavailable'}" 
-                     data-date="${dateStr}" 
-                     data-company="${$calendar.data('company')}"
-                     ${!hasSlots ? 'data-disabled="true"' : ''}>
-                    <div class="day-number">${dayData.day_number}</div>
-                    <div class="day-name">${dayData.day_name}</div>
-                </div>
-            `);
-            
-            $calendar.append($day);
-        });
-        
-        // Update remaining dates
-        $calendar.data('remaining-dates', stillRemaining);
-        
-        // Hide link if no more dates
-        if (stillRemaining.length === 0) {
-            $link.hide();
-        }
-    });
 
     // ─── REFRESH CALENDAR AVAILABILITY ─────────────────
     function refreshCompanyCalendar(companyName) {

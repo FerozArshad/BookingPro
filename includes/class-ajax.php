@@ -26,14 +26,18 @@ class BSP_Ajax {
         add_action('wp_ajax_nopriv_bsp_get_availability', [$this, 'get_availability']);
         
         add_action('wp_ajax_bsp_submit_booking', [$this, 'submit_booking']);
-        add_action('wp_a            ]);
-        } else {
-            wp_send_json_error([
-                'message' => 'Webhook test failed',
-                'response_code' => $response_code,
-                'response_body' => $response_body
-            ]);
+        add_action('wp_ajax_nopriv_bsp_submit_booking', [$this, 'submit_booking']);
+        
+        add_action('wp_ajax_bsp_get_slots', [$this, 'get_time_slots']);
+        add_action('wp_ajax_nopriv_bsp_get_slots', [$this, 'get_time_slots']);
+        
+        add_action('wp_ajax_bsp_test_webhook', [$this, 'test_webhook']);
+        
+        if (function_exists('bsp_debug_log')) {
+            bsp_debug_log("AJAX endpoints registered: bsp_get_availability, bsp_submit_booking, bsp_get_slots, bsp_test_webhook", 'AJAX');
         }
+        
+        // Admin AJAX endpoints are handled in BSP_Admin class
     }
     
     /**
@@ -87,18 +91,6 @@ class BSP_Ajax {
         ));
         
         return $company_name ?: '';
-    }v_bsp_submit_booking', [$this, 'submit_booking']);
-        
-        add_action('wp_ajax_bsp_get_slots', [$this, 'get_time_slots']);
-        add_action('wp_ajax_nopriv_bsp_get_slots', [$this, 'get_time_slots']);
-        
-        add_action('wp_ajax_bsp_test_webhook', [$this, 'test_webhook']);
-        
-        if (function_exists('bsp_debug_log')) {
-            bsp_debug_log("AJAX endpoints registered: bsp_get_availability, bsp_submit_booking, bsp_get_slots, bsp_test_webhook", 'AJAX');
-        }
-        
-        // Admin AJAX endpoints are handled in BSP_Admin class
     }
     
     /**
@@ -783,6 +775,7 @@ class BSP_Ajax {
     
     /**
      * Generate availability for a date range in the format expected by frontend
+     * Enforces strict 72-hour (3-day) booking window from server time
      */
     private function generate_date_range_availability($company, $date_from, $date_to) {
         $availability = [];
@@ -796,9 +789,20 @@ class BSP_Ajax {
         $end_time = isset($company_data['available_hours_end']) ? 
             substr($company_data['available_hours_end'], 0, 5) : '17:00';
         
-        // Generate dates between date_from and date_to
+        // ENFORCE 72-HOUR WINDOW: Ignore frontend $date_to parameter
+        // Server is the source of truth for availability window
         $current_date = new DateTime($date_from);
-        $end_date = new DateTime($date_to);
+        $end_date = new DateTime($date_from);
+        $end_date->add(new DateInterval('P3D')); // Exactly 3 days from start date
+        
+        if (function_exists('bsp_debug_log')) {
+            bsp_debug_log("72-Hour Window Enforced", 'AVAILABILITY', [
+                'requested_end' => $date_to,
+                'enforced_start' => $current_date->format('Y-m-d'),
+                'enforced_end' => $end_date->format('Y-m-d'),
+                'company_id' => $company_data['id'] ?? 'unknown'
+            ]);
+        }
         
         while ($current_date <= $end_date) {
             $date_str = $current_date->format('Y-m-d');
