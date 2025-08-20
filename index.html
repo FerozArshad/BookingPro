@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home Services Booking System</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/booking-system.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <div id="booking-form" class="booking-system-form">
+        <!-- Step 1: Service Selection -->
+        <div class="booking-step active" data-step="1">
+            <section class="rs-step-1">
+                <div class="step-overlay"></div>
+                <div class="step-container">
+                    <div class="step-content">
+                        <div class="left-column">
+                            <h2 class="main-title">Find & Book<br>Free Estimates</h2>
+                            <p class="sub-text">With Top Local Contractors</p>
+                        </div>
+                        <div class="right-column">
+                            <div class="service-card">
+                                <h3 class="card-title">GET FREE<br>ESTIMATES</h3>
+                                <div class="service-options">
+                                    <button class="service-option" data-service="Roof">ROOF</button>
+                                    <button class="service-option" data-service="Windows">WINDOWS</button>
+                                    <button class="service-option" data-service="Bathroom">BATH</button>
+                                    <button class="service-option" data-service="Siding">SIDING</button>
+                                    <button class="service-option" data-service="Kitchen">KITCHEN</button>
+                                    <button class="service-option" data-service="Decks">DECKS</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- Step 2: Service Specific Questions (Dynamic) OR ZIP Code -->
+        <div class="booking-step" data-step="2">
+            <div class="step-card">
+                <h2 class="step-title" id="step2-title">Service Details</h2>
+                <!-- Choice options (for service questions) -->
+                <div class="option-grid" id="step2-options">
+                    <!-- Options populated by JavaScript -->
+                </div>
+                <!-- Text input (for ZIP codes) -->
+                <div class="form-group" id="step2-text-input" style="display: none;">
+                    <label class="form-label" id="step2-label">Enter your ZIP code</label>
+                    <input type="text" class="form-input" id="zip-input" placeholder="Enter ZIP code (e.g., 12345)" maxlength="10">
+                </div>
+                <div class="form-navigation">
+                    <button class="btn btn-secondary btn-back">Back</button>
+                    <button class="btn btn-primary btn-next" disabled>Next</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 3: Additional Service Questions (Dynamic) -->
+        <div class="booking-step" data-step="3">
+            <div class="step-card">
+                <h2 class="step-title" id="step3-title">Additional Details</h2>
+                <div class="option-grid" id="step3-options">
+                    <!-- Options populated by JavaScript -->
+                </div>
+                <div class="form-navigation">
+                    <button class="btn btn-secondary btn-back">Back</button>
+                    <button class="btn btn-primary btn-next" disabled>Next</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 4: ZIP Code -->
+        <div class="booking-step" data-step="4">
+            <div class="step-card">
+                <h2 class="step-title">Enter your ZIP code</h2>
+                <div class="form-group">
+                    <input type="text" class="form-input" id="zip-input" placeholder="Enter ZIP code (e.g., 12345)" maxlength="10">
+                </div>
+                <div class="form-navigation">
+                    <button class="btn btn-secondary btn-back">Back</button>
+                    <button class="btn btn-primary btn-next" disabled>Next</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 5: Full Name -->
+        <div class="booking-step" data-step="5">
+            <div class="step-card">
+                <h2 class="step-title">Please enter your full name</h2>
+                <div class="form-group">
+                    <input type="text" class="form-input" id="name-input" placeholder="Enter your full name">
+                </div>
+                <div class="form-navigation">
+                    <button class="btn btn-secondary btn-back">Back</button>
+                    <button class="btn btn-primary btn-next" disabled>Next</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 6: Address -->
+        <div class="booking-step" data-step="6">
+            <div class="step-card">
+                <h2 class="step-title">What is your street address?</h2>
+                <div class="form-group">
+                    <input type="text" class="form-input" id="address-input" placeholder="Enter your street address">
+                </div>
+                <div class="form-navigation">
+                    <button class="btn btn-secondary btn-back">Back</button>
+                    <button class="btn btn-primary btn-next" disabled>Next</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 7: Contact Info -->
+        <div class="booking-step" data-step="7">
+            <div class="step-card">
+                <h2 class="step-title">We have matching Pros in <span id="city-name">[City]</span></h2>
+                <div class="form-group">
+                    <label class="form-label">Cell Number</label>
+                    <input type="tel" class="form-input" id="phone-input" placeholder="Enter your phone number">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Email Address</label>
+                    <input type="email" class="form-input" id="email-input" placeholder="Enter your email address">
+                </div>
+                <div class="form-navigation">
+                    <button class="btn btn-secondary btn-back">Back</button>
+                    <button class="btn btn-primary btn-next" disabled>Next</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 8: Date & Time Selection -->
+        <div class="booking-step" data-step="8">
+            <div class="step-card">
+                <h2 class="step-title">Select a date and time</h2>
+                <div class="company-grid">
+                    <div class="company-card" data-company="Top Remodeling Pro">
+                        <div class="company-header">
+                            <div class="company-name">Top Remodeling Pro</div>
+                            <div class="company-rating">★★★★★ MOST RECOMMENDED BY CUSTOMERS</div>
+                            <div class="company-phone">(555) 123-4567</div>
+                        </div>
+                        <div class="calendar-container">
+                            <div class="calendar-section">
+                                <h4>Choose a date</h4>
+                                <div class="calendar-grid" data-company="Top Remodeling Pro">
+                                    <!-- Calendar days populated by JavaScript -->
+                                </div>
+                            </div>
+                            <div class="time-section">
+                                <h4>Choose a time</h4>
+                                <div class="time-slots" data-company="Top Remodeling Pro">
+                                    <!-- Time slots populated by JavaScript -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="company-card" data-company="RH Remodeling">
+                        <div class="company-header">
+                            <div class="company-name">RH Remodeling</div>
+                            <div class="company-rating">★★★★★ PREVIOUS GUARANTEED</div>
+                            <div class="company-phone">(555) 234-5678</div>
+                        </div>
+                        <div class="calendar-container">
+                            <div class="calendar-section">
+                                <h4>Choose a date</h4>
+                                <div class="calendar-grid" data-company="RH Remodeling">
+                                    <!-- Calendar days populated by JavaScript -->
+                                </div>
+                            </div>
+                            <div class="time-section">
+                                <h4>Choose a time</h4>
+                                <div class="time-slots" data-company="RH Remodeling">
+                                    <!-- Time slots populated by JavaScript -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="company-card" data-company="Eco Green">
+                        <div class="company-header">
+                            <div class="company-name">Eco Green</div>
+                            <div class="company-rating">★★★★★ MOST RECOMMENDED BY CUSTOMERS</div>
+                            <div class="company-phone">(555) 345-6789</div>
+                        </div>
+                        <div class="calendar-container">
+                            <div class="calendar-section">
+                                <h4>Choose a date</h4>
+                                <div class="calendar-grid" data-company="Eco Green">
+                                    <!-- Calendar days populated by JavaScript -->
+                                </div>
+                            </div>
+                            <div class="time-section">
+                                <h4>Choose a time</h4>
+                                <div class="time-slots" data-company="Eco Green">
+                                    <!-- Time slots populated by JavaScript -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-navigation">
+                    <button class="btn btn-secondary btn-back">Back</button>
+                    <button class="btn btn-primary btn-next" disabled>Next</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 9: Summary & Confirmation -->
+        <div class="booking-step" data-step="9">
+            <div class="step-card">
+                <h2 class="step-title">Please review & confirm your booking</h2>
+                <div class="summary-container">
+                    <div class="summary-left">
+                        <h3 class="schedule-summary-title" id="service-schedule-title">Service Estimate Schedule</h3>
+                        <div id="schedule-items">
+                            <!-- Schedule items populated by JavaScript -->
+                        </div>
+                        <p style="text-align: center; margin-top: 20px; font-size: 14px; opacity: 0.9; color: #fff;">
+                            I'm done booking estimates
+                        </p>
+                    </div>
+                    
+                    <div class="summary-right">
+                        <div class="summary-card">
+                            <h3 class="summary-title">Project Details</h3>
+                            <div id="summary-details">
+                                <!-- Summary details populated by JavaScript -->
+                            </div>
+                        </div>
+                        
+                        <div class="next-steps">
+                            <h3 class="next-steps-title">📞 Next Steps: Phone Call</h3>
+                            <ul class="next-steps-list">
+                                <li>Their service team will need a call to confirm this slot</li>
+                                <li>Any questions you have will be answered on that phone call</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-navigation">
+                    <button class="btn btn-secondary btn-back">Back</button>
+                    <button class="btn btn-primary btn-submit">Confirm Booking</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Progress Bar -->
+        <div class="progress-bar">
+            <div class="progress-fill" style="width: 14%"></div>
+        </div>
+    </div>
+
+    <script src="assets/js/booking-system.js"></script>
+</body>
+</html>

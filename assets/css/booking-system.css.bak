@@ -1,0 +1,2860 @@
+/* Backup of booking-system.css created on 2025-08-15 */
+/* Original file path: c:\Users\feroz\Local Sites\wordpress\app\public\wp-content\plugins\BookingPro\assets\css\booking-system.css */
+
+/* --- BEGIN ORIGINAL CONTENT --- */
+/* ─── FONT FACE DECLARATIONS ─────────────────────────── */
+/*
+  CRITICAL: HIGHEST PRIORITY THEME OVERRIDE PROTECTION
+  
+  This CSS file uses maximum specificity selectors to prevent ALL theme styles 
+  from overriding the BookingPro plugin styles.
+  
+  UPDATED: CSS now works with the existing HTML structure using .booking-system-form
+  as the main container class instead of requiring a wrapper div.
+  
+  The selectors use high specificity patterns like:
+  html body .booking-system-form { }
+  body .booking-system-form { }
+  
+  This ensures plugin styles override theme styles without requiring HTML changes.
+*/
+
+@font-face {
+    font-family: 'SF Pro Display';
+    src: url('../sf-pro-display/SFPRODISPLAYREGULAR.OTF') format('opentype');
+    font-weight: 400;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'SF Pro Display';
+    src: url('../sf-pro-display/SFPRODISPLAYMEDIUM.OTF') format('opentype');
+    font-weight: 500;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'SF Pro Display';
+    src: url('../sf-pro-display/SFPRODISPLAYBOLD.OTF') format('opentype');
+    font-weight: 600;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'SF Pro Display';
+    src: url('../sf-pro-display/SFPRODISPLAYBOLD.OTF') format('opentype');
+    font-weight: 700;
+    font-style: normal;
+}
+
+/* ─── GLOBAL STYLES ─────────────────────────────────── */
+html, body { 
+    margin: 0; 
+    padding: 0; 
+    font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+    line-height: 1.6;
+}
+
+/* ─── ELEMENTOR OVERRIDE PROTECTION ─────────────────── */
+/* Maximum specificity wrapper to prevent ALL theme styles from overriding plugin styles */
+
+/* ─── MAIN CONTAINER WITH DYNAMIC BACKGROUNDS ─────── */
+html body .booking-system-form,
+body .booking-system-form,
+.booking-system-form {
+    position: relative;
+    min-height: 700px;
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    transition: background-image 0.5s ease-in-out;
+    overflow: visible;
+    font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+}
+
+/* Default background for initial step */
+body .booking-system-form,
+.booking-system-form {
+    background-image: url('https://images.unsplash.com/photo-1560518883-ce09059eeffa?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=80');
+}
+
+/* Fallback background for error cases */
+body .booking-system-form.fallback-bg,
+.booking-system-form.fallback-bg {
+    background-image: url('../images/step-1-bg.jpeg');
+}
+
+/* Service-specific backgrounds */
+body .booking-system-form.service-roof,
+.booking-system-form.service-roof {
+    background-image: url('https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=80');
+}
+
+body .booking-system-form.service-windows,
+.booking-system-form.service-windows {
+    background-image: url('https://images.unsplash.com/photo-1513694203232-719a280e022f?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=80');
+}
+
+body .booking-system-form.service-bathroom,
+.booking-system-form.service-bathroom {
+    background-image: url('https://images.unsplash.com/photo-1620626011761-996317b8d101?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=80');
+}
+
+body .booking-system-form.service-siding,
+.booking-system-form.service-siding {
+    background-image: url('https://images.unsplash.com/photo-1570129477492-45c003edd2be?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=80');
+}
+
+body .booking-system-form.service-kitchen,
+.booking-system-form.service-kitchen {
+    background-image: url('https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=80');
+}
+
+/* 
+  NOTE: For common steps (full_name, address, contact_info, schedule, confirmation),
+  the JavaScript applies the last service-specific step class to maintain visual continuity.
+  This allows the same background image to continue through the remaining form steps.
+*/
+
+/* Roof step-specific backgrounds */
+body .booking-system-form.service-roof.roof-step-0,
+.booking-system-form.service-roof.roof-step-0 {
+    background-image: url('../images/roof-step-1.jpg');
+}
+
+body .booking-system-form.service-roof.roof-step-1,
+.booking-system-form.service-roof.roof-step-1 {
+    background-image: url('../images/roof-step-2.jpeg');
+}
+
+body .booking-system-form.service-roof.roof-step-2,
+.booking-system-form.service-roof.roof-step-2 {
+    background-image: url('../images/roof-step-2.jpeg');
+}
+
+/* Windows step-specific backgrounds */
+body .booking-system-form.service-windows.windows-step-0,
+.booking-system-form.service-windows.windows-step-0 {
+    background-image: url('../images/window-step-1.jpg');
+}
+
+body .booking-system-form.service-windows.windows-step-1,
+.booking-system-form.service-windows.windows-step-1 {
+    background-image: url('../images/window-step-2.jpeg');
+}
+
+body .booking-system-form.service-windows.windows-step-2a,
+.booking-system-form.service-windows.windows-step-2a {
+    background-image: url('../images/window-step-2b.jpg');
+}
+
+body .booking-system-form.service-windows.windows-step-2b,
+.booking-system-form.service-windows.windows-step-2b {
+    background-image: url('../images/window-step-2.jpeg');
+}
+
+/* Bathroom step-specific backgrounds - use single image for all steps */
+body .booking-system-form.service-bathroom.bathroom-step-0,
+.booking-system-form.service-bathroom.bathroom-step-0,
+body .booking-system-form.service-bathroom.bathroom-step-1,
+.booking-system-form.service-bathroom.bathroom-step-1 {
+    background-image: url('../images/bathroom-all-step.jpeg');
+}
+
+/* Siding step-specific backgrounds - use single image for all steps */
+body .booking-system-form.service-siding.siding-step-0,
+.booking-system-form.service-siding.siding-step-0,
+body .booking-system-form.service-siding.siding-step-1,
+.booking-system-form.service-siding.siding-step-1,
+body .booking-system-form.service-siding.siding-step-2,
+.booking-system-form.service-siding.siding-step-2 {
+    background-image: url('../images/siding-all-steps.png');
+}
+
+/* Kitchen step-specific backgrounds - use single image for all steps */
+body .booking-system-form.service-kitchen.kitchen-step-0,
+.booking-system-form.service-kitchen.kitchen-step-0,
+body .booking-system-form.service-kitchen.kitchen-step-1,
+.booking-system-form.service-kitchen.kitchen-step-1,
+body .booking-system-form.service-kitchen.kitchen-step-2,
+.booking-system-form.service-kitchen.kitchen-step-2 {
+    background-image: url('../images/kitchen-all-steps.jpg');
+}
+
+/* Decks step-specific backgrounds - use single image for all steps */
+body .booking-system-form.service-decks.decks-step-0,
+.booking-system-form.service-decks.decks-step-0,
+body .booking-system-form.service-decks.decks-step-1,
+.booking-system-form.service-decks.decks-step-1,
+body .booking-system-form.service-decks.decks-step-2,
+.booking-system-form.service-decks.decks-step-2 {
+    background-image: url('../images/decks-all-steps.jpeg');
+}
+
+/* ─── DARK OVERLAY ──────────────────────────────────── */
+body .booking-system-form::before,
+.booking-system-form::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.8);
+    z-index: 1;
+}
+
+/* ─── PROGRESS BAR ─────────────────────────────────── */
+body .booking-system-form .progress-bar,
+.booking-system-form .progress-bar {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 3;
+    height: 4px;
+    width: 100%;
+    background: rgba(0, 0, 0, 0.3);
+    margin: 0;
+    padding: 0;
+    border-radius: 0;
+    overflow: hidden;
+    box-shadow: 0 -1px 3px rgba(0, 0, 0, 0.2);
+}
+
+body .booking-system-form .progress-fill,
+.booking-system-form .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #79B62F 0%, rgba(121, 182, 47, 0.5) 100%) !important;
+    border-radius: 0;
+    transition: width 0.4s ease-in-out;
+    position: relative;
+    box-shadow: 0 0 8px rgba(121, 182, 47, 0.3);
+}
+
+body .booking-system-form .progress-fill::after,
+.booking-system-form .progress-fill::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.2) 50%, transparent 100%);
+    animation: shimmer 2s infinite ease-in-out;
+}
+
+@keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+/* ─── STEP CONTAINER LAYOUT ──────────────────────────── */
+body .booking-system-form .booking-step,
+.booking-system-form .booking-step {
+    position: relative;
+    z-index: 2;
+    background: none;
+    color: #fff !important;
+    text-align: center;
+    display: none;
+    padding: 20px;
+    padding-top: 120px; /* Added top padding for desktop */
+    min-height: 580px;
+    box-sizing: border-box;
+    overflow: visible;
+    font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+}
+
+body .booking-system-form .booking-step.active,
+.booking-system-form .booking-step.active {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+/* Step 1 - Custom full-width layout, others maintain card structure */
+body .booking-system-form .booking-step[data-step="1"],
+.booking-system-form .booking-step[data-step="1"] {
+    padding-top: 120px;
+    min-height: 580px;
+}
+
+body .booking-system-form .booking-step[data-step="1"] .step-card,
+.booking-system-form .booking-step[data-step="1"] .step-card {
+    display: none; /* Hide the default step-card for step 1 */
+}
+
+body .booking-system-form .booking-step:not([data-step="1"]) .step-card,
+.booking-system-form .booking-step:not([data-step="1"]) .step-card {
+    width: 62%;
+    max-width: 1000px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    overflow: visible;
+}
+
+/* Step 8 specific layout - wider container for calendar grid */
+body .booking-system-form .booking-step[data-step="8"] .step-card,
+.booking-system-form .booking-step[data-step="8"] .step-card {
+    width: 95%;
+    max-width: none;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    overflow: visible;
+}
+
+body .booking-system-form .step-card,
+.booking-system-form .step-card {
+    background: transparent;
+    padding: 25px;
+    box-sizing: border-box;
+    overflow: visible;
+}
+
+/* Full-width sections */
+body .booking-system-form .rs-step,
+.booking-system-form .rs-step {
+    width: 100vw;
+    min-height: 100vh;
+    position: relative;
+    background-size: cover;
+    background-position: center;
+}
+
+body .booking-system-form .step-overlay,
+.booking-system-form .step-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.8);
+    z-index: 1;
+}
+
+body .booking-system-form .step-card,
+.booking-system-form .step-card {
+    position: relative;
+    z-index: 2;
+    background: transparent;
+    border-radius: 12px;
+    padding: 20px;
+    margin: 5vh auto;
+    width: 55%;
+}
+
+@media (max-width: 768px) {
+    body .booking-system-form .step-card,
+    .booking-system-form .step-card {
+        width: 100%;
+        margin: 2vh auto;
+    }
+}
+
+/* ─── TYPOGRAPHY WITH WHITE TEXT ──────────────────────── */
+body .booking-system-form .step-title,
+.booking-system-form .step-title {
+    font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+    font-size: 41.6px !important; /* 30% increase from original 32px */
+    font-weight: 600 !important;
+    color: #fff !important;
+    text-align: center;
+    line-height: 1.2; /* Adjusted for larger text */
+}
+
+
+body .booking-system-form .step-subtitle,
+.booking-system-form .step-subtitle {
+    font-size: 20px !important;
+    color: rgba(255, 255, 255, 0.9) !important;
+    margin-bottom: 25px;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+}
+
+/* ─── SERVICE SELECTION (SINGLE-CHOICE) ──────────────── */
+body .booking-system-form .service-options,
+.booking-system-form .service-options {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 15px;
+    margin: 20px 0;
+}
+
+body .booking-system-form .service-option,
+.booking-system-form .service-option {
+    background: #fff !important;
+    color: #004d00 !important;
+    border: none;
+    border-radius: 8px;
+    padding: 20px;
+    font-size: 20px !important;
+    font-weight: 600 !important;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-align: center;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+}
+
+body .booking-system-form .service-option:hover,
+.booking-system-form .service-option:hover {
+    opacity: 0.8;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+}
+
+body .booking-system-form .service-option.selected,
+.booking-system-form .service-option.selected {
+    background: #79B62F !important;
+    color: #fff !important;
+    transform: translateY(-2px);
+}
+
+/* ─── OPTION BUTTONS ──────────────────────────────────── */
+body .booking-system-form .option-grid,
+.booking-system-form .option-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin: 20px 0;
+    justify-content: center;
+}
+
+body .booking-system-form .option-btn,
+.booking-system-form .option-btn {
+    background: rgba(255, 255, 255, 0.2) !important;
+    color: #fff !important;
+    border: 2px solid rgba(255, 255, 255, 0.8) !important;
+    border-radius: 12px;
+    padding: 40px 30px;
+    font-size: 20px !important;
+    font-weight: 600 !important;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-align: center;
+    min-height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    min-width: 200px;
+    max-width: 25%;
+    font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    hyphens: auto;
+    white-space: normal;
+    line-height: 1.4;
+}
+
+body .booking-system-form .option-btn:hover,
+.booking-system-form .option-btn:hover {
+    border-color: rgba(141, 191, 88, 0.25) !important;
+    background: rgba(141, 191, 88, 0.25) !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+body .booking-system-form .option-btn.selected,
+.booking-pro_plugin body .booking-system-form .option-btn.selected,
+.booking-system-form .option-btn.selected {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: #fff !important;
+    color: #fff !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+/* Responsive option button layouts */
+@media (max-width: 768px) {
+    body .booking-system-form .option-grid,
+    .booking-system-form .option-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        justify-content: center;
+    }
+    body .booking-system-form .form-input,
+    .booking-system-form .form-input {
+    width: 95%;}
+
+    body .booking-system-form .option-btn,
+    .booking-system-form .option-btn {
+        min-width: auto;
+        max-width: none;
+        flex: none;
+        padding: 18px 20px;
+        font-size: 20px !important;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+        hyphens: auto;
+        white-space: normal;
+        line-height: 1.3;
+    }
+}
+
+@media (max-width: 480px) {
+    body .booking-system-form .option-grid,
+    .booking-system-form .option-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+    }
+    
+    body .booking-system-form .option-btn,
+    .booking-system-form .option-btn {
+        padding: 16px 15px;
+        font-size: 20px !important;
+        min-height: 55px;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+        hyphens: auto;
+        white-space: normal;
+        line-height: 1.3;
+    }
+}
+
+/* ─── FORM INPUTS ────────────────────────────────────── */
+body .booking-system-form .form-group,
+.booking-system-form .form-group {
+    margin: 15px 0;
+    text-align: left;
+}
+
+body .booking-system-form .form-label,
+.booking-system-form .form-label {
+    color: #fff !important;
+    font-size: 18.2px !important; /* 30% increase from 14px */
+    text-align: center;
+    width: 100% !important;
+	display:inline-block !important;
+    padding-bottom: 10px;
+    font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+}
+
+body .booking-system-form .form-input,
+.booking-system-form .form-input {
+    width: 65% !important;
+    margin: 0 auto;
+    padding: 15px;
+    text-align: center;
+    border: none !important;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.2) !important;
+    color: #fff !important;
+    font-size: 20px !important;
+    box-sizing: border-box;
+    display: block;
+    font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+}
+
+body .booking-system-form .form-input::placeholder,
+.booking-system-form .form-input::placeholder {
+    color: rgba(255, 255, 255, 0.7) !important;
+}
+
+body .booking-system-form .form-input:focus,
+.booking-system-form .form-input:focus {
+    outline: none !important;
+    background: rgba(141, 191, 88, 0.25) !important;
+    box-shadow: 0 0 0 3px rgba(121, 182, 47, 0.3) !important;
+}
+
+/* Form input validation states */
+body .booking-system-form .form-input.valid,
+.booking-system-form .form-input.valid {
+    border: 2px solid rgba(40, 167, 69, 0.8) !important;
+    background: rgba(40, 167, 69, 0.1) !important;
+    box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.2) !important;
+}
+
+body .booking-system-form .form-input.error,
+.booking-system-form .form-input.error {
+    border: 2px solid rgba(220, 53, 69, 0.8) !important;
+    background: rgba(220, 53, 69, 0.1) !important;
+    box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.2) !important;
+}
+
+body .booking-system-form .form-input.valid:focus,
+.booking-system-form .form-input.valid:focus {
+    background: rgba(40, 167, 69, 0.15) !important;
+    box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.3) !important;
+}
+
+body .booking-system-form .form-input.error:focus,
+.booking-system-form .form-input.error:focus {
+    background: rgba(220, 53, 69, 0.15) !important;
+    box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.3) !important;
+}
+
+/* ─── COMPANY CARDS WITH CALENDARS ───────────────────── */
+body .booking-system-form .company-grid,
+.booking-system-form .company-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+    margin: 20px 0;
+}
+
+/* Responsive company layout */
+@media (min-width: 1200px) {
+    body .booking-system-form .company-grid,
+    .booking-system-form .company-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (min-width: 768px) and (max-width: 1199px) {
+    body .booking-system-form .company-grid,
+    .booking-system-form .company-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 767px) {
+    body .booking-system-form .company-grid,
+    .booking-system-form .company-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+body .booking-system-form .company-card,
+.booking-system-form .company-card {
+    background: rgba(255, 255, 255, 0.98);
+    border: 2px solid #79B62F !important;
+    border-radius: 12px;
+    padding: 20px;
+    color: #333 !important;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    overflow: visible;
+    margin-bottom: 20px;
+    margin-top: 45px; /* Increased space to accommodate featured badge height + padding */
+    transition: all 0.3s ease;
+    font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+    position: relative; /* Important for absolute positioning of badges */
+    /* Ensure flex children maintain proper spacing */
+    flex-shrink: 0;
+}
+
+body .booking-system-form .company-card:hover,
+.booking-system-form .company-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+}
+
+body .booking-system-form .company-card.expanded,
+.booking-system-form .company-card.expanded {
+    border-color: #689F38 !important;
+    box-shadow: 0 8px 30px rgba(121, 182, 47, 0.2);
+}
+
+body .booking-system-form .company-header,
+.booking-system-form .company-header {
+    background: #79B62F !important;
+    color: #fff !important;
+    padding: 20px;
+    text-align: left;
+}
+
+body .booking-system-form .company-name,
+.booking-system-form .company-name {
+    font-size: 18px !important;
+    font-weight: 700 !important;
+    margin-bottom: 5px;
+    color: #fff !important;
+    font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+}
+
+body .booking-system-form .company-rating,
+.booking-system-form .company-rating {
+    font-size: 20px !important;
+    opacity: 0.9;
+    font-weight: 600 !important;
+    margin-bottom: 5px;
+    color: #fff !important;
+    font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+}
+
+body .booking-system-form .company-phone,
+.booking-system-form .company-phone {
+    font-size: 20px !important;
+    opacity: 0.8;
+    color: #fff !important;
+    font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+}
+
+/* ─── CALENDAR STYLING ───────────────────────────────── */
+body .booking-system-form .calendar-container,
+.booking-system-form .calendar-container,
+.calendar-container {
+    padding: 50px 30px;
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 12px;
+    margin-bottom: 20px;
+    /* Step 8 specific: flex layout for company cards */
+    display: flex;
+    flex-direction: row;
+    gap: 20px;
+    width: 100%;
+}
+
+/* Individual company cards in Step 8 */
+body .booking-system-form .calendar-container .company-card,
+.booking-system-form .calendar-container .company-card,
+.calendar-container .company-card {
+    flex: 1;
+    min-width: 0; /* Allow cards to shrink */
+    width: calc(33.333% - 13.333px); /* 33% minus gap compensation */
+}
+
+.calendar-section h4 {
+    color: #79B62F;
+    font-weight: 700;
+    margin-bottom: 15px;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.calendar-section h4::before {
+    content: "👤";
+    font-size: 20px;
+}
+
+.company-phone {
+    font-size: 20px;
+    color: #666;
+    font-weight: 400;
+    margin-top: 2px;
+}
+
+body .booking-system-form .calendar-grid,
+.booking-system-form .calendar-grid,
+.calendar-grid {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 15px;
+    overflow-x: auto;
+    padding-bottom: 5px;
+}
+
+body .booking-system-form .calendar-day,
+.booking-system-form .calendar-day,
+.calendar-day {
+    min-width: 60px;
+    height: 70px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    background: #fff;
+    border: 2px solid #e0e0e0;
+    flex-shrink: 0;
+}
+
+body .booking-system-form .calendar-day.available,
+.booking-system-form .calendar-day.available,
+.calendar-day.available {
+    border-color: #79B62F;
+    color: #333;
+}
+
+body .booking-system-form .calendar-day.available:hover,
+.booking-system-form .calendar-day.available:hover,
+.calendar-day.available:hover {
+    background: #f1f8e9;
+    border-color: #689F38;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(121, 182, 47, 0.2);
+}
+
+body .booking-system-form .calendar-day.selected,
+.booking-system-form .calendar-day.selected,
+.calendar-day.selected {
+    background: #79B62F;
+    color: #fff;
+    border-color: #689F38;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(121, 182, 47, 0.3);
+}
+
+.calendar-day.unavailable {
+    background: #f5f5f5;
+    color: #999;
+    border-color: #e0e0e0;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.calendar-day.unavailable:hover {
+    background: #f5f5f5;
+    border-color: #e0e0e0;
+    transform: none;
+    box-shadow: none;
+}
+
+/* Enhanced disabled state for dates with no available slots */
+.calendar-day.disabled {
+    background: #f0f0f0 !important;
+    color: #ccc !important;
+    border-color: #ddd !important;
+    cursor: not-allowed !important;
+    opacity: 0.5 !important;
+    pointer-events: none; /* Prevent any click events */
+}
+
+.calendar-day.disabled:hover {
+    background: #f0f0f0 !important;
+    color: #ccc !important;
+    border-color: #ddd !important;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+.calendar-day .day-number {
+    font-size: 18px;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.calendar-day .day-name {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 2px;
+}
+
+/* Slots availability indicator */
+.calendar-day .slots-indicator {
+    font-size: 20px;
+    font-weight: 600;
+    color: #ff9800;
+    background: rgba(255, 152, 0, 0.1);
+    padding: 1px 4px;
+    border-radius: 3px;
+    margin-top: 1px;
+    line-height: 1;
+}
+
+.more-dates-button {
+    min-width: 60px;
+    height: 70px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.more-dates-button button {
+    background: #fff;
+    border: 2px dashed #79B62F;
+    border-radius: 8px;
+    padding: 8px 12px;
+    color: #79B62F;
+    font-size: 20px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+}
+
+.more-dates-button button:hover {
+    background: #f1f8e9;
+    border-style: solid;
+}
+
+.more-dates-button button::after {
+    content: "→";
+    font-size: 20px;
+}
+
+body .booking-system-form .time-slots,
+.booking-system-form .time-slots,
+.time-slots {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+    gap: 8px;
+    margin-top: 15px;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+body .booking-system-form .time-slot,
+.booking-system-form .time-slot,
+.time-slot {
+    padding: 8px 6px;
+    border: 2px solid #79B62F;
+    border-radius: 6px;
+    text-align: center;
+    cursor: pointer;
+    font-size: 20px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    background: #fff;
+    color: #79B62F;
+}
+
+body .booking-system-form .time-slot:hover,
+.booking-system-form .time-slot:hover,
+.time-slot:hover {
+    background: #f1f8e9;
+    transform: translateY(-1px);
+}
+
+body .booking-system-form .time-slot.selected,
+.booking-system-form .time-slot.selected,
+.time-slot.selected {
+    background: #79B62F;
+    color: #fff;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(121, 182, 47, 0.3);
+}
+
+/* ─── TIME SLOT IMPROVEMENTS ───────────────────── */
+body .booking-system-form .time-slot.disabled,
+.booking-system-form .time-slot.disabled,
+.time-slot.disabled {
+    background: #f5f5f5 !important;
+    color: #999 !important;
+    cursor: not-allowed !important;
+    opacity: 0.6;
+    border: 1px solid #ddd !important;
+    position: relative;
+}
+
+.time-slot.disabled:hover {
+    background: #f5f5f5 !important;
+    transform: none !important;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1) !important;
+}
+
+.booked-indicator {
+    display: inline-block;
+    background: #dc3545;
+    color: white;
+    font-size: 20px;
+    padding: 2px 6px;
+    border-radius: 8px;
+    margin-left: 8px;
+    font-weight: 600;
+}
+
+.limited-slots-warning {
+    background: #fff3cd;
+    border: 1px solid #ffeaa7;
+    color: #856404;
+    padding: 10px 15px;
+    border-radius: 6px;
+    margin-bottom: 15px;
+    font-size: 13px;
+    font-weight: 600;
+    text-align: center;
+}
+
+.no-slots {
+    background: #f8d7da;
+    border: 1px solid #f5c6cb;
+    color: #721c24;
+    padding: 15px;
+    border-radius: 6px;
+    text-align: center;
+    font-weight: 600;
+}
+
+/* ─── LOADING AND ERROR STATES ───────────────────── */
+.loading-spinner {
+    text-align: center;
+    padding: 20px;
+    color: #666;
+    font-style: italic;
+}
+
+.error-message {
+    background: #f8d7da;
+    border: 1px solid #f5c6cb;
+    color: #721c24;
+    padding: 15px;
+    border-radius: 6px;
+    text-align: center;
+    font-weight: 600;
+    margin: 10px 0;
+}
+
+/* ─── FORM NAVIGATION BUTTONS ────────────────────────── */
+body .booking-system-form .form-navigation,
+.booking-system-form .form-navigation {
+    display: flex;
+    width: 65%;
+    margin: 0 auto;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 30px;
+    gap: 15px;
+}
+
+/* Single button navigation - center the back button when next is hidden */
+body .booking-system-form .form-navigation.single-button-nav,
+.booking-system-form .form-navigation.single-button-nav {
+    justify-content: center !important;
+}
+
+body .booking-system-form .form-navigation.single-button-nav .btn-back,
+.booking-system-form .form-navigation.single-button-nav .btn-back {
+    margin: 0 auto !important;
+}
+
+body .booking-system-form .form-navigation.single-button-nav .btn-next,
+.booking-system-form .form-navigation.single-button-nav .btn-next {
+    display: none !important;
+}
+
+body .booking-system-form .btn,
+.booking-system-form .btn {
+    padding: 15px 30px;
+    border: none !important;
+    border-radius: 8px;
+    font-size: 16px !important;
+    font-weight: 600 !important;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 120px;
+    font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+}
+
+body .booking-system-form .btn-primary,
+.booking-system-form .btn-primary {
+    background-color: #79B62F !important;
+    color: #fff !important;
+    flex: 1;
+}
+
+body .booking-system-form .btn-primary:hover,
+.booking-system-form .btn-primary:hover {
+    background-color: #689F38 !important;
+    transform: translateY(-1px);
+}
+
+body .booking-system-form .btn-primary:disabled,
+.booking-system-form .btn-primary:disabled {
+    background: rgba(121, 182, 47, 0.5) !important;
+    cursor: not-allowed;
+    transform: none;
+}
+
+body .booking-system-form .btn-secondary,
+.booking-system-form .btn-secondary {
+    color: #fff !important;
+    border-color: rgba(255, 255, 255, 0.5) !important;
+	background-color:transparent !important;
+    text-decoration: underline;
+    min-width: auto;
+    padding: 10px 20px;
+}
+
+body .booking-system-form .btn-secondary:hover,
+.booking-system-form .btn-secondary:hover {
+    background: rgba(141, 191, 88, 0.25) !important;
+    border-color:  rgba(141, 191, 88, 0.25) !important;
+    text-decoration: none;
+}
+
+/* ─── SUMMARY PAGE REDESIGN - REFERENCE MATCH ──────────── */
+
+/* Summary Step - Complete White Background Design */
+html body .booking-system-form .booking-step[data-step="9"],
+.booking-step[data-step="9"] {
+    background: #ffffff !important;
+    min-height: 600px !important;
+    padding: 2rem !important;
+    padding-top: 120px !important; /* Match other steps with 120px top padding */
+}
+
+html body .booking-system-form .booking-step[data-step="9"] .booking-system-form::before,
+.booking_step[data-step="9"] .booking-system-form::before {
+    background: none !important;
+}
+
+html body .booking-system-form .booking-step[data-step="9"] .step-card,
+.booking_step[data-step="9"] .step-card {
+    background: transparent !important;
+    padding: 0 !important;
+    width: 100% !important;
+    max-width: 1200px !important;
+}
+
+html body .booking-system-form .booking-step[data-step="9"] .step-title,
+.booking_step[data-step="9"] .step-title {
+    display: none !important; /* Hide the default step title */
+}
+
+/* Main Summary Container - Grid Layout with Equal Height Columns */
+html body .booking-system-form .summary-container,
+.summary-container {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    grid-template-rows: 1fr !important;
+    gap: 2rem !important;
+    max-width: 1200px !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
+    min-height: 500px !important;
+}
+
+html body .booking-system-form .summary-left,
+.summary-left {
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+html body .booking-system-form .summary-right,
+.summary-right {
+    display: grid !important;
+    grid-template-rows: auto 1fr !important;
+    gap: 1rem !important;
+}
+
+/* Left Column - Schedule Summary with Green Background and White Border Inner Container */
+html body .booking-system-form .schedule-summary-container,
+.schedule-summary-container {
+    background: #79B62F !important;
+    border-radius: 25px !important;
+    padding: 3.2rem 2.2rem !important;
+    height: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    -webkit-border-radius: 25px !important;
+    -moz-border-radius: 25px !important;
+    -ms-border-radius: 25px !important;
+    -o-border-radius: 25px !important;
+}
+
+html body .booking-system-form .schedule-summary-inner,
+.schedule-summary-inner {
+    background: transparent !important;
+    border: 1px solid #ffffff !important;
+    border-radius: 25px !important;
+    padding: 3rem 2.4rem !important;
+    flex: 1 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    -webkit-border-radius: 25px !important;
+    -moz-border-radius: 25px !important;
+    -ms-border-radius: 25px !important;
+    -o-border-radius: 25px !important;
+}
+
+html body .booking-system-form .schedule-summary-title,
+.schedule-summary-title {
+    font-family: 'SF Pro Display', sans-serif !important;
+    font-size: 1.95rem !important; /* 30% increase from 1.5rem */
+    font-weight: 600 !important;
+    color: #ffffff !important;
+    margin-bottom: 1.5rem !important;
+    text-align: left !important;
+}
+
+html body .booking-system-form .schedule-item,
+.schedule-item {
+    background: transparent !important;
+    border: 1px solid #ffffff !important;
+    border-radius: 8px !important; /* Reduced to match reference image exactly */
+    padding: 0.875rem !important; /* Adjusted for reference proportions */
+    margin-bottom: 0.875rem !important; /* Tighter spacing to match reference */
+    /*Betterspacingbetweenitems*/color: #ffffff !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    display: flex !important;
+    align-items: center !important; /* Center align to match reference */
+    gap: 0.75rem !important; /* Standard gap for icon-text spacing */
+    -webkit-border-radius: 8px !important;
+    -moz-border-radius: 8px !important;
+    -ms-border-radius: 8px !important;
+    -o-border-radius: 8px !important;
+}
+
+html body .booking-system-form .schedule-item-icon,
+.schedule-item-icon {
+    width: 1.125rem !important; /* Adjusted to match reference icon size */
+    height: 1.125rem !important;
+    color: #ffffff !important;
+    flex-shrink: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+html body .booking-system-form .schedule-item-icon svg,
+.schedule-item-icon svg {
+    width: 100% !important;
+    height: 100% !important;
+    color: #ffffff !important;
+}
+
+html body .booking-system-form .schedule-item-content,
+.schedule-item-content {
+    flex: 1 !important;
+    min-width: 0 !important; /* Prevent flex item from overflowing */
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.25rem !important; /* Tight spacing between company and date */
+}
+
+html body .booking-system-form .schedule-company,
+.schedule-company {
+    font-family: 'SF Pro Display', sans-serif !important;
+    font-weight: 600 !important;
+    font-size: 1.45rem !important; /* 45% increase from 1rem */
+    margin-bottom: 0 !important; /* Remove margin, use gap instead */
+    color: #ffffff !important;
+    line-height: 1.2 !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.375rem !important; /* Tighter icon-text gap */
+}
+
+html body .booking-system-form .schedule-company-icon,
+.schedule-company-icon {
+    width: 1.125rem !important;
+    height: 1.125rem !important;
+    color: #ffffff !important;
+    flex-shrink: 0 !important;
+}
+
+html body .booking-system-form .schedule-company-text,
+.schedule-company-text {
+    font-family: 'SF Pro Display', sans-serif !important;
+    font-weight: 600 !important;
+    font-size: 1.45rem !important; /* 45% increase from 1rem */
+    color: #ffffff !important;
+    line-height: 1.2 !important;
+    margin: 0 !important;
+}
+
+html body .booking-system-form .schedule-datetime,
+.schedule-datetime {
+    font-family: 'SF Pro Display', sans-serif !important;
+    font-size: 1.27rem !important; /* 45% increase from 0.875rem */
+    color: #ffffff !important;
+    opacity: 0.95 !important; /* Slightly less muted for better readability */
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.375rem !important; /* Tighter icon-text gap */
+    line-height: 1.2 !important;
+}
+
+html body .booking-system-form .schedule-datetime-icon,
+.schedule-datetime-icon {
+    width: 1.2rem !important;
+    height: 1.2rem !important;
+    color: #ffffff !important;
+    opacity: 0.95 !important; /* Match the datetime text opacity */
+    flex-shrink: 0 !important;
+}
+
+html body .booking-system-form .schedule-datetime-text,
+.schedule-datetime-text {
+    font-family: 'SF Pro Display', sans-serif !important;
+    font-size: 1.27rem !important; /* 45% increase from 0.875rem */
+    color: #ffffff !important;
+    opacity: 0.95 !important;
+    line-height: 1.2 !important;
+    margin: 0 !important;
+}
+
+/* Done Booking Link */
+html body .booking-system-form .done-booking-link,
+.done-booking-link {
+    text-align: center !important;
+    margin-top: auto !important;
+    padding-top: 1.5rem !important;
+    font-family: 'SF Pro Display', sans-serif !important;
+    font-size: 0.9375rem !important;
+    color: #ffffff !important;
+    font-style: italic !important;
+    opacity: 0.9 !important;
+}
+
+/* Right Column Top - Project Details with Green Background and White Inner Container */
+html body .booking-system-form .summary-card,
+.summary-card {
+    background: #79B62F !important;
+    border-radius: 25px !important;
+    padding: 3rem 2.2rem !important;
+    color: #333333 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    -webkit-border-radius: 25px !important;
+    -moz-border-radius: 25px !important;
+    -ms-border-radius: 25px !important;
+    -o-border-radius: 25px !important;
+}
+
+html body .booking-system-form .summary-card-inner,
+.summary-card-inner {
+    background: #ffffff !important;
+    border-radius: 25px !important;
+    padding: 3rem 2.2rem !important;
+    flex: 1 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    -webkit-border-radius: 25px !important;
+    -moz-border-radius: 25px !important;
+    -ms-border-radius: 25px !important;
+    -o-border-radius: 25px !important;
+}
+
+html body .booking-system-form .summary-title,
+.summary-title {
+    font-family: 'SF Pro Display', sans-serif !important;
+    font-size: 1.69rem !important; /* 30% increase from 1.3rem */
+    font-weight: 600 !important;
+    color: #79B62F !important;
+    margin-bottom: 1.5rem !important;
+    text-align: left !important;
+}
+
+html body .booking-system-form .summary-row,
+.summary-row {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    padding: 0.75rem 0 !important;
+    border-bottom: 1px solid #e0e0e0 !important;
+}
+
+html body .booking-system-form .summary-row:last-child,
+.summary-row:last-child {
+    border-bottom: none !important;
+}
+
+html body .booking-system-form .summary-label,
+.summary-label {
+    font-family: 'SF Pro Display', sans-serif !important;
+    font-weight: 400 !important;
+    color: #333333 !important;
+    font-size: 1.1rem !important;
+}
+
+html body .booking-system-form .summary-value,
+.summary-value {
+    font-family: 'SF Pro Display', sans-serif !important;
+    font-weight: 500 !important;
+    color: #79B62F !important;
+    font-size: 1.2rem !important; 
+    text-align: right !important;
+}
+
+/* Right Column Bottom - Next Steps with Green Background and White Border Inner Container */
+html body .booking-system-form .next-steps,
+.next-steps {
+    background: #79B62F !important;
+    border-radius: 25px !important;
+    padding: 3rem 2rem !important;
+    display: flex !important;
+    flex-direction: column !important;
+    -webkit-border-radius: 25px !important;
+    -moz-border-radius: 25px !important;
+    -ms-border-radius: 25px !important;
+    -o-border-radius: 25px !important;
+}
+
+html body .booking-system-form .next-steps-inner,
+.next-steps-inner {
+    background: transparent !important;
+    border: 1px solid #ffffff !important;
+    border-radius: 25px !important;
+    padding: 2rem !important;
+    flex: 1 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    -webkit-border-radius: 25px !important;
+    -moz-border-radius: 25px !important;
+    -ms-border-radius: 25px !important;
+    -o-border-radius: 25px !important;
+}
+
+html body .booking-system-form .next-steps-title,
+.next-steps-title {
+    font-family: 'SF Pro Display', sans-serif !important;
+    font-size: 3.25rem !important; /* 30% increase from 2.5rem */
+    font-weight: 700 !important; /* Bolder weight for better visibility */
+    margin-bottom: 1.5rem !important;
+    color: #ffffff !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.75rem !important; /* Increased gap for better icon spacing */
+    line-height: 1.2 !important; /* Better line height for multi-line text */
+}
+
+html body .booking-system-form .next-steps-title-icon,
+.next-steps-title-icon {
+    color: #ffffff !important;
+    flex-shrink: 0 !important; /* Prevent icon from shrinking */
+}
+
+html body .booking-system-form .next-steps-list,
+.next-steps-list {
+    list-style: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    color: #ffffff !important;
+    counter-reset: step-counter !important;
+}
+
+html body .booking-system-form .next-steps-list li,
+.next-steps-list li {
+    margin-bottom: 1.25rem !important;
+    display: flex !important;
+    align-items: flex-start !important;
+    text-align: left !important;
+    gap: 1rem !important; 
+    font-family: 'SF Pro Display', sans-serif !important;
+    font-size: 1.63rem !important;
+    line-height: 1.5 !important; 
+    color: #ffffff !important;
+    font-weight: 500 !important;
+}
+
+html body .booking-system-form .next-steps-list li::before,
+.next-steps-list li::before {
+    content: counter(step-counter) !important;
+    counter-increment: step-counter !important;
+    background: #ffffff !important;
+    color: #79B62F !important;
+    border-radius: 50% !important;
+    width: 1.75rem !important; 
+    height: 1.75rem !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-family: 'SF Pro Display', sans-serif !important;
+    font-weight: 700 !important;
+    font-size: 1rem !important; /* Increased number text size */
+    flex-shrink: 0 !important;
+    margin-top: 0.125rem !important; /* Adjusted for larger icon alignment */
+}
+
+/* Summary Step Specific Buttons - Updated Design */
+html body .booking-system-form .booking-step[data-step="9"] .form-navigation,
+.booking-step[data-step="9"] .form-navigation {
+    margin-top: 2rem !important;
+    justify-content: center !important;
+    gap: 1rem !important;
+}
+
+html body .booking-system-form .booking-step[data-step="9"] .btn-primary,
+.booking-step[data-step="9"] .btn-primary {
+    background: #1E773B !important;
+    color: #ffffff !important;
+    border: 2px solid #1E773B !important;
+    padding: 0.75rem 2rem !important;
+    font-weight: 600 !important;
+}
+
+html body .booking-system-form .booking-step[data-step="9"] .btn-primary:hover,
+.booking-step[data-step="9"] .btn-primary:hover {
+    background: #155C2B !important;
+    color: #ffffff !important;
+    border-color: #155C2B !important;
+    transform: translateY(-1px) !important;
+}
+
+html body .booking-system-form .booking-step[data-step="9"] .btn-secondary,
+.booking-step[data-step="9"] .btn-secondary {
+    background: transparent !important;
+    color: #333333 !important;
+    border: none !important;
+    text-decoration: underline !important;
+    padding: 0.75rem 2rem !important;
+    font-weight: 400 !important;
+}
+
+html body .booking-system-form .booking-step[data-step="9"] .btn-secondary:hover,
+.booking-step[data-step="9"] .btn-secondary:hover {
+    background: transparent !important;
+    color: #000000 !important;
+    text-decoration: underline !important;
+}
+
+/* Responsive Design for Summary Step - Updated Grid Layout */
+@media (max-width: 768px) {
+    .booking-step[data-step="9"] {
+        padding: 1rem !important;
+        padding-top: 120px !important; /* Maintain 120px top padding on tablet */
+    }
+    
+    .summary-container {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto auto;
+        gap: 1.5rem;
+    }
+    
+    .summary-right {
+        grid-template-rows: auto auto;
+        gap: 1rem;
+    }
+    
+    .schedule-summary-container,
+    .next-steps {
+        padding: 1.5rem;
+    }
+    
+    .schedule-summary-inner,
+    .next-steps-inner {
+        padding: 1.5rem;
+    }
+    
+    .schedule-summary-title,
+    .next-steps-title {
+        font-size: 1.8rem !important; /* Updated for tablet to 1.8rem */
+        text-align: center;
+        margin-bottom: 1.25rem;
+    }
+    
+    .next-steps-title-icon {
+        width: 1.9rem !important; /* Scale icon to match text */
+        height: 1.9rem !important;
+    }
+    
+    .schedule-item {
+        padding: 0.875rem;
+        gap: 0.625rem;
+    }
+    
+    .schedule-company {
+        font-size: 0.9375rem;
+        gap: 0.3125rem;
+    }
+    
+    .schedule-company-icon {
+        width: 1rem;
+        height: 1rem;
+    }
+    
+    .schedule-company-text {
+        font-size: 0.9375rem;
+    }
+    
+    .schedule-datetime {
+        font-size: 0.8125rem;
+        gap: 0.3125rem;
+    }
+    
+    .schedule-datetime-icon {
+        width: 0.75rem;
+        height: 0.75rem;
+    }
+    
+    .schedule-datetime-text {
+        font-size: 0.8125rem;
+    }
+    
+    .summary-card {
+        padding: 1.5rem;
+    }
+    
+    .summary-title {
+        font-size: 1.125rem;
+    }
+    
+    .next-steps-list li {
+        font-size: 1.0625rem; /* Larger tablet size to match new desktop sizing */
+    }
+    
+    .booking-step[data-step="9"] .form-navigation {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+    
+    .booking-step[data-step="9"] .btn {
+        width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    .booking-step[data-step="9"] {
+        padding: 0.75rem !important;
+        padding-top: 120px !important; /* Maintain 120px top padding on mobile */
+    }
+    
+    .summary-container {
+        gap: 1rem;
+    }
+    
+    .schedule-summary-container,
+    .next-steps {
+        padding: 1.25rem;
+    }
+    
+    .schedule-summary-inner,
+    .next-steps-inner {
+        padding: 1.25rem;
+    }
+    
+    .schedule-summary-title,
+    .next-steps-title {
+        font-size: 1.8rem !important; /* Updated for mobile to 1.8rem */
+    }
+    
+    .next-steps-title-icon {
+        width: 1.8rem !important; /* Scale icon to match text */
+        height: 1.8rem !important;
+    }
+    
+    .schedule-item {
+        padding: 0.75rem;
+        gap: 0.5rem;
+    }
+    
+    .schedule-company {
+        font-size: 0.875rem;
+        gap: 0.25rem;
+    }
+    
+    .schedule-company-icon {
+        width: 0.9375rem;
+        height: 0.9375rem;
+    }
+    
+    .schedule-company-text {
+        font-size: 0.875rem;
+    }
+    
+    .schedule-datetime {
+        font-size: 0.75rem;
+        gap: 0.25rem;
+    }
+    
+    .schedule-datetime-icon {
+        width: 0.6875rem;
+        height: 0.6875rem;
+    }
+    
+    .schedule-datetime-text {
+        font-size: 0.75rem;
+    }
+    
+    html body .booking-system-form .summary-card,
+    .summary-card {
+        padding: 1.25rem !important;
+    }
+    
+    html body .booking-system-form .summary-card-inner,
+    .summary-card-inner {
+        padding: 1.25rem !important;
+    }
+    
+    html body .booking-system-form .next-steps,
+    .next-steps {
+        padding: 1.5rem !important;
+    }
+    
+    html body .booking-system-form .next-steps-inner,
+    .next-steps-inner {
+        padding: 1.5rem !important;
+    }
+    
+    .step-title {
+        font-size: 31.2px; /* 30% increase from original 24px */
+        line-height: 1.2;
+    }
+    
+    .next-steps-list li {
+        font-size: 1rem; /* Updated to match new larger sizing */
+    }
+}
+
+/* ─── STEP 1 SPECIFIC STYLING ──────────────────────── */
+body .booking-system-form .rs-step-1,
+.booking-system-form .rs-step-1 {
+    position: relative;
+    width: 100%;
+    min-height: 580px;
+    background-image: url('../images/step-1-bg.jpeg');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: visible;
+}
+
+body .booking-system-form .rs-step-1 .step-overlay,
+.booking-system-form .rs-step-1 .step-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 1;
+}
+
+body .booking-system-form .rs-step-1 .step-container,
+.booking-system-form .rs-step-1 .step-container {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+body .booking-system-form .rs-step-1 .step-content,
+.booking-system-form .rs-step-1 .step-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 40px;
+    min-height: 580px;
+    width: 100%;
+    padding: 40px 0;
+}
+
+body .booking-system-form .rs-step-1 .left-column,
+.booking-system-form .rs-step-1 .left-column {
+    flex: 1;
+    color: white !important;
+    text-align: left;
+}
+
+body .booking-system-form .rs-step-1 .main-title,
+.booking-system-form .rs-step-1 .main-title {
+    font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+    font-size: 4.5rem !important;  
+    font-weight: 600 !important; 
+    line-height: 1.2; 
+    margin: 0 0 20px 0;
+    color: white !important;
+}
+
+body .booking-system-form .rs-step-1 .sub-text,
+.booking-system-form .rs-step-1 .sub-text {
+    font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+    font-size: 2.5rem !important; /* 40px equivalent */
+    color: #8DBF58 !important;
+    line-height: 1.2;
+    font-weight: 500 !important; /* Bolder by 1 step from 400 */
+    margin: 0;
+}
+
+body .booking-system-form .rs-step-1 .right-column,
+.booking-system-form .rs-step-1 .right-column {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+body .booking-system-form .rs-step-1 .service-card,
+.booking-system-form .rs-step-1 .service-card {
+    background: rgba(141, 191, 88, 0.65);
+    border-radius: 15px;
+    padding: 30px 60px;
+    text-align: center;
+    max-width: 550px;
+    width: 100%;
+}
+
+body .booking-system-form .rs-step-1 .card-title,
+.booking-system-form .rs-step-1 .card-title {
+    font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+    font-size: 48px !important;
+    font-weight: 700 !important;
+    color: white !important;
+    margin: 0 0 25px 0;
+    line-height: 1.3;
+}
+
+body .booking-system-form .rs-step-1 .service-options,
+.booking-system-form .rs-step-1 .service-options {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-width: 350px;
+    margin: 0px auto;
+}
+
+body .booking-system-form .rs-step-1 .service-option,
+.booking-system-form .rs-step-1 .service-option {
+    background: white !important;
+    color: #1E773B !important;
+    border: none !important;
+    border-radius: 8px;
+    padding: 15px 20px;
+    font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+    font-size: 23.4px !important;
+    font-weight: 600 !important;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    -webkit-border-radius: 8px;
+    -moz-border-radius: 8px;
+    -ms-border-radius: 8px;
+    -o-border-radius: 8px;
+}
+
+body .booking-system-form .rs-step-1 .service-option:hover,
+.booking-system-form .rs-step-1 .service-option:hover,
+body .booking-system-form .rs-step-1 .service-option.selected,
+.booking-system-form .rs-step-1 .service-option.selected {
+    background: #8DBF57 !important;
+    color: white !important;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* ─── RESPONSIVE DESIGN ──────────────────────── */
+@media (max-width: 1024px) {
+    /* Tablet and Mobile adjustments - 90px top padding */
+    .booking-step {
+        padding-top: 90px;
+    }
+    
+    .booking-step[data-step="1"] {
+        padding-top: 120px !important; /* Maintain 120px top padding on tablet for consistency */
+    }
+    
+    .rs-step-1 {
+        padding-top: 90px;
+    }
+    
+    .rs-step-1 .main-title {
+        font-size: 37.8px; /* 35% increase from original 28px */
+        line-height: 1.1;
+    }
+    .form-navigation {
+        width: 100%;
+    }
+    
+    .rs-step-1 .service-card {
+        padding: 25px 45px;
+    }
+}
+
+@media (max-width: 768px) {
+    .rs-step-1 .step-content {
+        flex-direction: column;
+        text-align: center;
+        gap: 30px;
+        min-height: 580px;
+        padding: 40px 0;
+    }
+    
+    .rs-step-1 .main-title {
+        font-size: 32.4px; /* 35% increase from original 24px */
+        line-height: 1.1;
+    }
+    
+    .rs-step-1 .sub-text {
+        font-size: 18.2px; /* 30% increase from original 14px */
+        line-height: 1.3;
+    }
+    
+    .rs-step-1 .service-card {
+        padding: 25px 30px;
+        max-width: 350px;
+    }
+    
+    .rs-step-1 .service-option {
+        font-size: 20.8px;
+        padding: 12px 18px;
+    }
+}
+
+@media (max-width: 480px) {
+    .rs-step-1 .main-title {
+        font-size: 27px; /* 35% increase from original 20px */
+        line-height: 1.1;
+    }
+    
+    .rs-step-1 .service-card {
+        padding: 20px 25px;
+    }
+    
+    .rs-step-1 .step-container {
+        padding: 0 15px;
+    }
+}
+
+/* ─── RESPONSIVE DESIGN ────────────────────────────── */
+@media (max-width: 1024px) and (min-width: 769px) {
+    .calendar-container {
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    .calendar-container .company-card {
+        width: 100%;
+        flex: none;
+    }
+    
+    .booking-step[data-step="8"] .step-card {
+        width: 90%;
+    }
+}
+
+@media (max-width: 768px) {
+    .booking-system-form {
+        background-attachment: scroll;
+    }
+    
+    .step-title {
+        font-size: 36.4px; /* 30% increase from original 28px */
+        line-height: 1.2;
+    }
+    
+    /* Step 8 tablet/mobile specific */
+    .booking-step[data-step="8"] .step-card {
+        width: 95%;
+    }
+    
+    /* Step 9 Summary - Responsive */
+    html body .booking-system-form .summary-container,
+    .summary-container {
+        grid-template-columns: 1fr !important;
+        gap: 1.5rem !important;
+        min-height: auto !important;
+    }
+    
+    html body .booking-system-form .schedule-summary-container,
+    .schedule-summary-container {
+        padding: 1.25rem !important;
+    }
+    
+    html body .booking-system-form .schedule-summary-inner,
+    .schedule-summary-inner {
+        padding: 1.25rem !important;
+    }
+    
+    html body .booking-system-form .schedule-item,
+    .schedule-item {
+        padding: 0.75rem !important;
+        margin-bottom: 0.75rem !important;
+        border-radius: 6px !important; /* Smaller on mobile */
+    }
+    
+    html body .booking-system-form .schedule-item-icon,
+    .schedule-item-icon {
+        width: 1rem !important;
+        height: 1rem !important;
+    }
+    
+    html body .booking-system-form .schedule-company,
+    .schedule-company {
+        font-size: 0.9375rem !important;
+        gap: 0.3125rem !important;
+    }
+    
+    html body .booking-system-form .schedule-company-icon,
+    .schedule-company-icon {
+        width: 1.2rem !important;
+        height: 1.2rem !important;
+    }
+    
+    html body .booking-system-form .schedule-company-text,
+    .schedule-company-text {
+        font-size: 0.9375rem !important;
+    }
+    
+    html body .booking-system-form .schedule-datetime,
+    .schedule-datetime {
+        font-size: 0.8125rem !important;
+        gap: 0.3125rem !important;
+    }
+    
+    html body .booking-system-form .schedule-datetime-icon,
+    .schedule-datetime-icon {
+        width: 0.75rem !important;
+        height: 0.75rem !important;
+    }
+    
+    html body .booking-system-form .schedule-datetime-text,
+    .schedule-datetime-text {
+        font-size: 0.8125rem !important;
+    }
+    
+    .calendar-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+    
+    .time-slots {
+        grid-template-columns: repeat(3, 1fr);
+    }
+    
+    .form-navigation {
+        flex-direction: column;
+    }
+    
+    .btn {
+        width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    .booking-step:not([data-step="1"]) .step-card {
+        width: 100%;
+        padding: 15px;
+        margin: 1vh auto;
+    }
+    
+    /* Step 8 mobile specific */
+    .booking-step[data-step="8"] .step-card {
+        width: 95%;
+        padding: 15px;
+        margin: 1vh auto;
+    }
+    
+    /* Step 9 Summary - Mobile */
+    html body .booking-system-form .schedule-summary-container,
+    .schedule-summary-container {
+        padding: 1rem !important;
+    }
+    
+    html body .booking-system-form .schedule-summary-inner,
+    .schedule-summary-inner {
+        padding: 1rem !important;
+    }
+    
+    html body .booking-system-form .schedule-item,
+    .schedule-item {
+        padding: 0.75rem !important;
+        margin-bottom: 0.75rem !important;
+        gap: 0.625rem !important;
+        border-radius: 6px !important; /* Smaller on mobile */
+    }
+    
+    html body .booking-system-form .schedule-item-icon,
+    .schedule-item-icon {
+        width: 1rem !important;
+        height: 1rem !important;
+    }
+    
+    html body .booking-system-form .schedule-company,
+    .schedule-company {
+        font-size: 0.875rem !important;
+        gap: 0.25rem !important;
+    }
+    
+    html body .booking-system-form .schedule-company-icon,
+    .schedule-company-icon {
+        width: 0.9375rem !important;
+        height: 0.9375rem !important;
+    }
+    
+    html body .booking-system-form .schedule-company-text,
+    .schedule-company-text {
+        font-size: 0.875rem !important;
+    }
+    
+    html body .booking-system-form .schedule-datetime,
+    .schedule-datetime {
+        font-size: 0.75rem !important;
+        gap: 0.25rem !important;
+    }
+    
+    html body .booking-system-form .schedule-datetime-icon,
+    .schedule-datetime-icon {
+        width: 0.6875rem !important;
+        height: 0.6875rem !important;
+    }
+    
+    html body .booking-system-form .schedule-datetime-text,
+    .schedule-datetime-text {
+        font-size: 0.75rem !important;
+    }
+    
+    html body .booking-system-form .summary-card,
+    .summary-card {
+        padding: 1.5rem !important;
+    }
+    
+    html body .booking-system-form .summary-card-inner,
+    .summary-card-inner {
+        padding: 1.5rem !important;
+    }
+    
+    html body .booking-system-form .next-steps,
+    .next-steps {
+        padding: 1.5rem !important;
+ }
+    
+    html body .booking-system-form .next-steps-inner,
+    .next-steps-inner {
+        padding: 1.5rem !important;
+    }
+    
+    .step-title {
+        font-size: 31.2px; /* 30% increase from original 24px */
+        line-height: 1.2;
+    }
+    
+    .calendar-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+    
+    .time-slots {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .company-header {
+        padding: 15px;
+    }
+    
+    .calendar-container {
+        padding: 15px;
+        /* Mobile and tablet: stack company cards vertically */
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    .calendar-container .company-card {
+        width: 100%;
+        flex: none;
+    }
+}
+
+/* ─── HEIGHT MANAGEMENT FOR ALL STEPS ──────────────── */
+/* Ensure consistent minimum height for content */
+.booking-step {
+    min-height: 580px;
+	padding-top:120px;
+}
+
+.booking-step[data-step="1"] {
+    min-height: 580px;
+}
+
+.rs-step-1 {
+    min-height: 580px;
+}
+
+/* Ensure scheduling step (step 8) has adequate space for calendars */
+.booking-step[data-step="8"] {
+    min-height: 700px;
+}
+
+/* Summary step content requirements */
+.booking-step[data-step="9"] {
+    min-height: 600px;
+}
+
+/* Responsive adjustments for smaller screens */
+@media (max-height: 580px) {
+    .booking-step {
+        min-height: 580px;
+        padding: 10px;
+    }
+    
+    .booking-step[data-step="1"] {
+        min-height: 580px;
+    }
+    
+    .rs-step-1 {
+        min-height: 580px;
+    }
+}
+
+/* Tablet landscape and smaller desktop adjustments */
+@media (max-width: 1024px) and (max-height: 768px) {
+    .booking-step {
+        padding: 15px;
+    }
+    
+    .rs-step-1 .step-content {
+        min-height: 480px;
+    }
+}
+
+/* ─── RESPONSIVE CARD WIDTH MANAGEMENT ──────────────── */
+@media (max-width: 768px) {
+    .booking-step:not([data-step="1"]) .step-card {
+        width: 100%;
+    }
+}
+
+@media (max-width: 768px) {
+    .booking-system-form {
+        background-attachment: scroll;
+    }
+    
+    .step-title {
+        font-size: 36.4px; /* 30% increase from original 28px */
+        line-height: 1.2;
+    }
+    
+    .summary-container {
+        flex-direction: column;
+    }
+    
+    .calendar-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+    
+    .time-slots {
+        grid-template-columns: repeat(3, 1fr);
+    }
+    
+    .form-navigation {
+        flex-direction: column;
+    }
+    
+    .btn {
+        width: 100%;
+    }
+}
+
+/* ─── NEW REFERENCE DESIGN STYLES ─────────────────────── */
+
+/* Featured Badge - Centered Tab Above Card */
+body .booking-system-form .featured-badge,
+.booking-system-form .featured-badge {
+    background: #79B62F !important;
+    color: white !important;
+    font-size: 22px !important;
+    min-width: 90%;
+    font-weight: 600 !important;
+    padding: 6px 5px;
+    border-radius: 12px 12px 0 0;
+    text-align: center;
+    letter-spacing: 0.5px;
+    position: absolute;
+    top: 0; /* Position at the exact top edge of the card */
+    left: 50%; /* Center horizontally */
+    transform: translateX(-50%) translateY(-100%); /* Move completely above card */
+    z-index: 11;
+    display: flex; /* Changed to flex for icon + text layout */
+    align-items: center; /* Center align icon and text */
+    justify-content: center; /* Center content horizontally */
+    gap: 1px; /* Space between icon and text */
+    font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+    border: 2px solid #79B62F !important;
+    border-bottom: 2px solid #79B62F !important; /* Ensure connection to card */
+    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
+    /* Ensure consistent positioning regardless of parent properties */
+    margin: 0 !important;
+    width: calc(90% - 4px); /* Account for border width */
+    box-sizing: border-box;
+}
+
+/* Badge Icon Styling */
+body .booking-system-form .featured-badge .badge-icon,
+.booking-system-form .featured-badge .badge-icon {
+    height: 68px !important;
+    width: auto !important;
+    object-fit: contain !important;
+    flex-shrink: 0 !important;
+    filter: brightness(0) invert(1) !important; /* Make icon white to match text */
+}
+
+/* Badge Text Styling */
+body .booking-system-form .featured-badge .badge-text,
+.booking-system-form .featured-badge .badge-text {
+    flex: 1 !important;
+}
+
+/* Remove old trophy emoji since we now have custom icons */
+body .booking-system-form .featured-badge::after,
+.booking-system-form .featured-badge::after {
+    display: none !important;
+}
+
+/* New Company Header */
+body .booking-system-form .company-header-new,
+.booking-system-form .company-header-new {
+    margin-bottom: 20px;
+}
+
+body .booking-system-form .company-title,
+.booking-system-form .company-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 5px;
+}
+
+body .booking-system-form .checkmark-icon,
+.booking-system-form .checkmark-icon {
+    background: #79B62F !important;
+    color: white !important;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px !important;
+    font-weight: bold !important;
+    flex-shrink: 0;
+}
+
+body .booking-system-form .company-name-text,
+.booking-system-form .company-name-text {
+    font-size: 18px !important;
+    font-weight: 700 !important;
+    color: #333 !important;
+    line-height: 1.2;
+    font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+}
+
+body .booking-system-form .company-service,
+.booking-system-form .company-service {
+    font-size: 14px !important;
+    text-align: left !important;
+    color: #666 !important;
+    margin-left: 28px;
+    line-height: 1.3;
+    font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+}
+
+/* Section Headers */
+.date-selection-section,
+.time-selection-section {
+    margin-bottom: 20px;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.section-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #333;
+}
+
+.more-dates-link {
+    font-size: 14px;
+    color: #79B62F;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.more-dates-link:hover {
+    text-decoration: underline;
+}
+
+/* Updated Calendar Grid for 5-column layout */
+.date-selection-section .calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 8px;
+    margin-bottom: 0;
+}
+
+/* Updated Time Slots for 4-column layout */
+.time-selection-section .time-slots {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin-top: 0;
+    max-height: none;
+    overflow-y: visible;
+}
+
+/* Booking Disclaimer */
+.booking-disclaimer {
+    font-size: 11px;
+    color: #666;
+    line-height: 1.4;
+    margin: 20px 0 15px 0;
+    padding: 0 5px;
+    text-align: justify;
+}
+
+/* Request Estimate Button */
+.estimate-button-container {
+    margin-top: 15px;
+}
+
+.btn-request-estimate {
+    width: 100%;
+    background: #79B62F;
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    font-size: 16px;
+    font-weight: 700;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.btn-request-estimate:hover {
+    background: #689F38;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(121, 182, 47, 0.3);
+}
+
+.btn-request-estimate:active {
+    transform: translateY(0);
+}
+
+/* Company Card Updates */
+body .booking-system-form .company-card,
+.booking-system-form .company-card {
+    background: rgba(255, 255, 255, 0.98);
+    border: 2px solid #79B62F !important;
+    border-radius: 12px;
+    padding: 20px;
+    color: #333 !important;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    overflow: visible;
+    margin-bottom: 20px;
+    margin-top: 45px; /* Increased space to accommodate featured badge height + padding */
+    transition: all 0.3s ease;
+    font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+    position: relative; /* Important for absolute positioning of badges */
+    /* Ensure flex children maintain proper spacing */
+    flex-shrink: 0;
+}
+
+body .booking-system-form .company-card:hover,
+.booking-system-form .company-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+}
+
+/* All companies show appointment details by default - no expand/collapse needed */
+body .booking-system-form .company-card .date-selection-section,
+.booking-system-form .company-card .date-selection-section,
+body .booking-system-form .company-card .time-selection-section,
+.booking-system-form .company-card .time-selection-section,
+body .booking-system-form .company-card .booking-disclaimer,
+.booking-system-form .company-card .booking-disclaimer,
+body .booking-system-form .company-card .estimate-button-container,
+.booking-system-form .company-card .estimate-button-container {
+    display: block !important;
+}
+
+/* Visual indicator for companies with appointments - Top Right Corner */
+body .booking-system-form .company-card.has-appointment,
+.booking-system-form .company-card.has-appointment {
+    border-color: #4CAF50 !important;
+    background: rgba(255, 255, 255, 0.99);
+}
+
+body .booking-system-form .company-card.has-appointment::before,
+.booking-system-form .company-card.has-appointment::before {
+    content: "✓ Appointment Selected";
+    position: absolute;
+    top: 15px; /* Position in top-right, not conflicting with centered badge */
+    right: 15px;
+    background: #4CAF50 !important;
+    color: white !important;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    z-index: 10; /* Lower z-index than featured badge */
+    font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+}
+
+/* Hide original elements that are replaced */
+.company-header,
+.calendar-section h4,
+.more-dates-button {
+    display: none;
+}
+
+/* Schedule Items Container */
+html body .booking-system-form #schedule-items,
+#schedule-items {
+    flex: 1 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0 !important; /* Remove gap, use margin-bottom on items instead */
+    margin-bottom: 0 !important;
+}
+
+/* Ultra-high specificity rules to prevent any overrides */
+html body .booking-system-form .booking-step[data-step="9"] .next-steps-title,
+html body .booking-system-form .next-steps .next-steps-title,
+html body .booking-system-form .next-steps-inner .next-steps-title {
+    font-size: 2.5rem !important; /* Updated to match desktop size */
+    font-weight: 700 !important;
+}
+
+html body .booking-system-form .booking-step[data-step="9"] .next-steps-title-icon,
+html body .booking-system-form .next-steps .next-steps-title-icon,
+html body .booking-system-form .next-steps-inner .next-steps-title-icon {
+    width: 4.2rem !important; /* Updated to match new text size */
+    height: 4.2rem !important;
+}
+
+html body .booking-system-form .booking-step[data-step="9"] .next-steps-list li,
+html body .booking-system-form .next-steps .next-steps-list li,
+html body .booking-system-form .next-steps-inner .next-steps-list li {
+    font-size: 1.125rem !important;
+    font-weight: 500 !important;
+}
+
+html body .booking-system-form .booking-step[data-step="9"] .next-steps-list li::before,
+html body .booking-system-form .next-steps .next-steps-list li::before,
+html body .booking-system-form .next-steps-inner .next-steps-list li::before {
+    width: 1.75rem !important;
+    height: 1.75rem !important;
+    font-size: 1rem !important;
+    font-weight: 700 !important;
+}
+
+/* ─── ZIP CODE LOOKUP STYLES ─────────────────────────── */
+
+/* ZIP Code Location Display Container */
+html body .booking-system-form .zipcode-location-display {
+    margin-top: 0.5rem !important;
+    padding: 0.5rem 0.75rem !important;
+    border-radius: 8px !important;
+    font-size: 0.875rem !important;
+    font-weight: 500 !important;
+    transition: all 0.3s ease !important;
+    display: none !important;
+}
+
+/* Successful location display */
+html body .booking-system-form .zipcode-location {
+    color: #059669 !important;
+    background-color: #ecfdf5 !important;
+    border: 1px solid #a7f3d0 !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.5rem !important;
+}
+
+html body .booking-system-form .zipcode-location .zipcode-city {
+    font-weight: 600 !important;
+    color: #047857 !important;
+}
+
+html body .booking-system-form .zipcode-location .zipcode-state {
+    color: #065f46 !important;
+}
+
+html body .booking-system-form .zipcode-location .zipcode-check {
+    color: #059669 !important;
+    font-weight: 700 !important;
+    margin-left: auto !important;
+}
+
+/* Loading indicator */
+html body .booking-system-form .zipcode-loading {
+    color: #3b82f6 !important;
+    background-color: #eff6ff !important;
+    border: 1px solid #bfdbfe !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.5rem !important;
+    position: relative !important;
+}
+
+html body .booking-system-form .zipcode-loading::before {
+    content: "" !important;
+    display: inline-block !important;
+    width: 1rem !important;
+    height: 1rem !important;
+    border: 2px solid #e5e7eb !important;
+    border-top: 2px solid #3b82f6 !important;
+    border-radius: 50% !important;
+    animation: zipcode-spin 1s linear infinite !important;
+}
+
+@keyframes zipcode-spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Error display */
+html body .booking-system-form .zipcode-error {
+    color: #dc2626 !important;
+    background-color: #fef2f2 !important;
+    border: 1px solid #fecaca !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.5rem !important;
+}
+
+html body .booking-system-form .zipcode-error::before {
+    content: "⚠" !important;
+    color: #dc2626 !important;
+    font-weight: 700 !important;
+}
+
+/* ZIP code input enhancement */
+html body .booking-system-form input[name*="zip"],
+html body .booking-system-form input[name*="postal"],
+html body .booking-system-form input[id*="zip"],
+html body .booking-system-form input[id*="postal"],
+html body .booking-system-form .zipcode-input {
+    position: relative !important;
+}
+
+/* ZIP code input focus state with enhanced feedback */
+html body .booking-system-form input[name*="zip"]:focus,
+html body .booking-system-form input[name*="postal"]:focus,
+html body .booking-system-form input[id*="zip"]:focus,
+html body .booking-system-form input[id*="postal"]:focus,
+html body .booking-system-form .zipcode-input:focus {
+    border-color: #3b82f6 !important;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
+}
+
+/* ZIP code input with valid data */
+html body .booking-system-form input[name*="zip"].zipcode-valid,
+html body .booking-system-form input[name*="postal"].zipcode-valid,
+html body .booking-system-form input[id*="zip"].zipcode-valid,
+html body .booking-system-form input[id*="postal"].zipcode-valid,
+html body .booking-system-form .zipcode-input.zipcode-valid {
+    border-color: #059669 !important;
+    background-color: #f0fdf4 !important;
+}
+
+/* ZIP code input with error */
+html body .booking-system-form input[name*="zip"].zipcode-invalid,
+html body .booking-system-form input[name*="postal"].zipcode-invalid,
+html body .booking-system-form input[id*="zip"].zipcode-invalid,
+html body .booking-system-form input[id*="postal"].zipcode-invalid,
+html body .booking-system-form .zipcode-input.zipcode-invalid {
+    border-color: #dc2626 !important;
+    background-color: #fef2f2 !important;
+}
+
+/* Auto-filled field indicator */
+html body .booking-system-form input[data-auto-filled="true"] {
+    background-color: #f8fafc !important;
+    border-color: #cbd5e1 !important;
+}
+
+/* Mobile responsiveness for ZIP code features */
+@media (max-width: 768px) {
+    html body .booking-system-form .zipcode-location-display {
+        padding: 0.5rem !important;
+        font-size: 0.8rem !important;
+    }
+    
+    html body .booking-system-form .zipcode-location {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 0.25rem !important;
+    }
+    
+    html body .booking-system-form .zipcode-location .zipcode-check {
+        margin-left: 0 !important;
+        align-self: flex-end !important;
+    }
+}
+
+/* Dark mode support for ZIP code features */
+@media (prefers-color-scheme: dark) {
+    html body .booking-system-form .zipcode-location {
+        color: #10b981 !important;
+        background-color: #064e3b !important;
+        border-color: #065f46 !important;
+    }
+    
+    html body .booking-system-form .zipcode-loading {
+        color: #60a5fa !important;
+        background-color: #1e3a8a !important;
+        border-color: #3730a3 !important;
+    }
+    
+    html body .booking-system-form .zipcode-error {
+        color: #f87171 !important;
+        background-color: #7f1d1d !important;
+        border-color: #991b1b !important;
+    }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    html body .booking-system-form .zipcode-location,
+    html body .booking-system-form .zipcode-loading,
+    html body .booking-system-form .zipcode-error {
+        border-width: 2px !important;
+        font-weight: 600 !important;
+    }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+    html body .booking-system-form .zipcode-location-display {
+        transition: none !important;
+    }
+    
+    @keyframes zipcode-spin {
+        0%, 100% { transform: rotate(0deg); }
+    }
+}
+
+/* Form row layout for city/state fields */
+html body .booking-system-form .form-row {
+    display: flex !important;
+    gap: 1rem !important;
+    margin-bottom: 1rem !important;
+}
+
+html body .booking-system-form .form-row .form-group {
+    flex: 1 !important;
+    margin-bottom: 0 !important;
+}
+
+/* Readonly fields styling */
+html body .booking-system-form input[readonly] {
+    background-color: #f8fafc !important;
+    border-color: #e2e8f0 !important;
+    color: #64748b !important;
+    cursor: not-allowed !important;
+}
+
+html body .booking-system-form input[readonly]:focus {
+    border-color: #e2e8f0 !important;
+    box-shadow: none !important;
+}
+
+/* Mobile responsive form row */
+@media (max-width: 768px) {
+    html body .booking-system-form .form-row {
+        flex-direction: column !important;
+        gap: 0.75rem !important;
+    }
+}
+
+/* ─── COMPREHENSIVE FONT SIZE ENFORCEMENT ─────────────────── */
+/* Ensure all text throughout the plugin meets minimum 20px requirement */
+
+/* Global text elements */
+html body .booking-system-form,
+html body .booking-system-form *,
+.booking-system-form,
+.booking-system-form * {
+    font-size: inherit !important;
+}
+
+/* Base minimum font size for all plugin text */
+html body .booking-system-form {
+    font-size: 20px !important;
+    line-height: 1.6 !important;
+}
+
+/* Specific minimum font size overrides for small elements */
+html body .booking-system-form .form-label,
+html body .booking-system-form .form-input,
+html body .booking-system-form .btn,
+html body .booking-system-form button,
+html body .booking-system-form input,
+html body .booking-system-form select,
+html body .booking-system-form textarea,
+html body .booking-system-form .step-instructions,
+html body .booking-system-form .company-service,
+html body .booking-system-form .featured-badge,
+html body .booking-system-form .section-title,
+html body .booking-system-form .more-dates-link,
+html body .booking-system-form .done-booking-link,
+.booking-system-form .form-label,
+.booking-system-form .form-input,
+.booking-system-form .btn,
+.booking-system-form button,
+.booking-system-form input,
+.booking-system-form select,
+.booking-system-form textarea,
+.booking-system-form .step-instructions,
+.booking-system-form .company-service,
+.booking-system-form .featured-badge,
+.booking-system-form .section-title,
+.booking-system-form .more-dates-link,
+.booking-system-form .done-booking-link {
+    font-size: 20px !important;
+}
+html body .booking-system-form .booking-disclaimer{
+	font-size:15px !important;
+}
+
+/* Confirmation page specific font increases for titles */
+html body .booking-system-form .booking-step[data-step="9"] h1,
+html body .booking-system-form .booking-step[data-step="9"] h2,
+html body .booking-system-form .booking-step[data-step="9"] h3,
+html body .booking-system-form .booking-step[data-step="9"] h4,
+html body .booking-system-form .booking-step[data-step="9"] h5,
+html body .booking-system-form .booking-step[data-step="9"] h6,
+.booking-system-form .booking-step[data-step="9"] h1,
+.booking-system-form .booking-step[data-step="9"] h2,
+.booking-system-form .booking-step[data-step="9"] h3,
+.booking-system-form .booking-step[data-step="9"] h4,
+.booking-system-form .booking-step[data-step="9"] h5,
+.booking-system-form .booking-step[data-step="9"] h6 {
+    font-size: calc(var(--base-font-size, 19px) * 1.3) !important; /* 30% increase for titles */
+}
+
+/* Confirmation page specific font increases for regular text */
+html body .booking-system-form .booking-step[data-step="9"] p,
+html body .booking-system-form .booking-step[data-step="9"] span,
+html body .booking-system-form .booking-step[data-step="9"] div:not([class*="title"]):not([class*="header"]),
+html body .booking-system-form .booking-step[data-step="9"] li,
+.booking-system-form .booking-step[data-step="9"] p,
+.booking-system-form .booking-step[data-step="9"] span,
+.booking-system-form .booking-step[data-step="9"] div:not([class*="title"]):not([class*="header"]),
+.booking-system-form .booking-step[data-step="9"] li {
+    font-size: calc(var(--base-font-size, 17px) * 1.2) !important; /* 45% increase for text */
+}
+
+/* Success message page font sizes */
+html body .booking-system-form .success-message,
+html body .booking-system-form .success-message *,
+.booking-system-form .success-message,
+.booking-system-form .success-message * {
+    font-size: 29px !important; /* 45% increase from 20px base */
+}
+
+html body .booking-system-form .success-message h2,
+.booking-system-form .success-message h2 {
+    font-size: 52px !important; /* Large success title */
+}
+
+html body .booking-system-form .success-message h4,
+.booking-system-form .success-message h4 {
+    font-size: 37.7px !important; /* 30% increase from 29px */
+}
+
+/* Done booking link styling enhancement */
+html body .booking-system-form .done-booking-link,
+.booking-system-form .done-booking-link {
+    font-size: 29px !important; /* 45% increase */
+    font-weight: 500 !important;
+}
+
+/* Variables for consistent sizing */
+:root {
+    --base-font-size: 20px;
+    --title-multiplier: 1.3;
+    --text-multiplier: 1.45;
+}
+
+/* --- END ORIGINAL CONTENT --- */

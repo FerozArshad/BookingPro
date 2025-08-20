@@ -1,0 +1,524 @@
+/**
+ * Booking System Pro - Admin Styles
+ */
+
+/* General Admin Styles */
+.bsp-admin-wrapper {
+    margin: 20px 0;
+}
+
+.bsp-admin-header {
+    background: #fff;
+    border: 1px solid #ccd0d4;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 1px rgba(0,0,0,.04);
+}
+
+.bsp-admin-header h1 {
+    margin: 0 0 10px 0;
+    font-size: 24px;
+    font-weight: 600;
+}
+
+.bsp-admin-header p {
+    margin: 0;
+    color: #666;
+    font-size: 14px;
+}
+
+/* Dashboard Widgets */
+.bsp-dashboard-widgets {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.bsp-dashboard-widget {
+    background: #fff;
+    border: 1px solid #ccd0d4;
+    box-shadow: 0 1px 1px rgba(0,0,0,.04);
+    padding: 20px;
+}
+
+.bsp-dashboard-widget h3 {
+    margin: 0 0 15px 0;
+    font-size: 18px;
+    font-weight: 600;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+}
+
+.bsp-stat-number {
+    font-size: 36px;
+    font-weight: bold;
+    color: #0073aa;
+    margin: 10px 0;
+}
+
+.bsp-stat-label {
+    color: #666;
+    font-size: 14px;
+}
+
+/* Tables */
+.bsp-admin-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    background: #fff;
+}
+
+.bsp-admin-table th,
+.bsp-admin-table td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #eee;
+}
+
+.bsp-admin-table th {
+    background: #f9f9f9;
+    font-weight: 600;
+    border-bottom: 2px solid #ccd0d4;
+}
+
+.bsp-admin-table tr:hover {
+    background: #f9f9f9;
+}
+
+/* Status Badges */
+.bsp-status-pending {
+    background: #f0ad4e;
+    color: #fff;
+    padding: 4px 8px;
+    border-radius: 3px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.bsp-status-confirmed {
+    background: #5cb85c;
+    color: #fff;
+    padding: 4px 8px;
+    border-radius: 3px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.bsp-status-cancelled {
+    background: #d9534f;
+    color: #fff;
+    padding: 4px 8px;
+    border-radius: 3px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.bsp-status-completed {
+    background: #5bc0de;
+    color: #fff;
+    padding: 4px 8px;
+    border-radius: 3px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+/* Forms */
+.bsp-form-section {
+    background: #fff;
+    border: 1px solid #ccd0d4;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 1px rgba(0,0,0,.04);
+}
+
+.bsp-form-section h3 {
+    margin: 0 0 20px 0;
+    font-size: 18px;
+    font-weight: 600;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+}
+
+.bsp-form-row {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 20px;
+    align-items: flex-start;
+}
+
+.bsp-form-field {
+    flex: 1;
+}
+
+.bsp-form-field.half {
+    flex: 0 0 calc(50% - 10px);
+}
+
+.bsp-form-field.quarter {
+    flex: 0 0 calc(25% - 15px);
+}
+
+.bsp-form-field label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 600;
+    color: #333;
+}
+
+.bsp-form-field input,
+.bsp-form-field select,
+.bsp-form-field textarea {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.bsp-form-field textarea {
+    min-height: 100px;
+    resize: vertical;
+}
+
+.bsp-form-field .description {
+    margin-top: 5px;
+    font-size: 13px;
+    color: #666;
+    font-style: italic;
+}
+
+/* Buttons */
+.bsp-btn {
+    display: inline-block;
+    padding: 8px 16px;
+    background: #0073aa;
+    color: #fff;
+    text-decoration: none;
+    border-radius: 4px;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: background-color 0.2s;
+}
+
+.bsp-btn:hover {
+    background: #005177;
+    color: #fff;
+}
+
+.bsp-btn-secondary {
+    background: #666;
+}
+
+.bsp-btn-secondary:hover {
+    background: #444;
+}
+
+.bsp-btn-danger {
+    background: #d9534f;
+}
+
+.bsp-btn-danger:hover {
+    background: #c9302c;
+}
+
+.bsp-btn-success {
+    background: #5cb85c;
+}
+
+.bsp-btn-success:hover {
+    background: #449d44;
+}
+
+.bsp-btn-small {
+    padding: 4px 8px;
+    font-size: 12px;
+}
+
+/* Action Buttons */
+.bsp-actions {
+    margin: 20px 0;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.bsp-bulk-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+/* Loading States */
+.bsp-loading {
+    position: relative;
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.bsp-loading::after {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.8);
+    z-index: 999998;
+}
+
+.bsp-loading::before {
+    content: '';
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    width: 32px;
+    height: 32px;
+    margin: -16px 0 0 -16px;
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid #0073aa;
+    border-radius: 50%;
+    animation: bsp-spin 1s linear infinite;
+    z-index: 999999;
+}
+
+@keyframes bsp-spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Modal Styles */
+.bsp-modal {
+    display: none;
+    position: fixed;
+    z-index: 999999;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.5);
+}
+
+.bsp-modal-content {
+    background-color: #fefefe;
+    margin: 5% auto;
+    padding: 20px;
+    border: 1px solid #888;
+    width: 80%;
+    max-width: 600px;
+    border-radius: 4px;
+    position: relative;
+}
+
+.bsp-modal-close {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    position: absolute;
+    top: 10px;
+    right: 15px;
+}
+
+.bsp-modal-close:hover,
+.bsp-modal-close:focus {
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+/* Modal Header and Footer */
+.bsp-modal-header {
+    border-bottom: 1px solid #eee;
+    padding-bottom: 15px;
+    margin-bottom: 20px;
+}
+
+.bsp-modal-header h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.bsp-modal-footer {
+    border-top: 1px solid #eee;
+    padding-top: 15px;
+    margin-top: 20px;
+    text-align: right;
+}
+
+.bsp-modal-footer .bsp-btn {
+    margin-left: 10px;
+}
+
+/* Calendar Styles */
+.bsp-calendar {
+    background: #fff;
+    border: 1px solid #ccd0d4;
+    border-radius: 4px;
+    padding: 20px;
+}
+
+.bsp-calendar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eee;
+}
+
+.bsp-calendar-nav {
+    background: none;
+    border: 1px solid #ccd0d4;
+    padding: 5px 10px;
+    cursor: pointer;
+    border-radius: 3px;
+}
+
+.bsp-calendar-nav:hover {
+    background: #f9f9f9;
+}
+
+.bsp-calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 1px;
+    background: #ccd0d4;
+    border: 1px solid #ccd0d4;
+}
+
+.bsp-calendar-day {
+    background: #fff;
+    padding: 10px;
+    text-align: center;
+    cursor: pointer;
+    min-height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.bsp-calendar-day:hover {
+    background: #f0f8ff;
+}
+
+.bsp-calendar-day.has-bookings {
+    background: #e3f2fd;
+    font-weight: bold;
+}
+
+.bsp-calendar-day.selected {
+    background: #0073aa;
+    color: #fff;
+}
+
+/* Reports */
+.bsp-chart-container {
+    background: #fff;
+    border: 1px solid #ccd0d4;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 1px rgba(0,0,0,.04);
+}
+
+.bsp-chart {
+    height: 300px;
+    width: 100%;
+}
+
+/* Settings Tabs */
+.bsp-settings-tabs {
+    border-bottom: 1px solid #ccd0d4;
+    margin-bottom: 20px;
+    display: flex;
+    gap: 0;
+}
+
+.bsp-settings-tabs a {
+    display: block;
+    padding: 12px 20px;
+    background: #f1f1f1;
+    border: 1px solid #ccd0d4;
+    border-bottom: none;
+    text-decoration: none;
+    color: #666;
+    margin-right: -1px;
+    transition: all 0.3s ease;
+}
+
+.bsp-settings-tabs a:first-child {
+    border-top-left-radius: 4px;
+}
+
+.bsp-settings-tabs a:last-child {
+    border-top-right-radius: 4px;
+    margin-right: 0;
+}
+
+.bsp-settings-tabs a:hover {
+    background: #fff;
+    color: #0073aa;
+}
+
+.bsp-settings-tabs a.active {
+    background: #fff;
+    color: #0073aa;
+    border-bottom: 1px solid #fff;
+    margin-bottom: -1px;
+}
+
+.bsp-settings-tab-content {
+    display: none;
+    background: #fff;
+    padding: 20px;
+    border: 1px solid #ccd0d4;
+    border-top: none;
+}
+
+.bsp-settings-tab-content.active {
+    display: block;
+}
+
+.bsp-settings-tab-content h3 {
+    margin-top: 0;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eee;
+}
+
+.bsp-settings-tab-content h4 {
+    margin: 20px 0 10px 0;
+    color: #0073aa;
+}
+
+/* Checkbox Labels */
+.bsp-checkbox-label {
+    display: block;
+    margin: 10px 0;
+    cursor: pointer;
+}
+
+.bsp-checkbox-label input[type="checkbox"] {
+    margin-right: 8px;
+}
+
+.bsp-form-field-group {
+    background: #f9f9f9;
+    padding: 15px;
+    border-left: 4px solid #0073aa;
+    margin: 10px 0;
+}
+
+.bsp-form-field.third {
+    width: calc(33.333% - 13px);
+}
+
+/* Enhanced Button Styles */
