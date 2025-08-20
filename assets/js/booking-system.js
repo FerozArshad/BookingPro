@@ -1370,19 +1370,11 @@ jQuery(document).ready(function($) {
 
 
         
-        if (typeof BSP_Ajax !== 'undefined' && BSP_Ajax.nonce === 'demo-nonce') {
-
-            // Generate demo availability
-            generateDemoAvailability($calendar, company, companyData);
-            return;
-        }
-        
         // Check if we have real AJAX configuration
         if (!CONFIG.ajaxUrl || !CONFIG.nonce) {
-
-
-
-            generateDemoAvailability($calendar, company, companyData);
+            const errorMsg = '<div class="error-message">Booking system configuration error. Please refresh the page and try again.</div>';
+            $calendar.html(errorMsg);
+            console.error('Missing AJAX configuration:', { ajaxUrl: CONFIG.ajaxUrl, nonce: CONFIG.nonce });
             return;
         }
         
@@ -1398,11 +1390,10 @@ jQuery(document).ready(function($) {
                 date_to: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
             },
             success: function(response) {
-
                 if (response.success && response.data[companyData.id]) {
                     renderCalendarDays($calendar, response.data[companyData.id], company);
                 } else {
-                    $calendar.html('<div class="error-message">No availability found</div>');
+                    $calendar.html('<div class="error-message">No availability found for this provider</div>');
                 }
             },
             error: function(xhr, status, error) {
@@ -1413,93 +1404,24 @@ jQuery(document).ready(function($) {
                     statusCode: xhr.status
                 });
                 
-                // Provide user-friendly error handling
+                // Display clean, user-friendly error message instead of demo fallback
+                let errorMsg = '<div class="error-message">Could not load availability. Please refresh and try again.</div>';
+                
                 if (xhr.status === 0) {
-
+                    errorMsg = '<div class="error-message">Connection error. Please check your internet connection and try again.</div>';
                 } else if (xhr.status >= 500) {
-
-                } else {
-
+                    errorMsg = '<div class="error-message">Server error. Please try again in a few moments.</div>';
+                } else if (xhr.status === 404) {
+                    errorMsg = '<div class="error-message">Booking service unavailable. Please contact support.</div>';
                 }
                 
-                generateDemoAvailability($calendar, company, companyData);
+                $calendar.html(errorMsg);
             }
         });
         
 
     }
-    
-    function generateDemoAvailability($calendar, company, companyData) {
 
-
-
-
-        
-        const availabilityData = {};
-        const today = new Date();
-        
-        // Generate 30 days of demo data
-        for (let i = 0; i < 30; i++) {
-            const date = new Date(today);
-            date.setDate(today.getDate() + i);
-            const dateStr = date.toISOString().split('T')[0];
-            
-            // Skip weekends for some companies (example: company ID 1)
-            if (companyData.id === 1 && [0, 6].includes(date.getDay())) continue;
-            
-            const slots = [];
-            // All companies use standard hours: 12 PM to 7 PM
-            const startHour = 12;
-            const endHour = 19;
-            
-            // DEBUG: Log time slot generation for each company
-
-
-            
-            for (let hour = startHour; hour < endHour; hour++) {
-                for (let minute = 0; minute < 60; minute += 30) {
-                    const time = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
-                    // More realistic availability - 80% chance of being available
-                    const available = Math.random() > 0.2;
-                    
-                    slots.push({
-                        time: time,
-                        formatted: new Date(`2000-01-01 ${time}`).toLocaleTimeString('en-US', { 
-                            hour: 'numeric', 
-                            minute: '2-digit',
-                            hour12: true 
-                        }),
-                        available: available
-                    });
-                }
-            }
-            
-            // DEBUG: Log generated slots for this company and date
-
-
-
-            
-            availabilityData[dateStr] = {
-                date: dateStr,
-                day_name: date.toLocaleDateString('en-US', { weekday: 'short' }),
-                day_number: date.getDate(),
-                slots: slots,
-                company: {
-                    id: companyData.id,
-                    name: companyData.name,
-                    phone: companyData.phone
-                }
-            };
-        }
-        
-
-
-        
-        renderCalendarDays($calendar, availabilityData, company);
-        
-
-    }
-    
     function renderCalendarDays($calendar, availabilityData, company) {
 
 

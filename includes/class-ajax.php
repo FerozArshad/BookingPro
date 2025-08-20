@@ -26,7 +26,68 @@ class BSP_Ajax {
         add_action('wp_ajax_nopriv_bsp_get_availability', [$this, 'get_availability']);
         
         add_action('wp_ajax_bsp_submit_booking', [$this, 'submit_booking']);
-        add_action('wp_ajax_nopriv_bsp_submit_booking', [$this, 'submit_booking']);
+        add_action('wp_a            ]);
+        } else {
+            wp_send_json_error([
+                'message' => 'Webhook test failed',
+                'response_code' => $response_code,
+                'response_body' => $response_body
+            ]);
+        }
+    }
+    
+    /**
+     * Get company ID by company name for accurate booking storage
+     */
+    private function get_company_id_by_name($company_name) {
+        global $wpdb;
+        
+        // Handle multiple companies (comma-separated)
+        if (strpos($company_name, ',') !== false) {
+            $company_names = array_map('trim', explode(',', $company_name));
+            $company_name = $company_names[0]; // Use first company for primary ID
+        }
+        
+        // Initialize database tables
+        BSP_Database_Unified::init_tables();
+        $tables = BSP_Database_Unified::$tables;
+        
+        $company_id = $wpdb->get_var($wpdb->prepare(
+            "SELECT id FROM {$tables['companies']} WHERE name = %s LIMIT 1",
+            $company_name
+        ));
+        
+        if (function_exists('bsp_debug_log')) {
+            bsp_debug_log("Company ID lookup", 'DATABASE', [
+                'input_name' => $company_name,
+                'found_id' => $company_id
+            ]);
+        }
+        
+        return $company_id ? intval($company_id) : null;
+    }
+    
+    /**
+     * Get company name by company ID for availability checking
+     */
+    private function get_company_name_by_id($company_id) {
+        global $wpdb;
+        
+        if (!$company_id) {
+            return '';
+        }
+        
+        // Initialize database tables
+        BSP_Database_Unified::init_tables();
+        $tables = BSP_Database_Unified::$tables;
+        
+        $company_name = $wpdb->get_var($wpdb->prepare(
+            "SELECT name FROM {$tables['companies']} WHERE id = %d LIMIT 1",
+            $company_id
+        ));
+        
+        return $company_name ?: '';
+    }v_bsp_submit_booking', [$this, 'submit_booking']);
         
         add_action('wp_ajax_bsp_get_slots', [$this, 'get_time_slots']);
         add_action('wp_ajax_nopriv_bsp_get_slots', [$this, 'get_time_slots']);
@@ -179,6 +240,16 @@ class BSP_Ajax {
             $booking_data['selected_time'] = implode(', ', $times);
         }
 
+        // Look up company ID from company name for accurate availability checking
+        $company_id = $this->get_company_id_by_name($booking_data['company']);
+        
+        if (function_exists('bsp_debug_log')) {
+            bsp_debug_log("Company lookup for booking", 'BOOKING', [
+                'company_name' => $booking_data['company'],
+                'company_id' => $company_id
+            ]);
+        }
+
         // Create booking post
         $post_data = [
             'post_title' => sprintf('Booking - %s - %s', $booking_data['full_name'], $booking_data['selected_date']),
@@ -194,6 +265,7 @@ class BSP_Ajax {
                 '_customer_phone' => $booking_data['phone'],
                 '_customer_address' => $booking_data['address'],
                 '_company_name' => $booking_data['company'],
+                '_company_id' => $company_id, // Store company ID for accurate availability checks
                 '_service_type' => $booking_data['service'],
                 '_booking_date' => $booking_data['selected_date'],
                 '_booking_time' => $booking_data['selected_time'],
@@ -381,28 +453,50 @@ class BSP_Ajax {
      * Check if a time slot is booked
      */
     private function is_slot_booked($company_id, $date, $time) {
+        // Handle multiple company scenario - check each company in comma-separated list
+        $meta_query = [
+            'relation' => 'AND',
+            [
+                'key' => '_booking_date',
+                'value' => $date,
+                'compare' => 'LIKE' // Use LIKE to handle comma-separated dates
+            ],
+            [
+                'key' => '_booking_time', 
+                'value' => $time,
+                'compare' => 'LIKE' // Use LIKE to handle comma-separated times
+            ]
+        ];
+        
+        // For company_id, check both exact match and comma-separated values
+        $meta_query[] = [
+            'relation' => 'OR',
+            [
+                'key' => '_company_id',
+                'value' => $company_id,
+                'compare' => '='
+            ],
+            [
+                'key' => '_company_name',
+                'value' => $this->get_company_name_by_id($company_id),
+                'compare' => 'LIKE'
+            ]
+        ];
+        
         $bookings = get_posts([
             'post_type' => 'bsp_booking',
             'posts_per_page' => 1,
-            'meta_query' => [
-                'relation' => 'AND',
-                [
-                    'key' => '_company_id',
-                    'value' => $company_id,
-                    'compare' => '='
-                ],
-                [
-                    'key' => '_booking_date',
-                    'value' => $date,
-                    'compare' => '='
-                ],
-                [
-                    'key' => '_booking_time',
-                    'value' => $time,
-                    'compare' => '='
-                ]
-            ]
+            'meta_query' => $meta_query
         ]);
+        
+        if (function_exists('bsp_debug_log')) {
+            bsp_debug_log("Slot booking check", 'AVAILABILITY', [
+                'company_id' => $company_id,
+                'date' => $date,
+                'time' => $time,
+                'found_bookings' => count($bookings)
+            ]);
+        }
         
         return !empty($bookings);
     }
@@ -421,7 +515,7 @@ class BSP_Ajax {
         
         // Send admin notification
         if (!empty($email_settings['send_admin_notification'])) {
-            $this->send_admin_notification($booking_data);
+            $this->send_admin_notification($booking_id);
         }
     }
     
@@ -443,30 +537,124 @@ class BSP_Ajax {
     }
     
     /**
-     * Send admin notification email
+     * Send admin notification email using centralized data manager
      */
-    private function send_admin_notification($booking_data) {
+    private function send_admin_notification($booking_id) {
+        // Use centralized data manager to get all formatted booking data
+        $data_for_email = BSP_Data_Manager::get_formatted_booking_data($booking_id);
+        
+        if (!$data_for_email) {
+            if (function_exists('bsp_debug_log')) {
+                bsp_debug_log('Admin notification: Failed to get booking data for ID ' . $booking_id, 'EMAIL_ERROR');
+            }
+            return;
+        }
+
         $email_settings = get_option('bsp_email_settings', []);
         $admin_email = $email_settings['admin_email'] ?? get_option('admin_email');
         
-        $subject = 'New Booking - ' . $booking_data['service'];
-        $message = sprintf(
-            "New booking received!\n\nCustomer: %s\nEmail: %s\nPhone: %s\nService: %s\nDate: %s\nTime: %s\nCompany: %s\nAddress: %s",
-            $booking_data['full_name'],
-            $booking_data['email'],
-            $booking_data['phone'],
-            $booking_data['service'],
-            $booking_data['selected_date'],
-            $booking_data['selected_time'],
-            $booking_data['company'],
-            $booking_data['address']
-        );
+        $subject = 'New Booking #' . $data_for_email['id'] . ' - ' . $data_for_email['service_type'];
         
-        wp_mail($admin_email, $subject, $message);
+        // Create a comprehensive, well-formatted email message
+        $message = "🎉 NEW BOOKING RECEIVED!\n";
+        $message .= str_repeat("=", 50) . "\n\n";
+        
+        // Customer Information
+        $message .= "👤 CUSTOMER INFORMATION:\n";
+        $message .= "• Name: " . $data_for_email['customer_name'] . "\n";
+        $message .= "• Email: " . $data_for_email['customer_email'] . "\n";
+        $message .= "• Phone: " . $data_for_email['customer_phone'] . "\n";
+        $message .= "• Address: " . $data_for_email['customer_address'] . "\n";
+        
+        // Location Information
+        $message .= "\n📍 LOCATION DETAILS:\n";
+        $message .= "• ZIP Code: " . ($data_for_email['zip_code'] ?: 'Not provided') . "\n";
+        $message .= "• City: " . ($data_for_email['city'] ?: 'Not provided') . "\n";
+        $message .= "• State: " . ($data_for_email['state'] ?: 'Not provided') . "\n";
+        
+        // Service Information
+        $message .= "\n🔧 SERVICE DETAILS:\n";
+        $message .= "• Service: " . $data_for_email['service_type'] . "\n";
+        $message .= "• Company: " . ($data_for_email['company_name'] ?: 'Not selected') . "\n";
+        
+        // Add specifications if available
+        if (!empty($data_for_email['specifications'])) {
+            $message .= "• Specifications: " . $data_for_email['specifications'] . "\n";
+        }
+        
+        // Appointment Information
+        $message .= "\n📅 APPOINTMENT DETAILS:\n";
+        $message .= "• Date: " . $data_for_email['formatted_date'] . "\n";
+        $message .= "• Time: " . $data_for_email['formatted_time'] . "\n";
+        
+        // Multiple appointments if they exist
+        if ($data_for_email['has_multiple_appointments'] && !empty($data_for_email['parsed_appointments'])) {
+            $message .= "\n📅 MULTIPLE APPOINTMENTS:\n";
+            foreach ($data_for_email['parsed_appointments'] as $i => $apt) {
+                $message .= "• Appointment " . ($i + 1) . ": " . $apt['company'] . " - " . 
+                           date('F j, Y', strtotime($apt['date'])) . " at " . 
+                           date('g:i A', strtotime($apt['time'])) . "\n";
+            }
+        }
+        
+        // Marketing Information (if available)
+        $has_marketing = !empty($data_for_email['utm_source']) || !empty($data_for_email['utm_medium']) || 
+                        !empty($data_for_email['utm_campaign']) || !empty($data_for_email['referrer']);
+        
+        if ($has_marketing) {
+            $message .= "\n📊 MARKETING ATTRIBUTION:\n";
+            if (!empty($data_for_email['utm_source'])) {
+                $message .= "• UTM Source: " . $data_for_email['utm_source'] . "\n";
+            }
+            if (!empty($data_for_email['utm_medium'])) {
+                $message .= "• UTM Medium: " . $data_for_email['utm_medium'] . "\n";
+            }
+            if (!empty($data_for_email['utm_campaign'])) {
+                $message .= "• UTM Campaign: " . $data_for_email['utm_campaign'] . "\n";
+            }
+            if (!empty($data_for_email['utm_term'])) {
+                $message .= "• UTM Term: " . $data_for_email['utm_term'] . "\n";
+            }
+            if (!empty($data_for_email['utm_content'])) {
+                $message .= "• UTM Content: " . $data_for_email['utm_content'] . "\n";
+            }
+            if (!empty($data_for_email['referrer'])) {
+                $message .= "• Referrer: " . $data_for_email['referrer'] . "\n";
+            }
+            if (!empty($data_for_email['landing_page'])) {
+                $message .= "• Landing Page: " . $data_for_email['landing_page'] . "\n";
+            }
+        }
+        
+        // Booking Information
+        $message .= "\n📋 BOOKING INFORMATION:\n";
+        $message .= "• Booking ID: #" . $data_for_email['id'] . "\n";
+        $message .= "• Status: " . ucfirst($data_for_email['status']) . "\n";
+        $message .= "• Created: " . $data_for_email['formatted_created'] . "\n";
+        
+        // Notes if available
+        if (!empty($data_for_email['notes'])) {
+            $message .= "\n📝 NOTES:\n";
+            $message .= $data_for_email['notes'] . "\n";
+        }
+        
+        $message .= "\n" . str_repeat("=", 50) . "\n";
+        $message .= "🔗 View booking details: " . admin_url('admin.php?page=bsp-bookings&action=view&id=' . $data_for_email['id']) . "\n";
+        
+        // Send the email
+        $sent = wp_mail($admin_email, $subject, $message);
+        
+        if (function_exists('bsp_debug_log')) {
+            if ($sent) {
+                bsp_debug_log('Admin notification email sent successfully for booking ID: ' . $booking_id, 'EMAIL');
+            } else {
+                bsp_debug_log('Failed to send admin notification email for booking ID: ' . $booking_id, 'EMAIL_ERROR');
+            }
+        }
     }
 
     /**
-     * Send booking data to Google Sheets
+     * Send booking data to Google Sheets using centralized data manager
      */
     private function send_to_google_sheets($booking_id, $booking_data) {
         $integration_settings = get_option('bsp_integration_settings', []);
@@ -478,196 +666,93 @@ class BSP_Ajax {
             return;
         }
 
-        // --- DEBUG: Log raw POST and booking_data for troubleshooting ---
-        if (function_exists('bsp_debug_log')) {
-            bsp_debug_log('Google Sheets Integration: Raw $_POST', 'INTEGRATION', $_POST);
-            bsp_debug_log('Google Sheets Integration: booking_data', 'INTEGRATION', $booking_data);
-        }
-
-        // --- Fallback: If source_data is empty, try to extract from $_POST directly ---
-        $utm_params = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'gclid', 'referrer'];
-        $source_data = $booking_data['source_data'] ?? [];
-        if (empty($source_data) || !is_array($source_data)) {
-            $source_data = [];
-            foreach ($utm_params as $param) {
-                if (!empty($_POST[$param])) {
-                    $source_data[$param] = sanitize_text_field($_POST[$param]);
-                }
-            }
+        // Use centralized data manager to get all formatted booking data
+        $data_for_sheets = BSP_Data_Manager::get_formatted_booking_data($booking_id);
+        
+        if (!$data_for_sheets) {
             if (function_exists('bsp_debug_log')) {
-                bsp_debug_log('Google Sheets Integration: Fallback source_data from $_POST', 'INTEGRATION', $source_data);
+                bsp_debug_log('Google Sheets Integration: Failed to get booking data for ID ' . $booking_id, 'INTEGRATION_ERROR');
             }
+            return;
         }
 
         $webhook_url = $integration_settings['google_sheets_webhook_url'];
-        $source_data = $booking_data['source_data'] ?? $source_data;
 
-        // Handle multiple appointments - consolidate into single row
-        $appointments_data = $booking_data['appointments'] ?? '';
-        $company_names = [];
-        $appointment_dates = [];
-        $appointment_times = [];
-
-        if (!empty($appointments_data)) {
-            $appointments = json_decode($appointments_data, true);
-            if (is_array($appointments)) {
-                foreach ($appointments as $appointment) {
-                    if (is_array($appointment)) {
-                        $company_names[] = $appointment['company'] ?? 'Unknown Company';
-                        $appointment_dates[] = isset($appointment['date']) ? date('Y-m-d', strtotime($appointment['date'])) : '';
-                        $appointment_times[] = isset($appointment['time']) ? date('H:i', strtotime($appointment['time'])) : '';
-                    }
-                }
-            }
-        }
-
-        // Fallback to single appointment data if no multiple appointments
-        if (empty($company_names)) {
-            $company_names[] = $booking_data['company'] ?? '';
-            $appointment_dates[] = $booking_data['selected_date'] ?? '';
-            $appointment_times[] = $booking_data['selected_time'] ?? '';
-        }
-
-        // Consolidate multiple appointments into comma-separated strings
-        $consolidated_companies = implode(', ', array_filter($company_names));
-        $consolidated_dates = implode(', ', array_filter($appointment_dates));
-        $consolidated_times = implode(', ', array_filter($appointment_times));
-
-        // ZIP code fallback logic for Google Sheets
-        $zip_code = $booking_data['zip_code'] ?? '';
-        if (empty($zip_code)) {
-            $zip_fields = ['roof_zip', 'windows_zip', 'bathroom_zip', 'siding_zip', 'kitchen_zip', 'decks_zip'];
-            foreach ($zip_fields as $field) {
-                if (!empty($booking_data[$field])) {
-                    $zip_code = $booking_data[$field];
-                    break;
-                }
-            }
-        }
-
-        // Debug log for source tracking
-        if (function_exists('bsp_debug_log')) {
-            bsp_debug_log('Source tracking POST data:', 'INTEGRATION', $_POST);
-            bsp_debug_log('Source tracking booking_data:', 'INTEGRATION', $booking_data);
-        }
-
-
-        // Map internal field names to readable column names
-        $field_map = [
-            'booking_id'        => 'Booking ID',
-            'status'            => 'Status',
-            'customer_name'     => 'Customer Name',
-            'customer_email'    => 'Customer Email',
-            'customer_phone'    => 'Customer Phone',
-            'customer_address'  => 'Customer Address',
-            // All zip fields map to one column
-            'zip_code'          => 'ZIP Code',
-            'roof_zip'          => 'ZIP Code',
-            'windows_zip'       => 'ZIP Code',
-            'bathroom_zip'      => 'ZIP Code',
-            'siding_zip'        => 'ZIP Code',
-            'kitchen_zip'       => 'ZIP Code',
-            'decks_zip'         => 'ZIP Code',
-            'city'              => 'City',
-            'state'             => 'State',
-            'service'           => 'Service',
-            'company'           => 'Company',
-            'date'              => 'Date',
-            'time'              => 'Time',
-            // UTM/marketing fields
-            'utm_source'        => 'UTM Source',
-            'utm_medium'        => 'UTM Medium',
-            'utm_campaign'      => 'UTM Campaign',
-            'utm_term'          => 'UTM Term',
-            'utm_content'       => 'UTM Content',
-            'gclid'             => 'GCLID',
-            'referrer'          => 'Referrer',
-            // Service-specific fields (clear names)
-            'roof_action'           => 'Roof Action',
-            'roof_material'         => 'Roof Material',
-            'windows_action'        => 'Windows Action',
-            'windows_replace_qty'   => 'Windows Replace Qty',
-            'windows_repair_needed' => 'Windows Repair Needed',
-            'bathroom_option'       => 'Bathroom Option',
-            'siding_option'         => 'Siding Option',
-            'siding_material'       => 'Siding Material',
-            'kitchen_action'        => 'Kitchen Action',
-            'kitchen_component'     => 'Kitchen Component',
-            'decks_action'          => 'Decks Action',
-            'decks_material'        => 'Decks Material',
-        ];
-
-        // Gather all possible fields (including all zip fields)
-        $all_fields = [
-            'booking_id'        => $booking_id,
-            'status'            => 'pending',
-            'customer_name'     => $booking_data['full_name'] ?? '',
-            'customer_email'    => $booking_data['email'] ?? '',
-            'customer_phone'    => $booking_data['phone'] ?? '',
-            'customer_address'  => $booking_data['address'] ?? '',
-            // Use the first non-empty zip field for ZIP Code
-            'zip_code'          => $zip_code,
-            'roof_zip'          => $booking_data['roof_zip'] ?? '',
-            'windows_zip'       => $booking_data['windows_zip'] ?? '',
-            'bathroom_zip'      => $booking_data['bathroom_zip'] ?? '',
-            'siding_zip'        => $booking_data['siding_zip'] ?? '',
-            'kitchen_zip'       => $booking_data['kitchen_zip'] ?? '',
-            'decks_zip'         => $booking_data['decks_zip'] ?? '',
-            'city'              => $booking_data['city'] ?? '',
-            'state'             => $booking_data['state'] ?? '',
-            'service'           => $booking_data['service'] ?? '',
-            'company'           => $consolidated_companies,
-            'date'              => $consolidated_dates,
-            'time'              => $consolidated_times,
-            // UTM/marketing fields
-            'utm_source'        => $source_data['utm_source'] ?? '',
-            'utm_medium'        => $source_data['utm_medium'] ?? '',
-            'utm_campaign'      => $source_data['utm_campaign'] ?? '',
-            'utm_term'          => $source_data['utm_term'] ?? '',
-            'utm_content'       => $source_data['utm_content'] ?? '',
-            'gclid'             => $source_data['gclid'] ?? '',
-            'referrer'          => $source_data['referrer'] ?? '',
+        // Prepare payload for Google Sheets with all the data in the expected format
+        // Sanitize all data to prevent Google Sheets API errors
+        $payload = [
+            'id' => intval($data_for_sheets['id']),
+            'booking_id' => intval($data_for_sheets['id']),
+            'status' => sanitize_text_field($data_for_sheets['status']),
+            'customer_name' => sanitize_text_field($data_for_sheets['customer_name']),
+            'customer_email' => sanitize_email($data_for_sheets['customer_email']),
+            'customer_phone' => sanitize_text_field($data_for_sheets['customer_phone']),
+            'customer_address' => sanitize_text_field($data_for_sheets['customer_address']),
+            'zip_code' => sanitize_text_field($data_for_sheets['zip_code']),
+            'city' => sanitize_text_field($data_for_sheets['city']),
+            'state' => sanitize_text_field($data_for_sheets['state']),
+            'service_type' => sanitize_text_field($data_for_sheets['service_type']),
+            'service_name' => sanitize_text_field($data_for_sheets['service_name']),
+            'specifications' => sanitize_textarea_field($data_for_sheets['specifications']),
+            'company_name' => sanitize_text_field($data_for_sheets['company_name']),
+            'formatted_date' => sanitize_text_field($data_for_sheets['formatted_date']),
+            'formatted_time' => sanitize_text_field($data_for_sheets['formatted_time']),
+            'booking_date' => sanitize_text_field($data_for_sheets['booking_date']),
+            'booking_time' => sanitize_text_field($data_for_sheets['booking_time']),
+            'formatted_created' => sanitize_text_field($data_for_sheets['formatted_created']),
+            'created_at' => sanitize_text_field($data_for_sheets['created_at']),
+            'notes' => sanitize_textarea_field($data_for_sheets['notes']),
+            // Marketing/tracking data
+            'utm_source' => sanitize_text_field($data_for_sheets['utm_source']),
+            'utm_medium' => sanitize_text_field($data_for_sheets['utm_medium']),
+            'utm_campaign' => sanitize_text_field($data_for_sheets['utm_campaign']),
+            'utm_term' => sanitize_text_field($data_for_sheets['utm_term']),
+            'utm_content' => sanitize_text_field($data_for_sheets['utm_content']),
+            'referrer' => sanitize_url($data_for_sheets['referrer']),
+            'landing_page' => sanitize_url($data_for_sheets['landing_page']),
             // Service-specific fields
-            'roof_action'           => $booking_data['roof_action'] ?? '',
-            'roof_material'         => $booking_data['roof_material'] ?? '',
-            'windows_action'        => $booking_data['windows_action'] ?? '',
-            'windows_replace_qty'   => $booking_data['windows_replace_qty'] ?? '',
-            'windows_repair_needed' => $booking_data['windows_repair_needed'] ?? '',
-            'bathroom_option'       => $booking_data['bathroom_option'] ?? '',
-            'siding_option'         => $booking_data['siding_option'] ?? '',
-            'siding_material'       => $booking_data['siding_material'] ?? '',
-            'kitchen_action'        => $booking_data['kitchen_action'] ?? '',
-            'kitchen_component'     => $booking_data['kitchen_component'] ?? '',
-            'decks_action'          => $booking_data['decks_action'] ?? '',
-            'decks_material'        => $booking_data['decks_material'] ?? ''
+            'roof_action' => sanitize_text_field($data_for_sheets['roof_action']),
+            'roof_material' => sanitize_text_field($data_for_sheets['roof_material']),
+            'windows_action' => sanitize_text_field($data_for_sheets['windows_action']),
+            'windows_replace_qty' => sanitize_text_field($data_for_sheets['windows_replace_qty']),
+            'windows_repair_needed' => sanitize_text_field($data_for_sheets['windows_repair_needed']),
+            'bathroom_option' => sanitize_text_field($data_for_sheets['bathroom_option']),
+            'siding_option' => sanitize_text_field($data_for_sheets['siding_option']),
+            'siding_material' => sanitize_text_field($data_for_sheets['siding_material']),
+            'kitchen_action' => sanitize_text_field($data_for_sheets['kitchen_action']),
+            'kitchen_component' => sanitize_text_field($data_for_sheets['kitchen_component']),
+            'decks_action' => sanitize_text_field($data_for_sheets['decks_action']),
+            'decks_material' => sanitize_text_field($data_for_sheets['decks_material']),
+            // Handle multiple appointments - send as string to avoid JSON parsing issues
+            'appointments' => is_string($data_for_sheets['appointments']) ? 
+                $data_for_sheets['appointments'] : 
+                wp_json_encode($data_for_sheets['appointments'], JSON_UNESCAPED_UNICODE)
         ];
 
-        // Only include non-empty fields, and map to readable names
-        $payload = [];
-        $zip_written = false;
-        foreach ($all_fields as $key => $value) {
-            if ($value === '' || $value === null) continue;
-            $column = $field_map[$key] ?? $key;
-            // For ZIP Code, only write the first non-empty zip field
-            if ($column === 'ZIP Code') {
-                if ($zip_written) continue;
-                $zip_written = true;
-            }
-            $payload[$column] = $value;
-        }
-
         if (function_exists('bsp_debug_log')) {
-            bsp_debug_log('Google Sheets Payload:', 'INTEGRATION', $payload);
+            bsp_debug_log('Google Sheets Integration: Sending sanitized data', 'INTEGRATION', $payload);
         }
 
-        // Send the single consolidated request
+        // Prepare the JSON payload
+        $json_payload = wp_json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        
+        if (function_exists('bsp_debug_log')) {
+            bsp_debug_log('Google Sheets Integration: JSON payload length: ' . strlen($json_payload), 'INTEGRATION');
+        }
+
+        // Send the request to Google Sheets with proper headers
         $response = wp_remote_post($webhook_url, [
             'method'      => 'POST',
-            'headers'     => ['Content-Type' => 'application/json; charset=utf-8'],
-            'body'        => json_encode($payload),
+            'headers'     => [
+                'Content-Type' => 'application/json; charset=utf-8',
+                'Accept' => 'application/json',
+                'User-Agent' => 'BookingPro/2.1.0'
+            ],
+            'body'        => $json_payload,
             'data_format' => 'body',
-            'timeout'     => 15,
+            'timeout'     => 30,
             'blocking'    => true,
+            'sslverify'   => true
         ]);
 
         // Log the response for debugging
@@ -678,11 +763,20 @@ class BSP_Ajax {
         } else {
             $response_code = wp_remote_retrieve_response_code($response);
             $response_body = wp_remote_retrieve_body($response);
+            
             if (function_exists('bsp_debug_log')) {
-                bsp_debug_log('Google Sheets API Response:', 'INTEGRATION', [
-                    'code' => $response_code,
-                    'body' => $response_body
-                ]);
+                bsp_debug_log("Google Sheets API Response Code: $response_code", 'INTEGRATION');
+                bsp_debug_log("Google Sheets API Response Body: $response_body", 'INTEGRATION');
+            }
+            
+            if ($response_code === 200) {
+                if (function_exists('bsp_debug_log')) {
+                    bsp_debug_log('Google Sheets sync successful for booking ID: ' . $booking_id, 'INTEGRATION');
+                }
+            } else {
+                if (function_exists('bsp_debug_log')) {
+                    bsp_debug_log("Google Sheets sync failed with code $response_code for booking ID: $booking_id", 'INTEGRATION_ERROR');
+                }
             }
         }
     }

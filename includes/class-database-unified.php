@@ -53,7 +53,7 @@ class BSP_Database_Unified {
     /**
      * Initialize table names with prefix
      */
-    private static function init_tables() {
+    public static function init_tables() {
         global $wpdb;
         
         // Only initialize if not already done

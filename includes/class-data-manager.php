@@ -120,20 +120,52 @@ class BSP_Data_Manager {
         }
         
         // Format dates and times properly - FIX THE DATE/TIME BUG
-        if (!empty($booking_data['booking_date'])) {
-            $booking_data['formatted_date'] = date('F j, Y', strtotime($booking_data['booking_date']));
+        // Handle comma-separated dates/times from multiple appointments
+        $booking_date = $booking_data['booking_date'];
+        $booking_time = $booking_data['booking_time'];
+        
+        // If we have comma-separated values, use the first one
+        if (!empty($booking_date) && strpos($booking_date, ',') !== false) {
+            $dates = explode(',', $booking_date);
+            $booking_date = trim($dates[0]); // Use first date
+        }
+        
+        if (!empty($booking_time) && strpos($booking_time, ',') !== false) {
+            $times = explode(',', $booking_time);
+            $booking_time = trim($times[0]); // Use first time
+        }
+        
+        if (!empty($booking_date)) {
+            $booking_data['formatted_date'] = date('F j, Y', strtotime($booking_date));
         } else {
             $booking_data['formatted_date'] = 'Not set';
         }
         
-        if (!empty($booking_data['booking_time'])) {
-            $booking_data['formatted_time'] = date('g:i A', strtotime($booking_data['booking_time']));
+        if (!empty($booking_time)) {
+            $booking_data['formatted_time'] = date('g:i A', strtotime($booking_time));
         } else {
             $booking_data['formatted_time'] = 'Not set';
         }
         
         if (!empty($booking_data['created_at'])) {
             $booking_data['formatted_created'] = date('F j, Y \a\t g:i A', strtotime($booking_data['created_at']));
+        }
+        
+        // Extract UTM data from _marketing_source if individual UTM fields are empty
+        if (empty($booking_data['utm_source'])) {
+            $marketing_source = $get_meta('_marketing_source');
+            if (!empty($marketing_source)) {
+                $marketing_data = maybe_unserialize($marketing_source);
+                if (is_array($marketing_data)) {
+                    $booking_data['utm_source'] = $marketing_data['utm_source'] ?? '';
+                    $booking_data['utm_medium'] = $marketing_data['utm_medium'] ?? '';
+                    $booking_data['utm_campaign'] = $marketing_data['utm_campaign'] ?? '';
+                    $booking_data['utm_term'] = $marketing_data['utm_term'] ?? '';
+                    $booking_data['utm_content'] = $marketing_data['utm_content'] ?? '';
+                    $booking_data['referrer'] = $marketing_data['referrer'] ?? '';
+                    $booking_data['landing_page'] = $marketing_data['landing_page'] ?? '';
+                }
+            }
         }
         
         // Parse multiple appointments if they exist
