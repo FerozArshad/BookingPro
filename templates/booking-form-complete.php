@@ -1,51 +1,100 @@
 <?php
-// Complete booking form template with all steps
+// Complete booking form template with all steps - UNIFIED VERSION
 ?>
-<div id="booking-form" class="booking-system-form">
+<form id="booking-form" class="booking-system-form" method="post" autocomplete="off">
+    <!-- UTM & Source Tracking Fields (Required by JavaScript) -->
+    <input type="hidden" name="service" id="service-field" value="">
+    <input type="hidden" name="company" id="company-field" value="">
+    <input type="hidden" name="utm_source" id="utm_source" value="">
+    <input type="hidden" name="utm_medium" id="utm_medium" value="">
+    <input type="hidden" name="utm_campaign" id="utm_campaign" value="">
+    <input type="hidden" name="utm_term" id="utm_term" value="">
+    <input type="hidden" name="utm_content" id="utm_content" value="">
+    <input type="hidden" name="gclid" id="gclid" value="">
+    <input type="hidden" name="referrer" id="referrer" value="">
+    
+    <!-- Service-specific hidden fields for JS to populate -->
+    <input type="hidden" name="roof_zip" id="roof_zip">
+    <input type="hidden" name="windows_zip" id="windows_zip">
+    <input type="hidden" name="bathroom_zip" id="bathroom_zip">
+    <input type="hidden" name="siding_zip" id="siding_zip">
+    <input type="hidden" name="kitchen_zip" id="kitchen_zip">
+    <input type="hidden" name="decks_zip" id="decks_zip">
+    <input type="hidden" name="adu_zip" id="adu_zip">
+    <input type="hidden" name="roof_action" id="roof_action">
+    <input type="hidden" name="roof_material" id="roof_material">
+    <input type="hidden" name="windows_action" id="windows_action">
+    <input type="hidden" name="windows_replace_qty" id="windows_replace_qty">
+    <input type="hidden" name="windows_repair_needed" id="windows_repair_needed">
+    <input type="hidden" name="bathroom_option" id="bathroom_option">
+    <input type="hidden" name="siding_option" id="siding_option">
+    <input type="hidden" name="siding_material" id="siding_material">
+    <input type="hidden" name="kitchen_action" id="kitchen_action">
+    <input type="hidden" name="kitchen_component" id="kitchen_component">
+    <input type="hidden" name="decks_action" id="decks_action">
+    <input type="hidden" name="decks_material" id="decks_material">
+    <input type="hidden" name="adu_action" id="adu_action">
+    <input type="hidden" name="adu_type" id="adu_type">
+    <input type="hidden" name="service_details" id="service_details">
+    <input type="hidden" name="appointments" id="appointments">
+    
+    <!-- City/State auto-populated from ZIP -->
+    <input type="hidden" name="city" id="city">
+    <input type="hidden" name="state" id="state">
+    
     <!-- Step 1: Service Selection -->
     <div class="booking-step active" data-step="1">
         <section class="rs-step-1">
             <div class="step-overlay"></div>
             <div class="step-container">
                 <div class="step-content">
-                    <div class="left-column">
-                        <h2 class="main-title">Find & Book<br>Free Estimates</h2>
+                    <div class="header-section">
+                        <h2 class="main-title">Find & Book Estimates</h2>
                         <p class="sub-text">With Top Local Contractors</p>
                     </div>
-                    <div class="right-column">
-                        <div class="service-card">
-                            <h3 class="card-title">GET FREE<br>ESTIMATES</h3>
-                            <div class="service-options">
-                                <button class="service-option" data-service="Roof">
-                                    <div class="service-icon"></div>
-                                    <span class="service-name">ROOFING</span>
-                                </button>
-                                <button class="service-option" data-service="Kitchen">
-                                    <div class="service-icon"></div>
-                                    <span class="service-name">KITCHEN</span>
-                                </button>
-                                <button class="service-option" data-service="Windows">
-                                    <div class="service-icon"></div>
-                                    <span class="service-name">WINDOWS</span>
-                                </button>
-                                <button class="service-option" data-service="ADU">
-                                    <div class="service-icon"></div>
-                                    <span class="service-name">ADU</span>
-                                </button>
-                                <button class="service-option" data-service="Bathroom">
-                                    <div class="service-icon"></div>
-                                    <span class="service-name">BATHROOM</span>
-                                </button>
-                                <button class="service-option" data-service="Siding">
-                                    <div class="service-icon"></div>
-                                    <span class="service-name">SIDING</span>
-                                </button>
-                                <button class="service-option" data-service="Decks">
-                                    <div class="service-icon"></div>
-                                    <span class="service-name">DECKS</span>
-                                </button>
+                    <div class="service-options">
+                        <button class="service-option" data-service="Roof">
+                            <div class="service-icon-box">
+                                <div class="service-icon"></div>
                             </div>
-                        </div>
+                            <span class="service-name">ROOFING</span>
+                        </button>
+                        <button class="service-option" data-service="Kitchen">
+                            <div class="service-icon-box">
+                                <div class="service-icon"></div>
+                            </div>
+                            <span class="service-name">KITCHEN</span>
+                        </button>
+                        <button class="service-option" data-service="Windows">
+                            <div class="service-icon-box">
+                                <div class="service-icon"></div>
+                            </div>
+                            <span class="service-name">WINDOWS</span>
+                        </button>
+                        <button class="service-option" data-service="ADU">
+                            <div class="service-icon-box">
+                                <div class="service-icon"></div>
+                            </div>
+                            <span class="service-name">ADU</span>
+                        </button>
+                        <button class="service-option" data-service="Bathroom">
+                            <div class="service-icon-box">
+                                <div class="service-icon"></div>
+                            </div>
+                            <span class="service-name">BATHROOM</span>
+                        </button>
+                        <button class="service-option" data-service="Siding">
+                            <div class="service-icon-box">
+                                <div class="service-icon"></div>
+                            </div>
+                            <span class="service-name">SIDING</span>
+                        </button>
+                        <button class="service-option" data-service="Decks">
+                            <div class="service-icon-box">
+                                <div class="service-icon"></div>
+                            </div>
+                            <span class="service-name">DECKS</span>
+                        </button>
                     </div>
                 </div>
             </div>
@@ -63,7 +112,7 @@
             <!-- Text input (for ZIP codes) -->
             <div class="form-group" id="step2-text-input" style="display: none;">
                 <label class="form-label" id="step2-label">Enter your ZIP code</label>
-                <input type="text" class="form-input" id="step2-zip-input" placeholder="Enter ZIP code (e.g., 12345)" maxlength="10">
+                <input type="text" class="form-input" id="step2-zip-input" name="zip_code" placeholder="Enter ZIP code (e.g., 12345)" maxlength="10" required>
             </div>
             <div class="form-navigation">
                 <button class="btn btn-secondary btn-back">Back</button>
@@ -91,7 +140,7 @@
         <div class="step-card">
             <h2 class="step-title">Enter your ZIP code</h2>
             <div class="form-group">
-                <input type="text" class="form-input" id="step4-zip-input" placeholder="Enter ZIP code (e.g., 12345)" maxlength="10">
+                <input type="text" class="form-input" id="step4-zip-input" name="zip_code" placeholder="Enter ZIP code (e.g., 12345)" maxlength="10" required>
             </div>
             <div class="form-navigation">
                 <button class="btn btn-secondary btn-back">Back</button>
@@ -105,7 +154,7 @@
         <div class="step-card">
             <h2 class="step-title">Please enter your full name</h2>
             <div class="form-group">
-                <input type="text" class="form-input" id="name-input" placeholder="Enter your full name">
+                <input type="text" class="form-input" id="name-input" name="full_name" placeholder="Enter your full name" required>
             </div>
             <div class="form-navigation">
                 <button class="btn btn-secondary btn-back">Back</button>
@@ -119,7 +168,7 @@
         <div class="step-card">
             <h2 class="step-title">What is your street address?</h2>
             <div class="form-group">
-                <input type="text" class="form-input" id="address-input" placeholder="Enter your street address">
+                <input type="text" class="form-input" id="address-input" name="street_address" placeholder="Enter your street address" required>
             </div>
             <div class="form-navigation">
                 <button class="btn btn-secondary btn-back">Back</button>
@@ -134,11 +183,11 @@
             <h2 class="step-title">We have matching Pros in <span id="city-name">[City]</span></h2>
             <div class="form-group">
                 <label class="form-label">Cell Number</label>
-                <input type="tel" class="form-input" id="phone-input" placeholder="(555) 123-4567">
+                <input type="tel" class="form-input" id="phone-input" name="phone_number" placeholder="(555) 123-4567" required>
             </div>
             <div class="form-group">
                 <label class="form-label">Email Address</label>
-                <input type="email" class="form-input" id="email-input" placeholder="your@email.com">
+                <input type="email" class="form-input" id="email-input" name="email_address" placeholder="your@email.com" required>
             </div>
             <div class="form-navigation">
                 <button class="btn btn-secondary btn-back">Back</button>
@@ -305,4 +354,4 @@
     <div class="progress-bar">
         <div class="progress-fill" style="width: 14%"></div>
     </div>
-</div>
+</form>

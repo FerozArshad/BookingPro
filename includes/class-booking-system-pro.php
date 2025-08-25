@@ -239,7 +239,7 @@ class Booking_System_Pro {
         ], $atts);
         
         ob_start();
-        include BSP_PLUGIN_DIR . 'templates/booking-form.php';
+        include BSP_PLUGIN_DIR . 'templates/booking-form-complete.php';
         return ob_get_clean();
     }
 

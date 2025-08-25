@@ -33,12 +33,8 @@ class BSP_Ajax {
         
         add_action('wp_ajax_bsp_test_webhook', [$this, 'test_webhook']);
         
-        // Async Google Sheets sync endpoint
-        add_action('wp_ajax_bsp_async_google_sheets_sync', [$this, 'handle_async_google_sheets_sync']);
-        add_action('wp_ajax_nopriv_bsp_async_google_sheets_sync', [$this, 'handle_async_google_sheets_sync']);
-        
         if (function_exists('bsp_debug_log')) {
-            bsp_debug_log("AJAX endpoints registered: bsp_get_availability, bsp_submit_booking, bsp_get_slots, bsp_test_webhook, bsp_async_google_sheets_sync", 'AJAX');
+            bsp_debug_log("AJAX endpoints registered: bsp_get_availability, bsp_submit_booking, bsp_get_slots, bsp_test_webhook", 'AJAX');
         }
         
         // Admin AJAX endpoints are handled in BSP_Admin class
@@ -535,76 +531,9 @@ class BSP_Ajax {
             'primary_booking_id' => $primary_booking_id
         ]);
         
-        // Trigger Google Sheets sync immediately after response using async request
-        // This ensures fast user response while syncing happens in background
-        $this->trigger_async_google_sheets_sync($primary_booking_id, $booking_data);
-        
-        // Also schedule backup cron in case async fails
-        wp_schedule_single_event(time() + 60, 'bsp_sync_google_sheets', [$primary_booking_id, $booking_data]);
-    }
-    
-    /**
-     * Trigger Google Sheets sync asynchronously without blocking the response
-     */
-    private function trigger_async_google_sheets_sync($booking_id, $booking_data) {
-        if (function_exists('bsp_debug_log')) {
-            bsp_debug_log("Triggering async Google Sheets sync", 'SYNC', [
-                'booking_id' => $booking_id,
-                'method' => 'async_wp_remote_post'
-            ]);
-        }
-        
-        // Create async request to trigger the sync
-        $site_url = get_site_url();
-        $sync_url = add_query_arg([
-            'action' => 'bsp_async_google_sheets_sync',
-            'booking_id' => $booking_id,
-            'nonce' => wp_create_nonce('bsp_async_sync')
-        ], admin_url('admin-ajax.php'));
-        
-        // Make async request (non-blocking)
-        wp_remote_post($sync_url, [
-            'timeout' => 0.01, // Very short timeout to make it async
-            'blocking' => false, // Non-blocking request
-            'headers' => [
-                'Content-Type' => 'application/x-www-form-urlencoded'
-            ],
-            'body' => [
-                'booking_data' => base64_encode(serialize($booking_data))
-            ]
-        ]);
-    }
-    
-    /**
-     * Handle async Google Sheets sync requests
-     */
-    public function handle_async_google_sheets_sync() {
-        // Verify nonce
-        if (!wp_verify_nonce($_REQUEST['nonce'] ?? '', 'bsp_async_sync')) {
-            if (function_exists('bsp_debug_log')) {
-                bsp_debug_log("Async sync nonce verification failed", 'SYNC_ERROR');
-            }
-            wp_die('Invalid nonce');
-        }
-        
-        $booking_id = intval($_REQUEST['booking_id'] ?? 0);
-        $booking_data = [];
-        
-        if (!empty($_POST['booking_data'])) {
-            $booking_data = unserialize(base64_decode($_POST['booking_data']));
-        }
-        
-        if ($booking_id && is_array($booking_data)) {
-            if (function_exists('bsp_debug_log')) {
-                bsp_debug_log("Executing async Google Sheets sync", 'SYNC', [
-                    'booking_id' => $booking_id
-                ]);
-            }
-            
-            $this->send_to_google_sheets($booking_id, $booking_data);
-        }
-        
-        wp_die('OK'); // End the async request
+        // Send single booking to Google Sheets asynchronously (after response is sent)
+        // Only send the one booking record that contains all companies
+        wp_schedule_single_event(time(), 'bsp_sync_google_sheets', [$primary_booking_id, $booking_data]);
     }
     
     /**
