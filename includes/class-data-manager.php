@@ -111,6 +111,8 @@ class BSP_Data_Manager {
             'kitchen_component' => $get_meta('_kitchen_component'),
             'decks_action' => $get_meta('_decks_action'),
             'decks_material' => $get_meta('_decks_material'),
+            'adu_action' => $get_meta('_adu_action'),
+            'adu_type' => $get_meta('_adu_type'),
         ];
         
         // Get status from taxonomy

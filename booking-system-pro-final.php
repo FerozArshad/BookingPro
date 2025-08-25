@@ -383,6 +383,9 @@ final class Booking_System_Pro_Final {
         add_action('wp_enqueue_scripts', [$this, 'frontend_assets']);
         add_action('admin_enqueue_scripts', [$this, 'admin_assets']);
         
+        // Background Google Sheets sync hook
+        add_action('bsp_sync_google_sheets', [$this, 'handle_google_sheets_sync'], 10, 2);
+        
         // Debug hooks
         if (BSP_DEBUG_MODE) {
             add_action('wp_footer', [$this, 'debug_info_footer']);
@@ -730,6 +733,46 @@ final class Booking_System_Pro_Final {
             bsp_debug_log("Toast notification system initialized", 'TOAST');
         } else {
             bsp_debug_log("Toast notification init file not found: " . $toast_init_file, 'ERROR');
+        }
+    }
+    
+    /**
+     * Handle background Google Sheets sync
+     */
+    public function handle_google_sheets_sync($booking_id, $booking_data) {
+        if (function_exists('bsp_debug_log')) {
+            bsp_debug_log("Background Google Sheets sync triggered", 'CRON', [
+                'booking_id' => $booking_id,
+                'has_ajax_instance' => !empty($this->ajax),
+                'method_exists' => method_exists($this->ajax, 'send_to_google_sheets')
+            ]);
+        }
+        
+        // Try to use existing ajax instance first
+        if ($this->ajax && method_exists($this->ajax, 'send_to_google_sheets')) {
+            $this->ajax->send_to_google_sheets($booking_id, $booking_data);
+        } else {
+            // Fallback: create a new ajax instance for cron context
+            if (function_exists('bsp_debug_log')) {
+                bsp_debug_log("Creating new AJAX instance for cron context", 'CRON');
+            }
+            
+            // Ensure the ajax class is loaded
+            if (!class_exists('BSP_Ajax')) {
+                require_once BSP_PLUGIN_DIR . 'includes/class-ajax.php';
+            }
+            
+            $ajax_instance = BSP_Ajax::get_instance();
+            if ($ajax_instance && method_exists($ajax_instance, 'send_to_google_sheets')) {
+                $ajax_instance->send_to_google_sheets($booking_id, $booking_data);
+            } else {
+                if (function_exists('bsp_debug_log')) {
+                    bsp_debug_log("Cannot execute Google Sheets sync - failed to create AJAX instance", 'CRON_ERROR', [
+                        'ajax_instance_created' => !empty($ajax_instance),
+                        'method_exists' => method_exists($ajax_instance, 'send_to_google_sheets')
+                    ]);
+                }
+            }
         }
     }
 }

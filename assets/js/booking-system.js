@@ -1023,13 +1023,30 @@ jQuery(document).ready(function($) {
                     if (cityInput) cityInput.value = city;
                     if (stateInput) stateInput.value = state;
                 }
-                // Sync UTM/marketing fields from cookies (if source-tracker.js didn't already)
+                // Sync UTM/marketing fields from URL parameters and cookies
                 const utmFields = ['utm_source','utm_medium','utm_campaign','utm_term','utm_content','gclid','referrer'];
+                const urlParams = new URLSearchParams(window.location.search);
+                
                 utmFields.forEach(function(field) {
                     const input = bookingForm.querySelector('input[name="'+field+'"]');
-                    if (input && typeof getCookie === 'function') {
-                        const val = getCookie('bsp_'+field);
-                        if (val && !input.value) input.value = val;
+                    if (input && !input.value) {
+                        let value = null;
+                        
+                        // Check URL parameters first
+                        if (urlParams.has(field)) {
+                            value = urlParams.get(field);
+                        }
+                        // Then check cookies
+                        else if (typeof getCookie === 'function') {
+                            const cookieVal = getCookie('bsp_'+field);
+                            if (cookieVal) {
+                                value = cookieVal;
+                            }
+                        }
+                        
+                        if (value) {
+                            input.value = value;
+                        }
                     }
                 });
                 // Sync service selection
@@ -2109,12 +2126,33 @@ jQuery(document).ready(function($) {
             bookingData.state = window.zipLookupService.currentState || '';
         }
 
-        // Add marketing data from cookies
+        // Add marketing data from cookies and URL parameters
         const utmParams = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'gclid', 'referrer'];
+        
+        // First try to get from URL parameters (current session)
+        const urlParams = new URLSearchParams(window.location.search);
+        
         utmParams.forEach(function(param) {
-            const cookieValue = getCookie('bsp_' + param);
-            if (cookieValue) {
-                bookingData[param] = cookieValue;
+            let value = null;
+            
+            // Check URL parameters first (highest priority)
+            if (urlParams.has(param)) {
+                value = urlParams.get(param);
+            }
+            // Then check cookies as fallback
+            else {
+                const cookieValue = getCookie('bsp_' + param);
+                if (cookieValue) {
+                    value = cookieValue;
+                }
+            }
+            
+            // Set the value if found, otherwise set default for utm_source
+            if (value) {
+                bookingData[param] = value;
+            } else if (param === 'utm_source') {
+                // Default to 'direct' only if no source found anywhere
+                bookingData[param] = 'direct';
             }
         });
 
