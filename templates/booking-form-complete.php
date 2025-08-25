@@ -16,12 +16,34 @@
                         <div class="service-card">
                             <h3 class="card-title">GET FREE<br>ESTIMATES</h3>
                             <div class="service-options">
-                                <button class="service-option" data-service="Roof">ROOF</button>
-                                <button class="service-option" data-service="Windows">WINDOWS</button>
-                                <button class="service-option" data-service="Bathroom">BATH</button>
-                                <button class="service-option" data-service="Siding">SIDING</button>
-                                <button class="service-option" data-service="Kitchen">KITCHEN</button>
-                                <button class="service-option" data-service="Decks">DECKS</button>
+                                <button class="service-option" data-service="Roof">
+                                    <div class="service-icon"></div>
+                                    <span class="service-name">ROOFING</span>
+                                </button>
+                                <button class="service-option" data-service="Kitchen">
+                                    <div class="service-icon"></div>
+                                    <span class="service-name">KITCHEN</span>
+                                </button>
+                                <button class="service-option" data-service="Windows">
+                                    <div class="service-icon"></div>
+                                    <span class="service-name">WINDOWS</span>
+                                </button>
+                                <button class="service-option" data-service="ADU">
+                                    <div class="service-icon"></div>
+                                    <span class="service-name">ADU</span>
+                                </button>
+                                <button class="service-option" data-service="Bathroom">
+                                    <div class="service-icon"></div>
+                                    <span class="service-name">BATHROOM</span>
+                                </button>
+                                <button class="service-option" data-service="Siding">
+                                    <div class="service-icon"></div>
+                                    <span class="service-name">SIDING</span>
+                                </button>
+                                <button class="service-option" data-service="Decks">
+                                    <div class="service-icon"></div>
+                                    <span class="service-name">DECKS</span>
+                                </button>
                             </div>
                         </div>
                     </div>

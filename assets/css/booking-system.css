@@ -106,6 +106,11 @@ body .booking-system-form.service-kitchen,
     background-image: url('https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=80');
 }
 
+body .booking-system-form.service-adu,
+.booking-system-form.service-adu {
+    background-image: url('../images/adu-all.png');
+}
+
 /* 
   NOTE: For common steps (full_name, address, contact_info, schedule, confirmation),
   the JavaScript applies the last service-specific step class to maintain visual continuity.
@@ -175,6 +180,16 @@ body .booking-system-form.service-kitchen.kitchen-step-1,
 body .booking-system-form.service-kitchen.kitchen-step-2,
 .booking-system-form.service-kitchen.kitchen-step-2 {
     background-image: url('../images/kitchen-all-steps.jpg');
+}
+
+/* ADU step-specific backgrounds - use single image for all steps */
+body .booking-system-form.service-adu.adu-step-0,
+.booking-system-form.service-adu.adu-step-0,
+body .booking-system-form.service-adu.adu-step-1,
+.booking-system-form.service-adu.adu-step-1,
+body .booking-system-form.service-adu.adu-step-2,
+.booking-system-form.service-adu.adu-step-2 {
+    background-image: url('../images/adu-all.png');
 }
 
 /* Decks step-specific backgrounds - use single image for all steps */
@@ -1870,10 +1885,11 @@ body .booking-system-form .rs-step-1 .card-title,
 
 body .booking-system-form .rs-step-1 .service-options,
 .booking-system-form .rs-step-1 .service-options {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    max-width: 350px;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: repeat(2, 1fr);
+    gap: 19.5px 16.5px;
+    max-width: 600px;
     margin: 0px auto;
 }
 
@@ -1881,30 +1897,149 @@ body .booking-system-form .rs-step-1 .service-option,
 .booking-system-form .rs-step-1 .service-option {
     background: white !important;
     color: #1E773B !important;
-    border: none !important;
-    border-radius: 8px;
-    padding: 15px 20px;
+    border: 3px solid #e0e0e0 !important;
+    border-radius: 12px;
+    padding: 15px 10px;
     font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
-    font-size: 23.4px !important;
+    font-size: 14px !important;
     font-weight: 600 !important;
     cursor: pointer;
     transition: all 0.3s ease;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    -webkit-border-radius: 8px;
-    -moz-border-radius: 8px;
-    -ms-border-radius: 8px;
-    -o-border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    text-align: center;
+    min-height: 120px;
+    position: relative;
+    overflow: hidden;
+    -webkit-border-radius: 12px;
+    -moz-border-radius: 12px;
+    -ms-border-radius: 12px;
+    -o-border-radius: 12px;
 }
 
 body .booking-system-form .rs-step-1 .service-option:hover,
-.booking-system-form .rs-step-1 .service-option:hover,
+.booking-system-form .rs-step-1 .service-option:hover {
+    border-color: #78B643 !important;
+    background: #78B643 !important;
+    color: white !important;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(121, 182, 47, 0.3);
+}
+
 body .booking-system-form .rs-step-1 .service-option.selected,
 .booking-system-form .rs-step-1 .service-option.selected {
     background: #8DBF57 !important;
+    border-color: #689F38 !important;
     color: white !important;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(121, 182, 47, 0.3);
+}
+
+/* Service Icon Styles */
+body .booking-system-form .rs-step-1 .service-icon,
+.booking-system-form .rs-step-1 .service-icon {
+    width: 56px;
+    height: 56px;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    flex-shrink: 0;
+}
+
+body .booking-system-form .rs-step-1 .service-name,
+.booking-system-form .rs-step-1 .service-name {
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    margin: 0;
+    transition: color 0.3s ease;
+    line-height: 1.2;
+}
+
+/* Service-specific icon backgrounds */
+body .booking-system-form .rs-step-1 .service-option[data-service="Roof"] .service-icon,
+.booking-system-form .rs-step-1 .service-option[data-service="Roof"] .service-icon {
+    background-image: url('../images/roofing-before.png');
+}
+body .booking-system-form .rs-step-1 .service-option[data-service="Roof"]:hover .service-icon,
+.booking-system-form .rs-step-1 .service-option[data-service="Roof"].selected .service-icon {
+    background-image: url('../images/roofing-after.svg');
+}
+
+body .booking-system-form .rs-step-1 .service-option[data-service="Windows"] .service-icon,
+.booking-system-form .rs-step-1 .service-option[data-service="Windows"] .service-icon {
+    background-image: url('../images/windows-before.png');
+}
+body .booking-system-form .rs-step-1 .service-option[data-service="Windows"]:hover .service-icon,
+.booking-system-form .rs-step-1 .service-option[data-service="Windows"].selected .service-icon {
+    background-image: url('../images/windows-after.svg');
+}
+
+body .booking-system-form .rs-step-1 .service-option[data-service="Bathroom"] .service-icon,
+.booking-system-form .rs-step-1 .service-option[data-service="Bathroom"] .service-icon {
+    background-image: url('../images/bathroom-before.png');
+}
+body .booking-system-form .rs-step-1 .service-option[data-service="Bathroom"]:hover .service-icon,
+.booking-system-form .rs-step-1 .service-option[data-service="Bathroom"].selected .service-icon {
+    background-image: url('../images/bathroom-after.svg');
+}
+
+body .booking-system-form .rs-step-1 .service-option[data-service="Siding"] .service-icon,
+.booking-system-form .rs-step-1 .service-option[data-service="Siding"] .service-icon {
+    background-image: url('../images/siding-before.png');
+}
+body .booking-system-form .rs-step-1 .service-option[data-service="Siding"]:hover .service-icon,
+.booking-system-form .rs-step-1 .service-option[data-service="Siding"].selected .service-icon {
+    background-image: url('../images/siding-after.svg');
+}
+
+body .booking-system-form .rs-step-1 .service-option[data-service="Kitchen"] .service-icon,
+.booking-system-form .rs-step-1 .service-option[data-service="Kitchen"] .service-icon {
+    background-image: url('../images/kitchen-before.png');
+}
+body .booking-system-form .rs-step-1 .service-option[data-service="Kitchen"]:hover .service-icon,
+.booking-system-form .rs-step-1 .service-option[data-service="Kitchen"].selected .service-icon {
+    background-image: url('../images/kitchen-after.svg');
+}
+
+body .booking-system-form .rs-step-1 .service-option[data-service="Decks"] .service-icon,
+.booking-system-form .rs-step-1 .service-option[data-service="Decks"] .service-icon {
+    background-image: url('../images/deck-before.png');
+}
+body .booking-system-form .rs-step-1 .service-option[data-service="Decks"]:hover .service-icon,
+.booking-system-form .rs-step-1 .service-option[data-service="Decks"].selected .service-icon {
+    background-image: url('../images/deck-after.png');
+}
+
+body .booking-system-form .rs-step-1 .service-option[data-service="ADU"] .service-icon,
+.booking-system-form .rs-step-1 .service-option[data-service="ADU"] .service-icon {
+    background-image: url('../images/adu-before.png');
+}
+body .booking-system-form .rs-step-1 .service-option[data-service="ADU"]:hover .service-icon,
+.booking-system-form .rs-step-1 .service-option[data-service="ADU"].selected .service-icon {
+    background-image: url('../images/adu-after.svg');
+}
+
+/* Grid positioning for 4+3 layout */
+body .booking-system-form .rs-step-1 .service-option[data-service="Bathroom"],
+.booking-system-form .rs-step-1 .service-option[data-service="Bathroom"] {
+    grid-column: 1;
+    grid-row: 2;
+}
+body .booking-system-form .rs-step-1 .service-option[data-service="Siding"],
+.booking-system-form .rs-step-1 .service-option[data-service="Siding"] {
+    grid-column: 2;
+    grid-row: 2;
+}
+body .booking-system-form .rs-step-1 .service-option[data-service="Decks"],
+.booking-system-form .rs-step-1 .service-option[data-service="Decks"] {
+    grid-column: 3;
+    grid-row: 2;
 }
 
 /* ─── RESPONSIVE DESIGN ──────────────────────── */
@@ -1976,14 +2111,53 @@ body .booking-system-form .rs-step-1 .service-option.selected,
     body .booking-system-form .rs-step-1 .service-card,
     .booking-system-form .rs-step-1 .service-card {
         padding: 25px 30px !important;
-        max-width: 350px !important;
+        max-width: 450px !important;
     }
     
+    /* Service grid responsive - 2x4 layout for tablet */
+    html body .booking-system-form .rs-step-1 .service-options,
+    body .booking-system-form .rs-step-1 .service-options,
+    .booking-system-form .rs-step-1 .service-options {
+        grid-template-columns: repeat(2, 1fr) !important;
+        grid-template-rows: auto !important;
+        gap: 15.6px 13.2px !important;
+        max-width: 400px !important;
+        margin: 0 auto !important;
+    }
+    
+    /* Reset grid positioning for tablet */
+    html body .booking-system-form .rs-step-1 .service-option[data-service="Bathroom"],
+    body .booking-system-form .rs-step-1 .service-option[data-service="Bathroom"],
+    .booking-system-form .rs-step-1 .service-option[data-service="Bathroom"],
+    html body .booking-system-form .rs-step-1 .service-option[data-service="Siding"],
+    body .booking-system-form .rs-step-1 .service-option[data-service="Siding"],
+    .booking-system-form .rs-step-1 .service-option[data-service="Siding"],
+    html body .booking-system-form .rs-step-1 .service-option[data-service="Decks"],
+    body .booking-system-form .rs-step-1 .service-option[data-service="Decks"],
+    .booking-system-form .rs-step-1 .service-option[data-service="Decks"] {
+        grid-column: auto !important;
+        grid-row: auto !important;
+    }
+
     html body .booking-system-form .rs-step-1 .service-option,
     body .booking-system-form .rs-step-1 .service-option,
     .booking-system-form .rs-step-1 .service-option {
-        font-size: 20.8px !important;
-        padding: 12px 18px !important;
+        font-size: 12px !important;
+        padding: 12px 8px !important;
+        min-height: 95px !important;
+    }
+    
+    html body .booking-system-form .rs-step-1 .service-icon,
+    body .booking-system-form .rs-step-1 .service-icon,
+    .booking-system-form .rs-step-1 .service-icon {
+        width: 40px !important;
+        height: 40px !important;
+    }
+    
+    html body .booking-system-form .rs-step-1 .service-name,
+    body .booking-system-form .rs-step-1 .service-name,
+    .booking-system-form .rs-step-1 .service-name {
+        font-size: 11px !important;
     }
 }
 
@@ -2005,6 +2179,41 @@ body .booking-system-form .rs-step-1 .service-option.selected,
     body .booking-system-form .rs-step-1 .step-container,
     .booking-system-form .rs-step-1 .step-container {
         padding: 0 15px !important;
+    }
+    
+    /* Service grid responsive - two columns for mobile */
+    html body .booking-system-form .rs-step-1 .service-options,
+    body .booking-system-form .rs-step-1 .service-options,
+    .booking-system-form .rs-step-1 .service-options {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 13px !important;
+        max-width: 320px !important;
+        margin: 0 auto !important;
+    }
+    
+    html body .booking-system-form .rs-step-1 .service-option,
+    body .booking-system-form .rs-step-1 .service-option,
+    .booking-system-form .rs-step-1 .service-option {
+        flex-direction: column !important;
+        padding: 12px 8px !important;
+        min-height: 90px !important;
+        text-align: center !important;
+        justify-content: center !important;
+        gap: 8px !important;
+    }
+    
+    html body .booking-system-form .rs-step-1 .service-icon,
+    body .booking-system-form .rs-step-1 .service-icon,
+    .booking-system-form .rs-step-1 .service-icon {
+        width: 36px !important;
+        height: 36px !important;
+    }
+    
+    html body .booking-system-form .rs-step-1 .service-name,
+    body .booking-system-form .rs-step-1 .service-name,
+    .booking-system-form .rs-step-1 .service-name {
+        font-size: 12px !important;
+        text-align: center !important;
     }
 }
 

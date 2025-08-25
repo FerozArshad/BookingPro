@@ -36,7 +36,7 @@ class Booking_System_Pro {
 
     // Step definitions matching JavaScript configuration
     private $steps = [
-        ['id'=>'service','type'=>'single-choice','question'=>'Which service are you interested in?','options'=>['Roof','Windows','Bathroom','Siding','Kitchen','Decks']],
+        ['id'=>'service','type'=>'single-choice','question'=>'Which service are you interested in?','options'=>['Roof','Windows','Bathroom','Siding','Kitchen','Decks','ADU']],
         
         // Service-specific ZIP code steps (immediately after service selection)
         ['id'=>'roof_zip','depends_on'=>['service','Roof'],'type'=>'text','question'=>'Roof<br>Replacement','label'=>'Enter the location of your project'],
@@ -45,6 +45,7 @@ class Booking_System_Pro {
         ['id'=>'siding_zip','depends_on'=>['service','Siding'],'type'=>'text','question'=>'Siding<br>Replacement','label'=>'Enter the location of your project'],
         ['id'=>'kitchen_zip','depends_on'=>['service','Kitchen'],'type'=>'text','question'=>'Kitchen<br>Replacement','label'=>'Enter the location of your project'],
         ['id'=>'decks_zip','depends_on'=>['service','Decks'],'type'=>'text','question'=>'Decks<br>Replacement','label'=>'Enter the location of your project'],
+        ['id'=>'adu_zip','depends_on'=>['service','ADU'],'type'=>'text','question'=>'ADU<br>Replacement','label'=>'Enter the location of your project'],
         
         // Roof
         ['id'=>'roof_action','depends_on'=>['service','Roof'],'type'=>'single-choice','question'=>'Are you looking to replace or repair your roof?','options'=>['Replace','Repair']],
@@ -69,6 +70,10 @@ class Booking_System_Pro {
         // Decks
         ['id'=>'decks_action','depends_on'=>['service','Decks'],'type'=>'single-choice','question'=>'Are you looking to replace or repair your decks?','options'=>['Replace','Repair']],
         ['id'=>'decks_material','depends_on'=>['service','Decks'],'type'=>'single-choice','question'=>'What material?','options'=>['Cedar','Redwood']],
+        
+        // ADU
+        ['id'=>'adu_action','depends_on'=>['service','ADU'],'type'=>'single-choice','question'=>'Are you looking to replace or repair your ADU?','options'=>['Replace','Repair']],
+        ['id'=>'adu_type','depends_on'=>['service','ADU'],'type'=>'single-choice','question'=>'What type of ADU project?','options'=>['New Build','Addition','Garage Conversion']],
         
         // Common
         ['id'=>'full_name','type'=>'text','question'=>'Please enter your full name'],

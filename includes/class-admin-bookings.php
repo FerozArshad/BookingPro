@@ -750,7 +750,8 @@ class BSP_Admin_Bookings {
             'bathroom_zip' => 'Bathroom Service ZIP',
             'siding_zip' => 'Siding Service ZIP',
             'kitchen_zip' => 'Kitchen Service ZIP',
-            'decks_zip' => 'Decks Service ZIP'
+            'decks_zip' => 'Decks Service ZIP',
+            'adu_zip' => 'ADU Service ZIP'
         ];
         
         foreach ($zip_fields as $field => $label) {
@@ -816,6 +817,15 @@ class BSP_Admin_Bookings {
                 }
                 if (!empty($booking['decks_material'])) {
                     $fields[] = ['name' => 'decks_material', 'label' => 'Decks Material', 'value' => $booking['decks_material']];
+                }
+                break;
+                
+            case 'adu':
+                if (!empty($booking['adu_action'])) {
+                    $fields[] = ['name' => 'adu_action', 'label' => 'ADU Action', 'value' => $booking['adu_action']];
+                }
+                if (!empty($booking['adu_type'])) {
+                    $fields[] = ['name' => 'adu_type', 'label' => 'ADU Type', 'value' => $booking['adu_type']];
                 }
                 break;
         }

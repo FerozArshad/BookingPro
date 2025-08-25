@@ -849,6 +849,7 @@ class BSP_Database_Unified {
             'siding_zip' => get_post_meta($booking_id, '_siding_zip', true),
             'kitchen_zip' => get_post_meta($booking_id, '_kitchen_zip', true),
             'decks_zip' => get_post_meta($booking_id, '_decks_zip', true),
+            'adu_zip' => get_post_meta($booking_id, '_adu_zip', true),
             'roof_action' => get_post_meta($booking_id, '_roof_action', true),
             'roof_material' => get_post_meta($booking_id, '_roof_material', true),
             'windows_action' => get_post_meta($booking_id, '_windows_action', true),
@@ -860,7 +861,9 @@ class BSP_Database_Unified {
             'kitchen_action' => get_post_meta($booking_id, '_kitchen_action', true),
             'kitchen_component' => get_post_meta($booking_id, '_kitchen_component', true),
             'decks_action' => get_post_meta($booking_id, '_decks_action', true),
-            'decks_material' => get_post_meta($booking_id, '_decks_material', true)
+            'decks_material' => get_post_meta($booking_id, '_decks_material', true),
+            'adu_action' => get_post_meta($booking_id, '_adu_action', true),
+            'adu_type' => get_post_meta($booking_id, '_adu_type', true)
         ];
         
         // Get status from taxonomy

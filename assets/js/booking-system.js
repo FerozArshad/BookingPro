@@ -4,7 +4,7 @@ jQuery(document).ready(function($) {
 
     const CONFIG = {
         steps: [
-            { id: 'service', type: 'single-choice', question: 'Which service are you interested in?', options: ['Roof', 'Windows', 'Bathroom', 'Siding', 'Kitchen', 'Decks'] },
+            { id: 'service', type: 'single-choice', question: 'Which service are you interested in?', options: ['Roof', 'Windows', 'Bathroom', 'Siding', 'Kitchen', 'Decks', 'ADU'] },
             
             // A single, dynamic ZIP code step that appears after any service is selected.
             { 
@@ -38,6 +38,10 @@ jQuery(document).ready(function($) {
             // Decks questions
             { id: 'decks_action', depends_on: ['service', 'Decks'], type: 'single-choice', question: 'Are you looking to replace or repair your decks?', options: ['Replace', 'Repair'] },
             { id: 'decks_material', depends_on: ['service', 'Decks'], type: 'single-choice', question: 'What material?', options: ['Cedar', 'Redwood'] },
+            
+            // ADU questions
+            { id: 'adu_action', depends_on: ['service', 'ADU'], type: 'single-choice', question: 'Are you looking to replace or repair your ADU?', options: ['Replace', 'Repair'] },
+            { id: 'adu_type', depends_on: ['service', 'ADU'], type: 'single-choice', question: 'What type of ADU project?', options: ['New Build', 'Addition', 'Garage Conversion'] },
             
             // Common steps
             { id: 'full_name', type: 'text', question: 'Please enter your full name' },
@@ -145,7 +149,7 @@ jQuery(document).ready(function($) {
     // ─── URL SERVICE DETECTION (HYBRID APPROACH) ─────
     function getServiceFromURL() {
         try {
-            const validServices = ['roof', 'windows', 'bathroom', 'siding', 'kitchen', 'decks'];
+            const validServices = ['roof', 'windows', 'bathroom', 'siding', 'kitchen', 'decks', 'adu'];
             
             // Check query parameter first (?service=roof)
             const urlParams = new URLSearchParams(window.location.search);
@@ -203,6 +207,20 @@ jQuery(document).ready(function($) {
         return serviceStepIndex !== -1 ? serviceStepIndex : 0;
     }
 
+    // ─── FIND FIRST SERVICE-SPECIFIC STEP (SKIP SERVICE SELECTION) ───
+    function findFirstServiceSpecificStep(service) {
+        // Find the first step that depends on this service (usually the ZIP code step)
+        const serviceStepIndex = CONFIG.steps.findIndex(step => 
+            step.depends_on && 
+            step.depends_on[0] === 'service' && 
+            step.depends_on[1] === service
+        );
+        
+        // For URL-based service selection, we skip the service selection step entirely
+        // If no service-specific step found, something is wrong - go to service selection
+        return serviceStepIndex !== -1 ? serviceStepIndex : 0;
+    }
+
     // ─── UPDATE STEP URL ──────────────────────────────
     function updateStepURL(step) {
         try {
@@ -251,13 +269,9 @@ jQuery(document).ready(function($) {
             // Auto-select service and skip service selection step
             formState.service = preselectedService;
             
-            // Go to ZIP code step (step 1) instead of skipping it
-            // ZIP code step is always the step after service selection
-            const zipCodeStepIndex = CONFIG.steps.findIndex(step => 
-                step.id === 'zip_code' || 
-                (step.depends_on && step.depends_on.length === 1 && step.depends_on[0] === 'service')
-            );
-            currentStepIndex = zipCodeStepIndex !== -1 ? zipCodeStepIndex : 1; // Default to step 1 if not found
+            // Skip directly to first service-specific step (ZIP code step)
+            const newStepIndex = findFirstServiceSpecificStep(preselectedService);
+            currentStepIndex = newStepIndex;
         }
         
         // Set default background
@@ -292,7 +306,7 @@ jQuery(document).ready(function($) {
                         currentStepIndex = 0;
                         renderCurrentStep();
                     }
-                } else if (hash === 'service-selection' || ['roof', 'windows', 'bathroom', 'siding', 'kitchen', 'decks'].includes(hash)) {
+                } else if (hash === 'service-selection' || ['roof', 'windows', 'bathroom', 'siding', 'kitchen', 'decks', 'adu'].includes(hash)) {
                     // Service selection or specific service - ensure we're in the right flow
                     if (hash !== 'service-selection' && currentStepIndex === 0) {
                         // User came back to a service-specific hash, maintain the selection
@@ -301,7 +315,7 @@ jQuery(document).ready(function($) {
                 } else if (hash.endsWith('-scheduling')) {
                     // Service-specific scheduling hash (e.g., "roof-scheduling", "decks-scheduling")
                     const service = hash.replace('-scheduling', '');
-                    if (['roof', 'windows', 'bathroom', 'siding', 'kitchen', 'decks'].includes(service)) {
+                    if (['roof', 'windows', 'bathroom', 'siding', 'kitchen', 'decks', 'adu'].includes(service)) {
                         // Set the service if not already set
                         if (!formState.service) {
                             formState.service = service.charAt(0).toUpperCase() + service.slice(1);
@@ -316,7 +330,7 @@ jQuery(document).ready(function($) {
                 } else if (hash.endsWith('-booking-confirmed')) {
                     // Service-specific booking confirmation hash (e.g., "roof-booking-confirmed", "decks-booking-confirmed")
                     const service = hash.replace('-booking-confirmed', '');
-                    if (['roof', 'windows', 'bathroom', 'siding', 'kitchen', 'decks'].includes(service)) {
+                    if (['roof', 'windows', 'bathroom', 'siding', 'kitchen', 'decks', 'adu'].includes(service)) {
                         // Set the service if not already set
                         if (!formState.service) {
                             formState.service = service.charAt(0).toUpperCase() + service.slice(1);
@@ -331,7 +345,7 @@ jQuery(document).ready(function($) {
                 } else if (hash.endsWith('-waiting-booking-confirmation')) {
                     // Service-specific waiting confirmation hash (e.g., "roof-waiting-booking-confirmation")
                     const service = hash.replace('-waiting-booking-confirmation', '');
-                    if (['roof', 'windows', 'bathroom', 'siding', 'kitchen', 'decks'].includes(service)) {
+                    if (['roof', 'windows', 'bathroom', 'siding', 'kitchen', 'decks', 'adu'].includes(service)) {
                         // Set the service if not already set
                         if (!formState.service) {
                             formState.service = service.charAt(0).toUpperCase() + service.slice(1);
@@ -357,8 +371,8 @@ jQuery(document).ready(function($) {
         const $form = $('#booking-form');
         
         // Remove existing service and step-specific classes
-        $form.removeClass('service-roof service-windows service-bathroom service-siding service-kitchen service-decks');
-        $form.removeClass('roof-step-0 roof-step-1 roof-step-2 windows-step-0 windows-step-1 windows-step-2a windows-step-2b bathroom-step-0 bathroom-step-1 siding-step-0 siding-step-1 siding-step-2 kitchen-step-0 kitchen-step-1 kitchen-step-2 decks-step-0 decks-step-1 decks-step-2');
+        $form.removeClass('service-roof service-windows service-bathroom service-siding service-kitchen service-decks service-adu');
+        $form.removeClass('roof-step-0 roof-step-1 roof-step-2 windows-step-0 windows-step-1 windows-step-2a windows-step-2b bathroom-step-0 bathroom-step-1 siding-step-0 siding-step-1 siding-step-2 kitchen-step-0 kitchen-step-1 kitchen-step-2 decks-step-0 decks-step-1 decks-step-2 adu-step-0 adu-step-1 adu-step-2');
         $form.removeClass('common-step-last fallback-bg');
         
         // Add service-specific class if service is selected
@@ -395,6 +409,8 @@ jQuery(document).ready(function($) {
                     $form.addClass('kitchen-step-2'); // Last kitchen step background
                 } else if (service === 'Decks') {
                     $form.addClass('decks-step-2'); // Last decks step background
+                } else if (service === 'ADU') {
+                    $form.addClass('adu-step-2'); // Last ADU step background
                 }
             } else {
                 // For service-specific steps, use step-specific backgrounds
@@ -456,6 +472,15 @@ jQuery(document).ready(function($) {
                         $form.addClass('decks-step-1'); // Replace/Repair question
                     } else if (stepId === 'decks_material') {
                         $form.addClass('decks-step-2'); // Material selection question
+                    }
+                }
+                
+                // Add step-specific background for ADU service
+                if (service === 'ADU' && stepId) {
+                    if (stepId === 'adu_action') {
+                        $form.addClass('adu-step-1'); // Replace/Repair question
+                    } else if (stepId === 'adu_type') {
+                        $form.addClass('adu-step-2'); // Type selection question
                     }
                 }
             }
@@ -653,7 +678,8 @@ jQuery(document).ready(function($) {
             'bathroom_option',
             'siding_option', 'siding_material',
             'kitchen_action', 'kitchen_component',
-            'decks_action', 'decks_material'
+            'decks_action', 'decks_material',
+            'adu_action', 'adu_type'
         ];
         const shouldAutoAdvance = autoAdvanceSteps.includes(step.id);
         
@@ -1023,13 +1049,14 @@ jQuery(document).ready(function($) {
                 }
                 // Sync all service-specific fields from formState to hidden fields
                 const serviceFields = [
-                    'roof_zip', 'windows_zip', 'bathroom_zip', 'siding_zip', 'kitchen_zip', 'decks_zip',
+                    'roof_zip', 'windows_zip', 'bathroom_zip', 'siding_zip', 'kitchen_zip', 'decks_zip', 'adu_zip',
                     'roof_action', 'roof_material',
                     'windows_action', 'windows_replace_qty', 'windows_repair_needed',
                     'bathroom_option',
                     'siding_option', 'siding_material',
                     'kitchen_action', 'kitchen_component',
-                    'decks_action', 'decks_material'
+                    'decks_action', 'decks_material',
+                    'adu_action', 'adu_type'
                 ];
                 serviceFields.forEach(function(field) {
                     if (formState[field] !== undefined) {
@@ -1765,19 +1792,14 @@ jQuery(document).ready(function($) {
             const serviceAutoSelected = getServiceFromURL() !== null;
             const currentStep = CONFIG.steps[currentStepIndex];
             
-            // If service was auto-selected and we're on zip code step or any service-dependent step,
+            // If we're on the first service-specific step and service was auto-selected,
             // go back to landing page instead of service selection
             if (serviceAutoSelected && formState.service && currentStep && 
-                currentStep.depends_on && currentStep.depends_on.includes('service')) {
+                currentStep.depends_on && currentStep.depends_on[0] === 'service') {
                 
-                // Find zip code step index
-                const zipCodeStepIndex = CONFIG.steps.findIndex(step => 
-                    step.id === 'zip_code' || 
-                    (step.depends_on && step.depends_on.length === 1 && step.depends_on[0] === 'service')
-                );
-                
-                // If we're on zip code step or any later service-dependent step, go to landing page
-                if (currentStepIndex >= zipCodeStepIndex) {
+                // Check if this is the first service-specific step
+                const firstServiceStepIndex = findFirstServiceSpecificStep(formState.service);
+                if (currentStepIndex === firstServiceStepIndex) {
                     // Go back to landing page
                     clearFormStateAndRedirect();
                     return;
@@ -1979,7 +2001,9 @@ jQuery(document).ready(function($) {
             case 'windows_zip':
             case 'bathroom_zip':
             case 'siding_zip':
-            case 'kitchen_zip': return '#step2-zip-input, #step4-zip-input, #zip-input';
+            case 'kitchen_zip':
+            case 'decks_zip':
+            case 'adu_zip': return '#step2-zip-input, #step4-zip-input, #zip-input';
             case 'full_name': return '#name-input';
             case 'address': return '#address-input';
             default: return '.form-input';
@@ -2000,7 +2024,8 @@ jQuery(document).ready(function($) {
             'bathroom_option',
             'siding_option', 'siding_material',
             'kitchen_action', 'kitchen_component',
-            'decks_action', 'decks_material'
+            'decks_action', 'decks_material',
+            'adu_action', 'adu_type'
         ];
         
         if (serviceQuestions.includes(stepId)) {

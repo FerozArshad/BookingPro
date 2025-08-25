@@ -238,19 +238,14 @@ class BSP_Ajax {
             SELECT 
                 pm1.meta_value as booking_date,
                 pm2.meta_value as booking_time,
-                pm3.meta_value as company_id,
-                pm4.meta_value as company_ids
+                pm3.meta_value as company_id
             FROM {$wpdb->posts} p
             INNER JOIN {$wpdb->postmeta} pm1 ON p.ID = pm1.post_id AND pm1.meta_key = '_booking_date'
             INNER JOIN {$wpdb->postmeta} pm2 ON p.ID = pm2.post_id AND pm2.meta_key = '_booking_time'
             INNER JOIN {$wpdb->postmeta} pm3 ON p.ID = pm3.post_id AND pm3.meta_key = '_company_id'
-            LEFT JOIN {$wpdb->postmeta} pm4 ON p.ID = pm4.post_id AND pm4.meta_key = '_company_ids'
             WHERE p.post_type = 'bsp_booking'
             AND p.post_status IN ('publish', 'pending')
-            AND (
-                pm3.meta_value IN ({$company_ids_sql})
-                OR pm4.meta_value REGEXP CONCAT('(^|,)', pm3.meta_value, '(,|$)')
-            )
+            AND pm3.meta_value IN ({$company_ids_sql})
             AND pm1.meta_value >= %s
             AND pm1.meta_value <= %s
         ", $date_from, $date_to);
@@ -260,40 +255,19 @@ class BSP_Ajax {
         // Organize results by company ID for fast lookup
         $booked_slots = [];
         foreach ($results as $row) {
-            // Handle both single company_id and comma-separated company_ids
-            $company_ids_to_check = [];
-            
-            // Add primary company ID
-            if (!empty($row->company_id)) {
-                $company_ids_to_check[] = intval($row->company_id);
-            }
-            
-            // Add all company IDs from comma-separated list
-            if (!empty($row->company_ids)) {
-                $additional_ids = array_map('trim', explode(',', $row->company_ids));
-                foreach ($additional_ids as $id) {
-                    if (is_numeric($id)) {
-                        $company_ids_to_check[] = intval($id);
-                    }
-                }
-            }
-            
-            // Remove duplicates
-            $company_ids_to_check = array_unique($company_ids_to_check);
+            $company_id = intval($row->company_id);
             
             // Handle comma-separated dates and times (multiple appointments)
             $dates = array_map('trim', explode(',', $row->booking_date));
             $times = array_map('trim', explode(',', $row->booking_time));
             
-            foreach ($company_ids_to_check as $company_id) {
-                foreach ($dates as $date) {
-                    foreach ($times as $time) {
-                        $slot_key = $date . '_' . $time;
-                        if (!isset($booked_slots[$company_id])) {
-                            $booked_slots[$company_id] = [];
-                        }
-                        $booked_slots[$company_id][] = $slot_key;
+            foreach ($dates as $date) {
+                foreach ($times as $time) {
+                    $slot_key = $date . '_' . $time;
+                    if (!isset($booked_slots[$company_id])) {
+                        $booked_slots[$company_id] = [];
                     }
+                    $booked_slots[$company_id][] = $slot_key;
                 }
             }
         }
@@ -345,13 +319,14 @@ class BSP_Ajax {
         
         // Add service-specific fields from frontend
         $service_fields = [
-            'roof_zip', 'windows_zip', 'bathroom_zip', 'siding_zip', 'kitchen_zip', 'decks_zip',
+            'roof_zip', 'windows_zip', 'bathroom_zip', 'siding_zip', 'kitchen_zip', 'decks_zip', 'adu_zip',
             'roof_action', 'roof_material',
             'windows_action', 'windows_replace_qty', 'windows_repair_needed',
             'bathroom_option',
             'siding_option', 'siding_material', 
             'kitchen_action', 'kitchen_component',
-            'decks_action', 'decks_material'
+            'decks_action', 'decks_material',
+            'adu_action', 'adu_type'
         ];
         
         foreach ($service_fields as $field) {
@@ -380,139 +355,172 @@ class BSP_Ajax {
             wp_send_json_error('Invalid email address.');
         }
         
-        // Process multiple appointments into single booking with comma-separated values
+        // If multiple appointments, create separate booking records for each appointment
         $appointments_json = $_POST['appointments'] ?? '';
         $appointments = json_decode(stripslashes($appointments_json), true);
 
-        $company_ids = [];
-        $company_names = [];
-        $booking_dates = [];
-        $booking_times = [];
+        $created_booking_ids = [];
         
-        if (!empty($appointments) && is_array($appointments) && count($appointments) > 1) {
-            // Multiple appointments - combine all into single booking
-            foreach ($appointments as $appointment) {
+        if (!empty($appointments) && is_array($appointments)) {
+            // Create separate booking for each appointment
+            foreach ($appointments as $index => $appointment) {
                 $company_name = $appointment['company'] ?? $booking_data['company'];
                 $appointment_date = $appointment['date'] ?? $booking_data['selected_date'];
                 $appointment_time = $appointment['time'] ?? $booking_data['selected_time'];
                 $company_id = $appointment['companyId'] ?? $this->get_company_id_by_name($company_name);
                 
-                $company_names[] = $company_name;
-                $company_ids[] = $company_id;
-                $booking_dates[] = $appointment_date;
-                $booking_times[] = $appointment_time;
+                if (function_exists('bsp_debug_log')) {
+                    bsp_debug_log("Creating individual booking", 'BOOKING', [
+                        'appointment_index' => $index,
+                        'company_name' => $company_name,
+                        'company_id' => $company_id,
+                        'date' => $appointment_date,
+                        'time' => $appointment_time
+                    ]);
+                }
+                
+                // Create individual booking post for each appointment
+                $individual_post_data = [
+                    'post_title' => sprintf('Booking - %s - %s - %s', $booking_data['full_name'], $company_name, $appointment_date),
+                    'post_content' => $booking_data['service_details'],
+                    'post_status' => 'publish',
+                    'post_type' => 'bsp_booking',
+                    'meta_input' => [
+                        '_city' => $booking_data['city'],
+                        '_state' => $booking_data['state'],
+                        '_zip_code' => $booking_data['zip_code'],
+                        '_customer_name' => $booking_data['full_name'],
+                        '_customer_email' => $booking_data['email'],
+                        '_customer_phone' => $booking_data['phone'],
+                        '_customer_address' => $booking_data['address'],
+                        '_company_name' => $company_name,
+                        '_company_id' => $company_id,
+                        '_service_type' => $booking_data['service'],
+                        '_booking_date' => $appointment_date,
+                        '_booking_time' => $appointment_time,
+                        '_appointments' => $booking_data['appointments'],
+                        '_specifications' => $this->_generate_specifications_string($_POST),
+                        '_status' => 'pending',
+                        '_created_at' => current_time('mysql'),
+                        '_appointment_group' => 'group_' . time(), // Link related appointments
+                        // Service-specific fields
+                        '_roof_action' => isset($booking_data['roof_action']) ? $booking_data['roof_action'] : '',
+                        '_roof_material' => isset($booking_data['roof_material']) ? $booking_data['roof_material'] : '',
+                        '_windows_action' => isset($booking_data['windows_action']) ? $booking_data['windows_action'] : '',
+                        '_windows_replace_qty' => isset($booking_data['windows_replace_qty']) ? $booking_data['windows_replace_qty'] : '',
+                        '_windows_repair_needed' => isset($booking_data['windows_repair_needed']) ? $booking_data['windows_repair_needed'] : '',
+                        '_bathroom_option' => isset($booking_data['bathroom_option']) ? $booking_data['bathroom_option'] : '',
+                        '_siding_option' => isset($booking_data['siding_option']) ? $booking_data['siding_option'] : '',
+                        '_siding_material' => isset($booking_data['siding_material']) ? $booking_data['siding_material'] : '',
+                        '_kitchen_action' => isset($booking_data['kitchen_action']) ? $booking_data['kitchen_action'] : '',
+                        '_kitchen_component' => isset($booking_data['kitchen_component']) ? $booking_data['kitchen_component'] : '',
+                        '_decks_action' => isset($booking_data['decks_action']) ? $booking_data['decks_action'] : '',
+                        '_decks_material' => isset($booking_data['decks_material']) ? $booking_data['decks_material'] : '',
+                        // Marketing attribution data
+                        '_marketing_source' => $booking_data['source_data']
+                    ]
+                ];
+                
+                $individual_booking_id = wp_insert_post($individual_post_data);
+                
+                if ($individual_booking_id && !is_wp_error($individual_booking_id)) {
+                    $created_booking_ids[] = $individual_booking_id;
+                    
+                    // Set taxonomies for each booking
+                    wp_set_object_terms($individual_booking_id, 'pending', 'bsp_booking_status');
+                    wp_set_object_terms($individual_booking_id, $booking_data['service'], 'bsp_service_type');
+                    
+                    if (function_exists('bsp_debug_log')) {
+                        bsp_debug_log("Individual booking created successfully", 'BOOKING', [
+                            'booking_id' => $individual_booking_id,
+                            'company_id' => $company_id,
+                            'company_name' => $company_name,
+                            'date' => $appointment_date,
+                            'time' => $appointment_time
+                        ]);
+                    }
+                } else {
+                    if (function_exists('bsp_debug_log')) {
+                        bsp_debug_log("Failed to create individual booking", 'BOOKING', [
+                            'error' => is_wp_error($individual_booking_id) ? $individual_booking_id->get_error_message() : 'Unknown error',
+                            'company_name' => $company_name,
+                            'date' => $appointment_date,
+                            'time' => $appointment_time
+                        ]);
+                    }
+                }
             }
-            
-            // Store comma-separated values for multiple companies
-            $booking_data['company'] = implode(', ', $company_names);
-            $booking_data['selected_date'] = implode(', ', $booking_dates);
-            $booking_data['selected_time'] = implode(', ', $booking_times);
-            
         } else {
-            // Single appointment or fallback
-            $single_appointment = !empty($appointments) && is_array($appointments) ? $appointments[0] : null;
-            if ($single_appointment && isset($single_appointment['companyId'])) {
-                $company_ids[] = $single_appointment['companyId'];
-            } else {
-                $company_ids[] = $this->get_company_id_by_name($booking_data['company']);
+            // Single appointment - use the original logic
+            $company_id = $this->get_company_id_by_name($booking_data['company']);
+            
+            // Create booking post
+            $post_data = [
+                'post_title' => sprintf('Booking - %s - %s', $booking_data['full_name'], $booking_data['selected_date']),
+                'post_content' => $booking_data['service_details'],
+                'post_status' => 'publish',
+                'post_type' => 'bsp_booking',
+                'meta_input' => [
+                    '_city' => $booking_data['city'],
+                    '_state' => $booking_data['state'],
+                    '_zip_code' => $booking_data['zip_code'],
+                    '_customer_name' => $booking_data['full_name'],
+                    '_customer_email' => $booking_data['email'],
+                    '_customer_phone' => $booking_data['phone'],
+                    '_customer_address' => $booking_data['address'],
+                    '_company_name' => $booking_data['company'],
+                    '_company_id' => $company_id,
+                    '_service_type' => $booking_data['service'],
+                    '_booking_date' => $booking_data['selected_date'],
+                    '_booking_time' => $booking_data['selected_time'],
+                    '_appointments' => $booking_data['appointments'],
+                    '_specifications' => $this->_generate_specifications_string($_POST),
+                    '_status' => 'pending',
+                    '_created_at' => current_time('mysql'),
+                    // Service-specific fields
+                    '_roof_action' => isset($booking_data['roof_action']) ? $booking_data['roof_action'] : '',
+                    '_roof_material' => isset($booking_data['roof_material']) ? $booking_data['roof_material'] : '',
+                    '_windows_action' => isset($booking_data['windows_action']) ? $booking_data['windows_action'] : '',
+                    '_windows_replace_qty' => isset($booking_data['windows_replace_qty']) ? $booking_data['windows_replace_qty'] : '',
+                    '_windows_repair_needed' => isset($booking_data['windows_repair_needed']) ? $booking_data['windows_repair_needed'] : '',
+                    '_bathroom_option' => isset($booking_data['bathroom_option']) ? $booking_data['bathroom_option'] : '',
+                    '_siding_option' => isset($booking_data['siding_option']) ? $booking_data['siding_option'] : '',
+                    '_siding_material' => isset($booking_data['siding_material']) ? $booking_data['siding_material'] : '',
+                    '_kitchen_action' => isset($booking_data['kitchen_action']) ? $booking_data['kitchen_action'] : '',
+                    '_kitchen_component' => isset($booking_data['kitchen_component']) ? $booking_data['kitchen_component'] : '',
+                    '_decks_action' => isset($booking_data['decks_action']) ? $booking_data['decks_action'] : '',
+                    '_decks_material' => isset($booking_data['decks_material']) ? $booking_data['decks_material'] : '',
+                    // Marketing attribution data
+                    '_marketing_source' => $booking_data['source_data']
+                ]
+            ];
+            
+            $booking_id = wp_insert_post($post_data);
+            
+            if ($booking_id && !is_wp_error($booking_id)) {
+                $created_booking_ids[] = $booking_id;
+                
+                // Set taxonomies
+                wp_set_object_terms($booking_id, 'pending', 'bsp_booking_status');
+                wp_set_object_terms($booking_id, $booking_data['service'], 'bsp_service_type');
             }
-            $company_names[] = $booking_data['company'];
-            $booking_dates[] = $booking_data['selected_date'];
-            $booking_times[] = $booking_data['selected_time'];
-        }
-
-        // Get primary company ID for the main _company_id field
-        $primary_company_id = !empty($company_ids) ? $company_ids[0] : $this->get_company_id_by_name($booking_data['company']);
-        
-        if (function_exists('bsp_debug_log')) {
-            bsp_debug_log("Creating single consolidated booking", 'BOOKING', [
-                'company_names' => $company_names,
-                'company_ids' => $company_ids,
-                'primary_company_id' => $primary_company_id,
-                'booking_dates' => $booking_dates,
-                'booking_times' => $booking_times,
-                'appointment_count' => count($appointments ?: [])
-            ]);
-        }
-
-        // Create single booking post with all appointment data consolidated
-        $post_data = [
-            'post_title' => sprintf('Booking - %s - %s', $booking_data['full_name'], $booking_data['selected_date']),
-            'post_content' => $booking_data['service_details'],
-            'post_status' => 'publish',
-            'post_type' => 'bsp_booking',
-            'meta_input' => [
-                '_city' => $booking_data['city'],
-                '_state' => $booking_data['state'],
-                '_zip_code' => $booking_data['zip_code'],
-                '_customer_name' => $booking_data['full_name'],
-                '_customer_email' => $booking_data['email'],
-                '_customer_phone' => $booking_data['phone'],
-                '_customer_address' => $booking_data['address'],
-                '_company_name' => $booking_data['company'], // Comma-separated company names
-                '_company_id' => $primary_company_id, // Primary company ID for backward compatibility
-                '_company_ids' => implode(',', $company_ids), // All company IDs comma-separated
-                '_service_type' => $booking_data['service'],
-                '_booking_date' => $booking_data['selected_date'], // Comma-separated dates
-                '_booking_time' => $booking_data['selected_time'], // Comma-separated times
-                '_appointments' => $booking_data['appointments'], // Original JSON data
-                '_specifications' => $this->_generate_specifications_string($_POST),
-                '_status' => 'pending',
-                '_created_at' => current_time('mysql'),
-                // Service-specific fields
-                '_roof_action' => isset($booking_data['roof_action']) ? $booking_data['roof_action'] : '',
-                '_roof_material' => isset($booking_data['roof_material']) ? $booking_data['roof_material'] : '',
-                '_windows_action' => isset($booking_data['windows_action']) ? $booking_data['windows_action'] : '',
-                '_windows_replace_qty' => isset($booking_data['windows_replace_qty']) ? $booking_data['windows_replace_qty'] : '',
-                '_windows_repair_needed' => isset($booking_data['windows_repair_needed']) ? $booking_data['windows_repair_needed'] : '',
-                '_bathroom_option' => isset($booking_data['bathroom_option']) ? $booking_data['bathroom_option'] : '',
-                '_siding_option' => isset($booking_data['siding_option']) ? $booking_data['siding_option'] : '',
-                '_siding_material' => isset($booking_data['siding_material']) ? $booking_data['siding_material'] : '',
-                '_kitchen_action' => isset($booking_data['kitchen_action']) ? $booking_data['kitchen_action'] : '',
-                '_kitchen_component' => isset($booking_data['kitchen_component']) ? $booking_data['kitchen_component'] : '',
-                '_decks_action' => isset($booking_data['decks_action']) ? $booking_data['decks_action'] : '',
-                '_decks_material' => isset($booking_data['decks_material']) ? $booking_data['decks_material'] : '',
-                // Marketing attribution data
-                '_marketing_source' => $booking_data['source_data']
-            ]
-        ];
-        
-        $booking_id = wp_insert_post($post_data);
-        
-        if (!$booking_id || is_wp_error($booking_id)) {
-            wp_send_json_error('Failed to create booking: ' . (is_wp_error($booking_id) ? $booking_id->get_error_message() : 'Unknown error'));
         }
         
-        // Set taxonomies
-        wp_set_object_terms($booking_id, 'pending', 'bsp_booking_status');
-        wp_set_object_terms($booking_id, $booking_data['service'], 'bsp_service_type');
-        
-        if (function_exists('bsp_debug_log')) {
-            bsp_debug_log("Single consolidated booking created successfully", 'BOOKING', [
-                'booking_id' => $booking_id,
-                'companies_included' => $booking_data['company'],
-                'total_appointments' => count($appointments ?: [])
-            ]);
+        if (empty($created_booking_ids)) {
+            wp_send_json_error('Failed to create any bookings.');
         }
         
-        // Send notifications for the booking
-        $this->send_booking_notifications($booking_id, $booking_data);
+        // Send notifications for the first booking (or all if needed)
+        $primary_booking_id = $created_booking_ids[0];
+        $this->send_booking_notifications($primary_booking_id, $booking_data);
         
-        // Schedule background Google Sheets processing (60 seconds delay for better user experience)
-        wp_schedule_single_event(time() + 60, 'bsp_send_to_google_sheets_event', array($booking_id));
-        
-        if (function_exists('bsp_debug_log')) {
-            bsp_debug_log("Scheduled background Google Sheets processing", 'GOOGLE_SHEETS', [
-                'booking_id' => $booking_id,
-                'companies_included' => $booking_data['company'],
-                'scheduled_time' => date('Y-m-d H:i:s', time() + 60)
-            ]);
-        }
+        // Send to Google Sheets
+        $this->send_to_google_sheets($primary_booking_id, $booking_data);
 
         wp_send_json_success([
             'message' => 'Booking submitted successfully!',
-            'booking_id' => $booking_id,
-            'companies_included' => $booking_data['company']
+            'booking_ids' => $created_booking_ids,
+            'primary_booking_id' => $primary_booking_id
         ]);
     }
     
@@ -739,28 +747,9 @@ class BSP_Ajax {
     }
 
     /**
-     * @deprecated 2.1.0 Use background processing with bsp_cron_send_to_google_sheets() instead
      * Send booking data to Google Sheets using centralized data manager
-     * 
-     * This method is deprecated and kept for backward compatibility.
-     * Google Sheets integration now uses background processing via WP-Cron.
      */
     private function send_to_google_sheets($booking_id, $booking_data) {
-        if (function_exists('bsp_debug_log')) {
-            bsp_debug_log('DEPRECATED: send_to_google_sheets() called. Use background processing instead.', 'DEPRECATED', [
-                'booking_id' => $booking_id
-            ]);
-        }
-        
-        // For backward compatibility, schedule the background event immediately
-        wp_schedule_single_event(time() + 5, 'bsp_send_to_google_sheets_event', array($booking_id));
-        
-        return;
-        
-        /* DEPRECATED CODE - Moved to background processing
-        $integration_settings = get_option('bsp_integration_settings', []);
-
-        /* DEPRECATED CODE - Moved to background processing
         $integration_settings = get_option('bsp_integration_settings', []);
 
         if (empty($integration_settings['google_sheets_enabled']) || empty($integration_settings['google_sheets_webhook_url'])) {
@@ -827,6 +816,8 @@ class BSP_Ajax {
             'kitchen_component' => sanitize_text_field($data_for_sheets['kitchen_component']),
             'decks_action' => sanitize_text_field($data_for_sheets['decks_action']),
             'decks_material' => sanitize_text_field($data_for_sheets['decks_material']),
+            'adu_action' => sanitize_text_field($data_for_sheets['adu_action']),
+            'adu_type' => sanitize_text_field($data_for_sheets['adu_type']),
             // Handle multiple appointments - send as string to avoid JSON parsing issues
             'appointments' => is_string($data_for_sheets['appointments']) ? 
                 $data_for_sheets['appointments'] : 
@@ -883,7 +874,6 @@ class BSP_Ajax {
                 }
             }
         }
-        */
     }
     
     /**
