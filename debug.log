@@ -1,1 +1,1416 @@
-ÿþ
+ÿþ[2025-08-25 17:50:24] [INIT] [booking-system-pro-final.php:132:__construct] === PLUGIN CONSTRUCTOR START ===
+[2025-08-25 17:50:24] [MEMORY] [booking-system-pro-final.php:87:bsp_memory_log] MEMORY at constructor_start: 4MB (Peak: 4MB)
+[2025-08-25 17:50:24] [INIT] [booking-system-pro-final.php:142:__construct] Plugin constructor completed
+[2025-08-25 17:50:24] [MEMORY] [booking-system-pro-final.php:87:bsp_memory_log] MEMORY at constructor_end: 4MB (Peak: 4MB)
+[2025-08-25 17:50:24] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: plugin_init
+[2025-08-25 17:50:24] [INIT] [booking-system-pro-final.php:155:init] === PLUGIN INITIALIZATION START ===
+[2025-08-25 17:50:24] [MEMORY] [booking-system-pro-final.php:87:bsp_memory_log] MEMORY at init_start: 4MB (Peak: 4MB)
+[2025-08-25 17:50:24] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: load_textdomain
+[2025-08-25 17:50:24] [INIT] [booking-system-pro-final.php:206:load_textdomain] Text domain loaded: Success
+[2025-08-25 17:50:24] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: load_textdomain took 0.0010058879852295 seconds
+[2025-08-25 17:50:24] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_files
+[2025-08-25 17:50:24] [INIT] [booking-system-pro-final.php:212:include_files] Starting file inclusion
+[2025-08-25 17:50:24] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-utilities.php
+[2025-08-25 17:50:24] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-utilities.php
+[2025-08-25 17:50:24] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-utilities.php took 0.0009009838104248 seconds
+[2025-08-25 17:50:24] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-database-unified.php
+[2025-08-25 17:50:24] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-database-unified.php
+[2025-08-25 17:50:24] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-database-unified.php took 0.00092506408691406 seconds
+[2025-08-25 17:50:24] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-post-types.php
+[2025-08-25 17:50:24] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-post-types.php
+[2025-08-25 17:50:24] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-post-types.php took 0.001025915145874 seconds
+[2025-08-25 17:50:24] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-taxonomies.php
+[2025-08-25 17:50:24] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-taxonomies.php
+[2025-08-25 17:50:24] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-taxonomies.php took 0.0012362003326416 seconds
+[2025-08-25 17:50:24] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-frontend.php
+[2025-08-25 17:50:24] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-frontend.php
+[2025-08-25 17:50:24] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-frontend.php took 0.0014739036560059 seconds
+[2025-08-25 17:50:24] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-admin.php
+[2025-08-25 17:50:24] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-admin.php
+[2025-08-25 17:50:24] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-admin.php took 0.0011231899261475 seconds
+[2025-08-25 17:50:24] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-admin-dashboard.php
+[2025-08-25 17:50:24] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-admin-dashboard.php
+[2025-08-25 17:50:24] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-admin-dashboard.php took 0.0013148784637451 seconds
+[2025-08-25 17:50:24] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-admin-bookings.php
+[2025-08-25 17:50:24] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-admin-bookings.php
+[2025-08-25 17:50:24] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-admin-bookings.php took 0.0011358261108398 seconds
+[2025-08-25 17:50:24] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-admin-companies.php
+[2025-08-25 17:50:24] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-admin-companies.php
+[2025-08-25 17:50:24] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-admin-companies.php took 0.000885009765625 seconds
+[2025-08-25 17:50:24] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-admin-settings.php
+[2025-08-25 17:50:24] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-admin-settings.php
+[2025-08-25 17:50:24] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-admin-settings.php took 0.00075602531433105 seconds
+[2025-08-25 17:50:24] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-ajax.php
+[2025-08-25 17:50:24] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-ajax.php
+[2025-08-25 17:50:24] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-ajax.php took 0.00077509880065918 seconds
+[2025-08-25 17:50:24] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-email.php
+[2025-08-25 17:50:24] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-email.php
+[2025-08-25 17:50:24] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-email.php took 0.0010769367218018 seconds
+[2025-08-25 17:50:24] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-data-manager.php
+[2025-08-25 17:50:24] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-data-manager.php
+[2025-08-25 17:50:24] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-data-manager.php took 0.0010581016540527 seconds
+[2025-08-25 17:50:24] [INIT] [booking-system-pro-final.php:234:include_files] File inclusion completed
+[2025-08-25 17:50:24] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_files took 0.023622035980225 seconds
+[2025-08-25 17:50:24] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: init_components
+[2025-08-25 17:50:24] [INIT] [booking-system-pro-final.php:254:init_components] Starting component initialization
+[2025-08-25 17:50:24] [INIT] [booking-system-pro-final.php:259:init_components] BSP_Utilities class available
+[2025-08-25 17:50:24] [DATABASE] [class-database-unified.php:42:__construct] BSP_Database_Unified initialized
+[2025-08-25 17:50:24] [DATABASE] [class-database-unified.php:49:__construct] Database tables initialized | Context: {"bookings":"wp_bsp_bookings","companies":"wp_bsp_companies","services":"wp_bsp_services","customers":"wp_bsp_customers","availability":"wp_bsp_availability","email_logs":"wp_bsp_email_logs","settings":"wp_bsp_settings"}
+[2025-08-25 17:50:24] [INIT] [booking-system-pro-final.php:265:init_components] Database component initialized
+[2025-08-25 17:50:24] [INIT] [booking-system-pro-final.php:273:init_components] Post types component initialized
+[2025-08-25 17:50:24] [INIT] [booking-system-pro-final.php:280:init_components] Taxonomies component initialized
+[2025-08-25 17:50:24] [FRONTEND] [class-frontend.php:21:__construct] BSP_Frontend initialized
+[2025-08-25 17:50:24] [INIT] [booking-system-pro-final.php:288:init_components] Frontend component initialized
+[2025-08-25 17:50:24] [AJAX] [class-ajax.php:21:__construct] BSP_Ajax initialized
+[2025-08-25 17:50:24] [AJAX] [class-ajax.php:37:__construct] AJAX endpoints registered: bsp_get_availability, bsp_submit_booking, bsp_get_slots, bsp_test_webhook
+[2025-08-25 17:50:24] [INIT] [booking-system-pro-final.php:296:init_components] AJAX component initialized
+[2025-08-25 17:50:24] [INIT] [booking-system-pro-final.php:304:init_components] Email component initialized
+[2025-08-25 17:50:24] [INIT] [booking-system-pro-final.php:321:init_components] Component initialization completed
+[2025-08-25 17:50:24] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: init_components took 0.008152961730957 seconds
+[2025-08-25 17:50:24] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: setup_hooks
+[2025-08-25 17:50:24] [INIT] [booking-system-pro-final.php:379:setup_hooks] Setting up hooks
+[2025-08-25 17:50:24] [INIT] [booking-system-pro-final.php:396:setup_hooks] Hooks setup completed
+[2025-08-25 17:50:24] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: setup_hooks took 0.0012152194976807 seconds
+[2025-08-25 17:50:24] [INIT] [booking-system-pro-final.php:401:init_legacy_compatibility] Initializing legacy compatibility
+[2025-08-25 17:50:24] [INIT] [booking-system-pro-final.php:412:init_legacy_compatibility] Created legacy shortcode: booking_system_form
+[2025-08-25 17:50:24] [INIT] [booking-system-pro-final.php:415:init_legacy_compatibility] Legacy compatibility initialized
+[2025-08-25 17:50:24] [TOAST] [booking-system-pro-final.php:733:init_toast_notifications] Toast notification system initialized
+[2025-08-25 17:50:24] [INIT] [booking-system-pro-final.php:177:init] Plugin initialization completed successfully
+[2025-08-25 17:50:24] [MEMORY] [booking-system-pro-final.php:87:bsp_memory_log] MEMORY at init_end: 4MB (Peak: 4MB)
+[2025-08-25 17:50:24] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: plugin_init took 0.040863990783691 seconds
+[2025-08-25 17:50:24] [SYSTEM] [booking-system-pro-final.php:108:bsp_system_info_log] SYSTEM INFO: {"PHP Version":"8.2.27","WordPress Version":"6.8.2","Plugin Version":"2.1.0","Active Theme":"Hello Elementor","Server Software":"nginx\/1.26.1","Memory Limit":"256M","Max Execution Time":"1200","Upload Max Size":"300M","Post Max Size":"1000M"}
+[2025-08-25 17:50:24] [DEBUG] [booking-system-pro-final.php:149:early_debug_init] === EARLY DEBUG INITIALIZATION ===
+[2025-08-25 17:50:24] [HOOK] [booking-system-pro-final.php:419:init_hooks] Additional initialization hooks
+[2025-08-25 17:50:24] [FRONTEND] [class-frontend.php:146:register_shortcodes] Registering frontend shortcodes
+[2025-08-25 17:50:24] [FRONTEND] [class-frontend.php:157:register_shortcodes] Frontend shortcodes registered: booking_form, booking_calendar, booking_services, booking_system_form
+[2025-08-25 17:50:24] [SHORTCODE] [booking-system-pro-final.php:505:has_booking_shortcode] Found shortcode: booking_form
+[2025-08-25 17:50:24] [ASSETS] [booking-system-pro-final.php:430:frontend_assets] Loading frontend assets
+[2025-08-25 17:50:24] [ASSETS] [booking-system-pro-final.php:470:frontend_assets] Frontend assets loaded
+[2025-08-25 17:50:24] [MEMORY] [booking-system-pro-final.php:87:bsp_memory_log] MEMORY at footer: 8MB (Peak: 8MB)
+[2025-08-25 17:50:24] [MEMORY] [booking-system-pro-final.php:87:bsp_memory_log] MEMORY at shutdown: 8MB (Peak: 8MB)
+[2025-08-25 17:50:24] [DEBUG] [booking-system-pro-final.php:544:debug_shutdown] === PLUGIN SHUTDOWN ===
+[2025-08-25 17:50:24] [DEBUG] [booking-system-pro-final.php:548:debug_shutdown] Environment: local
+[2025-08-25 17:50:25] [INIT] [booking-system-pro-final.php:132:__construct] === PLUGIN CONSTRUCTOR START ===
+[2025-08-25 17:50:25] [MEMORY] [booking-system-pro-final.php:87:bsp_memory_log] MEMORY at constructor_start: 4MB (Peak: 4MB)
+[2025-08-25 17:50:25] [INIT] [booking-system-pro-final.php:142:__construct] Plugin constructor completed
+[2025-08-25 17:50:25] [MEMORY] [booking-system-pro-final.php:87:bsp_memory_log] MEMORY at constructor_end: 4MB (Peak: 4MB)
+[2025-08-25 17:50:25] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: plugin_init
+[2025-08-25 17:50:25] [INIT] [booking-system-pro-final.php:155:init] === PLUGIN INITIALIZATION START ===
+[2025-08-25 17:50:25] [MEMORY] [booking-system-pro-final.php:87:bsp_memory_log] MEMORY at init_start: 4MB (Peak: 4MB)
+[2025-08-25 17:50:25] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: load_textdomain
+[2025-08-25 17:50:25] [INIT] [booking-system-pro-final.php:206:load_textdomain] Text domain loaded: Success
+[2025-08-25 17:50:25] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: load_textdomain took 0.001244068145752 seconds
+[2025-08-25 17:50:25] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_files
+[2025-08-25 17:50:25] [INIT] [booking-system-pro-final.php:212:include_files] Starting file inclusion
+[2025-08-25 17:50:25] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-utilities.php
+[2025-08-25 17:50:25] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-utilities.php
+[2025-08-25 17:50:25] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-utilities.php took 0.0020008087158203 seconds
+[2025-08-25 17:50:25] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-database-unified.php
+[2025-08-25 17:50:25] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-database-unified.php
+[2025-08-25 17:50:25] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-database-unified.php took 0.0017390251159668 seconds
+[2025-08-25 17:50:25] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-post-types.php
+[2025-08-25 17:50:25] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-post-types.php
+[2025-08-25 17:50:25] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-post-types.php took 0.0012319087982178 seconds
+[2025-08-25 17:50:25] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-taxonomies.php
+[2025-08-25 17:50:25] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-taxonomies.php
+[2025-08-25 17:50:25] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-taxonomies.php took 0.0010590553283691 seconds
+[2025-08-25 17:50:25] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-frontend.php
+[2025-08-25 17:50:25] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-frontend.php
+[2025-08-25 17:50:25] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-frontend.php took 0.0011110305786133 seconds
+[2025-08-25 17:50:25] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-admin.php
+[2025-08-25 17:50:25] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-admin.php
+[2025-08-25 17:50:25] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-admin.php took 0.0011560916900635 seconds
+[2025-08-25 17:50:25] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-admin-dashboard.php
+[2025-08-25 17:50:25] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-admin-dashboard.php
+[2025-08-25 17:50:25] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-admin-dashboard.php took 0.00094985961914062 seconds
+[2025-08-25 17:50:25] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-admin-bookings.php
+[2025-08-25 17:50:25] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-admin-bookings.php
+[2025-08-25 17:50:25] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-admin-bookings.php took 0.0012819766998291 seconds
+[2025-08-25 17:50:25] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-admin-companies.php
+[2025-08-25 17:50:25] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-admin-companies.php
+[2025-08-25 17:50:25] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-admin-companies.php took 0.001727819442749 seconds
+[2025-08-25 17:50:25] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-admin-settings.php
+[2025-08-25 17:50:25] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-admin-settings.php
+[2025-08-25 17:50:25] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-admin-settings.php took 0.0016460418701172 seconds
+[2025-08-25 17:50:25] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-ajax.php
+[2025-08-25 17:50:25] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-ajax.php
+[2025-08-25 17:50:25] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-ajax.php took 0.0011429786682129 seconds
+[2025-08-25 17:50:25] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-email.php
+[2025-08-25 17:50:25] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-email.php
+[2025-08-25 17:50:25] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-email.php took 0.0010440349578857 seconds
+[2025-08-25 17:50:25] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-data-manager.php
+[2025-08-25 17:50:25] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-data-manager.php
+[2025-08-25 17:50:25] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-data-manager.php took 0.0010221004486084 seconds
+[2025-08-25 17:50:25] [INIT] [booking-system-pro-final.php:234:include_files] File inclusion completed
+[2025-08-25 17:50:25] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_files took 0.02830982208252 seconds
+[2025-08-25 17:50:25] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: init_components
+[2025-08-25 17:50:25] [INIT] [booking-system-pro-final.php:254:init_components] Starting component initialization
+[2025-08-25 17:50:25] [INIT] [booking-system-pro-final.php:259:init_components] BSP_Utilities class available
+[2025-08-25 17:50:25] [DATABASE] [class-database-unified.php:42:__construct] BSP_Database_Unified initialized
+[2025-08-25 17:50:25] [DATABASE] [class-database-unified.php:49:__construct] Database tables initialized | Context: {"bookings":"wp_bsp_bookings","companies":"wp_bsp_companies","services":"wp_bsp_services","customers":"wp_bsp_customers","availability":"wp_bsp_availability","email_logs":"wp_bsp_email_logs","settings":"wp_bsp_settings"}
+[2025-08-25 17:50:25] [INIT] [booking-system-pro-final.php:265:init_components] Database component initialized
+[2025-08-25 17:50:25] [INIT] [booking-system-pro-final.php:273:init_components] Post types component initialized
+[2025-08-25 17:50:25] [INIT] [booking-system-pro-final.php:280:init_components] Taxonomies component initialized
+[2025-08-25 17:50:25] [FRONTEND] [class-frontend.php:21:__construct] BSP_Frontend initialized
+[2025-08-25 17:50:25] [INIT] [booking-system-pro-final.php:288:init_components] Frontend component initialized
+[2025-08-25 17:50:25] [AJAX] [class-ajax.php:21:__construct] BSP_Ajax initialized
+[2025-08-25 17:50:25] [AJAX] [class-ajax.php:37:__construct] AJAX endpoints registered: bsp_get_availability, bsp_submit_booking, bsp_get_slots, bsp_test_webhook
+[2025-08-25 17:50:25] [INIT] [booking-system-pro-final.php:296:init_components] AJAX component initialized
+[2025-08-25 17:50:25] [INIT] [booking-system-pro-final.php:304:init_components] Email component initialized
+[2025-08-25 17:50:25] [INIT] [booking-system-pro-final.php:326:init_admin_components] Initializing admin components
+[2025-08-25 17:50:25] [ADMIN] [class-admin.php:33:__construct] BSP_Admin initialized
+[2025-08-25 17:50:25] [ADMIN] [class-admin.php:61:__construct] Admin hooks and AJAX handlers registered
+[2025-08-25 17:50:25] [INIT] [booking-system-pro-final.php:331:init_admin_components] Admin component initialized
+[2025-08-25 17:50:25] [INIT] [booking-system-pro-final.php:339:init_admin_components] Admin dashboard component initialized
+[2025-08-25 17:50:25] [INIT] [booking-system-pro-final.php:347:init_admin_components] Admin bookings component initialized
+[2025-08-25 17:50:25] [INIT] [booking-system-pro-final.php:355:init_admin_components] Admin companies component initialized
+[2025-08-25 17:50:25] [INIT] [booking-system-pro-final.php:363:init_admin_components] Admin settings component initialized
+[2025-08-25 17:50:25] [INIT] [booking-system-pro-final.php:371:init_admin_components] Data manager component initialized
+[2025-08-25 17:50:25] [INIT] [booking-system-pro-final.php:321:init_components] Component initialization completed
+[2025-08-25 17:50:25] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: init_components took 0.016410112380981 seconds
+[2025-08-25 17:50:25] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: setup_hooks
+[2025-08-25 17:50:25] [INIT] [booking-system-pro-final.php:379:setup_hooks] Setting up hooks
+[2025-08-25 17:50:25] [INIT] [booking-system-pro-final.php:396:setup_hooks] Hooks setup completed
+[2025-08-25 17:50:25] [INIT] [booking-system-pro-final.php:132:__construct] === PLUGIN CONSTRUCTOR START ===
+[2025-08-25 17:50:25] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: setup_hooks took 0.0023980140686035 seconds
+[2025-08-25 17:50:25] [INIT] [booking-system-pro-final.php:401:init_legacy_compatibility] Initializing legacy compatibility
+[2025-08-25 17:50:25] [MEMORY] [booking-system-pro-final.php:87:bsp_memory_log] MEMORY at constructor_start: 6MB (Peak: 6MB)
+[2025-08-25 17:50:25] [INIT] [booking-system-pro-final.php:412:init_legacy_compatibility] Created legacy shortcode: booking_system_form
+[2025-08-25 17:50:25] [INIT] [booking-system-pro-final.php:415:init_legacy_compatibility] Legacy compatibility initialized
+[2025-08-25 17:50:25] [INIT] [booking-system-pro-final.php:142:__construct] Plugin constructor completed
+[2025-08-25 17:50:25] [MEMORY] [booking-system-pro-final.php:87:bsp_memory_log] MEMORY at constructor_end: 6MB (Peak: 6MB)
+[2025-08-25 17:50:25] [TOAST] [booking-system-pro-final.php:733:init_toast_notifications] Toast notification system initialized
+[2025-08-25 17:50:25] [INIT] [booking-system-pro-final.php:177:init] Plugin initialization completed successfully
+[2025-08-25 17:50:25] [MEMORY] [booking-system-pro-final.php:87:bsp_memory_log] MEMORY at init_end: 4MB (Peak: 4MB)
+[2025-08-25 17:50:25] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: plugin_init took 0.057185173034668 seconds
+[2025-08-25 17:50:25] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: plugin_init
+[2025-08-25 17:50:25] [INIT] [booking-system-pro-final.php:155:init] === PLUGIN INITIALIZATION START ===
+[2025-08-25 17:50:25] [MEMORY] [booking-system-pro-final.php:87:bsp_memory_log] MEMORY at init_start: 6MB (Peak: 6MB)
+[2025-08-25 17:50:25] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: load_textdomain
+[2025-08-25 17:50:25] [INIT] [booking-system-pro-final.php:206:load_textdomain] Text domain loaded: Success
+[2025-08-25 17:50:25] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: load_textdomain took 0.00097107887268066 seconds
+[2025-08-25 17:50:25] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_files
+[2025-08-25 17:50:25] [INIT] [booking-system-pro-final.php:212:include_files] Starting file inclusion
+[2025-08-25 17:50:25] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-utilities.php
+[2025-08-25 17:50:25] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-utilities.php
+[2025-08-25 17:50:25] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-utilities.php took 0.00082206726074219 seconds
+[2025-08-25 17:50:25] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-database-unified.php
+[2025-08-25 17:50:25] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-database-unified.php
+[2025-08-25 17:50:25] [SYSTEM] [booking-system-pro-final.php:108:bsp_system_info_log] SYSTEM INFO: {"PHP Version":"8.2.27","WordPress Version":"6.8.2","Plugin Version":"2.1.0","Active Theme":"Hello Elementor","Server Software":"nginx\/1.26.1","Memory Limit":"256M","Max Execution Time":"1200","Upload Max Size":"300M","Post Max Size":"1000M"}
+[2025-08-25 17:50:25] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-database-unified.php took 0.0010161399841309 seconds
+[2025-08-25 17:50:25] [DEBUG] [booking-system-pro-final.php:149:early_debug_init] === EARLY DEBUG INITIALIZATION ===
+[2025-08-25 17:50:25] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-post-types.php
+[2025-08-25 17:50:25] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-post-types.php
+[2025-08-25 17:50:25] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-post-types.php took 0.0015020370483398 seconds
+[2025-08-25 17:50:25] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-taxonomies.php
+[2025-08-25 17:50:25] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-taxonomies.php
+[2025-08-25 17:50:25] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-taxonomies.php took 0.0010778903961182 seconds
+[2025-08-25 17:50:25] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-frontend.php
+[2025-08-25 17:50:25] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-frontend.php
+[2025-08-25 17:50:25] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-frontend.php took 0.0022449493408203 seconds
+[2025-08-25 17:50:25] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-admin.php
+[2025-08-25 17:50:25] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-admin.php
+[2025-08-25 17:50:25] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-admin.php took 0.0010740756988525 seconds
+[2025-08-25 17:50:25] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-admin-dashboard.php
+[2025-08-25 17:50:25] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-admin-dashboard.php
+[2025-08-25 17:50:25] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-admin-dashboard.php took 0.0011210441589355 seconds
+[2025-08-25 17:50:25] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-admin-bookings.php
+[2025-08-25 17:50:25] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-admin-bookings.php
+[2025-08-25 17:50:25] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-admin-bookings.php took 0.0010349750518799 seconds
+[2025-08-25 17:50:25] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-admin-companies.php
+[2025-08-25 17:50:25] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-admin-companies.php
+[2025-08-25 17:50:25] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-admin-companies.php took 0.001039981842041 seconds
+[2025-08-25 17:50:25] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-admin-settings.php
+[2025-08-25 17:50:25] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-admin-settings.php
+[2025-08-25 17:50:25] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-admin-settings.php took 0.0010387897491455 seconds
+[2025-08-25 17:50:25] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-ajax.php
+[2025-08-25 17:50:25] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-ajax.php
+[2025-08-25 17:50:25] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-ajax.php took 0.001413106918335 seconds
+[2025-08-25 17:50:25] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-email.php
+[2025-08-25 17:50:25] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-email.php
+[2025-08-25 17:50:25] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-email.php took 0.0011091232299805 seconds
+[2025-08-25 17:50:25] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-data-manager.php
+[2025-08-25 17:50:25] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-data-manager.php
+[2025-08-25 17:50:25] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-data-manager.php took 0.0030629634857178 seconds
+[2025-08-25 17:50:25] [INIT] [booking-system-pro-final.php:234:include_files] File inclusion completed
+[2025-08-25 17:50:25] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_files took 0.030505895614624 seconds
+[2025-08-25 17:50:25] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: init_components
+[2025-08-25 17:50:25] [INIT] [booking-system-pro-final.php:254:init_components] Starting component initialization
+[2025-08-25 17:50:25] [INIT] [booking-system-pro-final.php:259:init_components] BSP_Utilities class available
+[2025-08-25 17:50:25] [DATABASE] [class-database-unified.php:42:__construct] BSP_Database_Unified initialized
+[2025-08-25 17:50:25] [DATABASE] [class-database-unified.php:49:__construct] Database tables initialized | Context: {"bookings":"wp_bsp_bookings","companies":"wp_bsp_companies","services":"wp_bsp_services","customers":"wp_bsp_customers","availability":"wp_bsp_availability","email_logs":"wp_bsp_email_logs","settings":"wp_bsp_settings"}
+[2025-08-25 17:50:25] [INIT] [booking-system-pro-final.php:265:init_components] Database component initialized
+[2025-08-25 17:50:25] [INIT] [booking-system-pro-final.php:273:init_components] Post types component initialized
+[2025-08-25 17:50:25] [INIT] [booking-system-pro-final.php:280:init_components] Taxonomies component initialized
+[2025-08-25 17:50:25] [FRONTEND] [class-frontend.php:21:__construct] BSP_Frontend initialized
+[2025-08-25 17:50:25] [INIT] [booking-system-pro-final.php:288:init_components] Frontend component initialized
+[2025-08-25 17:50:25] [AJAX] [class-ajax.php:21:__construct] BSP_Ajax initialized
+[2025-08-25 17:50:25] [AJAX] [class-ajax.php:37:__construct] AJAX endpoints registered: bsp_get_availability, bsp_submit_booking, bsp_get_slots, bsp_test_webhook
+[2025-08-25 17:50:25] [INIT] [booking-system-pro-final.php:296:init_components] AJAX component initialized
+[2025-08-25 17:50:25] [INIT] [booking-system-pro-final.php:304:init_components] Email component initialized
+[2025-08-25 17:50:25] [INIT] [booking-system-pro-final.php:326:init_admin_components] Initializing admin components
+[2025-08-25 17:50:25] [ADMIN] [class-admin.php:33:__construct] BSP_Admin initialized
+[2025-08-25 17:50:25] [ADMIN] [class-admin.php:61:__construct] Admin hooks and AJAX handlers registered
+[2025-08-25 17:50:25] [INIT] [booking-system-pro-final.php:331:init_admin_components] Admin component initialized
+[2025-08-25 17:50:25] [INIT] [booking-system-pro-final.php:339:init_admin_components] Admin dashboard component initialized
+[2025-08-25 17:50:25] [INIT] [booking-system-pro-final.php:347:init_admin_components] Admin bookings component initialized
+[2025-08-25 17:50:25] [INIT] [booking-system-pro-final.php:355:init_admin_components] Admin companies component initialized
+[2025-08-25 17:50:25] [INIT] [booking-system-pro-final.php:363:init_admin_components] Admin settings component initialized
+[2025-08-25 17:50:25] [INIT] [booking-system-pro-final.php:371:init_admin_components] Data manager component initialized
+[2025-08-25 17:50:25] [INIT] [booking-system-pro-final.php:321:init_components] Component initialization completed
+[2025-08-25 17:50:25] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: init_components took 0.016976118087769 seconds
+[2025-08-25 17:50:25] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: setup_hooks
+[2025-08-25 17:50:25] [INIT] [booking-system-pro-final.php:379:setup_hooks] Setting up hooks
+[2025-08-25 17:50:25] [INIT] [booking-system-pro-final.php:396:setup_hooks] Hooks setup completed
+[2025-08-25 17:50:25] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: setup_hooks took 0.0014791488647461 seconds
+[2025-08-25 17:50:25] [INIT] [booking-system-pro-final.php:401:init_legacy_compatibility] Initializing legacy compatibility
+[2025-08-25 17:50:25] [INIT] [booking-system-pro-final.php:412:init_legacy_compatibility] Created legacy shortcode: booking_system_form
+[2025-08-25 17:50:25] [INIT] [booking-system-pro-final.php:415:init_legacy_compatibility] Legacy compatibility initialized
+[2025-08-25 17:50:25] [TOAST] [booking-system-pro-final.php:733:init_toast_notifications] Toast notification system initialized
+[2025-08-25 17:50:25] [INIT] [booking-system-pro-final.php:177:init] Plugin initialization completed successfully
+[2025-08-25 17:50:25] [MEMORY] [booking-system-pro-final.php:87:bsp_memory_log] MEMORY at init_end: 6MB (Peak: 6MB)
+[2025-08-25 17:50:25] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: plugin_init took 0.057168960571289 seconds
+[2025-08-25 17:50:25] [SYSTEM] [booking-system-pro-final.php:108:bsp_system_info_log] SYSTEM INFO: {"PHP Version":"8.2.27","WordPress Version":"6.8.2","Plugin Version":"2.1.0","Active Theme":"Hello Elementor","Server Software":"nginx\/1.26.1","Memory Limit":"256M","Max Execution Time":"1200","Upload Max Size":"300M","Post Max Size":"1000M"}
+[2025-08-25 17:50:25] [DEBUG] [booking-system-pro-final.php:149:early_debug_init] === EARLY DEBUG INITIALIZATION ===
+[2025-08-25 17:50:25] [HOOK] [booking-system-pro-final.php:419:init_hooks] Additional initialization hooks
+[2025-08-25 17:50:25] [FRONTEND] [class-frontend.php:146:register_shortcodes] Registering frontend shortcodes
+[2025-08-25 17:50:25] [FRONTEND] [class-frontend.php:157:register_shortcodes] Frontend shortcodes registered: booking_form, booking_calendar, booking_services, booking_system_form
+[2025-08-25 17:50:25] [HOOK] [booking-system-pro-final.php:424:admin_init] Admin initialization
+[2025-08-25 17:50:25] [MEMORY] [booking-system-pro-final.php:87:bsp_memory_log] MEMORY at shutdown: 4MB (Peak: 4MB)
+[2025-08-25 17:50:25] [DEBUG] [booking-system-pro-final.php:544:debug_shutdown] === PLUGIN SHUTDOWN ===
+[2025-08-25 17:50:25] [DEBUG] [booking-system-pro-final.php:548:debug_shutdown] Environment: local
+[2025-08-25 17:50:25] [HOOK] [booking-system-pro-final.php:419:init_hooks] Additional initialization hooks
+[2025-08-25 17:50:25] [FRONTEND] [class-frontend.php:146:register_shortcodes] Registering frontend shortcodes
+[2025-08-25 17:50:25] [FRONTEND] [class-frontend.php:157:register_shortcodes] Frontend shortcodes registered: booking_form, booking_calendar, booking_services, booking_system_form
+[2025-08-25 17:50:25] [HOOK] [booking-system-pro-final.php:424:admin_init] Admin initialization
+[2025-08-25 17:50:25] [MEMORY] [booking-system-pro-final.php:87:bsp_memory_log] MEMORY at shutdown: 6MB (Peak: 6MB)
+[2025-08-25 17:50:25] [DEBUG] [booking-system-pro-final.php:544:debug_shutdown] === PLUGIN SHUTDOWN ===
+[2025-08-25 17:50:25] [DEBUG] [booking-system-pro-final.php:548:debug_shutdown] Environment: local
+[2025-08-25 17:50:32] [INIT] [booking-system-pro-final.php:132:__construct] === PLUGIN CONSTRUCTOR START ===
+[2025-08-25 17:50:32] [MEMORY] [booking-system-pro-final.php:87:bsp_memory_log] MEMORY at constructor_start: 4MB (Peak: 4MB)
+[2025-08-25 17:50:32] [INIT] [booking-system-pro-final.php:142:__construct] Plugin constructor completed
+[2025-08-25 17:50:32] [MEMORY] [booking-system-pro-final.php:87:bsp_memory_log] MEMORY at constructor_end: 4MB (Peak: 4MB)
+[2025-08-25 17:50:32] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: plugin_init
+[2025-08-25 17:50:32] [INIT] [booking-system-pro-final.php:155:init] === PLUGIN INITIALIZATION START ===
+[2025-08-25 17:50:32] [MEMORY] [booking-system-pro-final.php:87:bsp_memory_log] MEMORY at init_start: 4MB (Peak: 4MB)
+[2025-08-25 17:50:32] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: load_textdomain
+[2025-08-25 17:50:32] [INIT] [booking-system-pro-final.php:206:load_textdomain] Text domain loaded: Success
+[2025-08-25 17:50:32] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: load_textdomain took 0.0010671615600586 seconds
+[2025-08-25 17:50:32] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_files
+[2025-08-25 17:50:32] [INIT] [booking-system-pro-final.php:212:include_files] Starting file inclusion
+[2025-08-25 17:50:32] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-utilities.php
+[2025-08-25 17:50:32] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-utilities.php
+[2025-08-25 17:50:32] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-utilities.php took 0.0010278224945068 seconds
+[2025-08-25 17:50:32] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-database-unified.php
+[2025-08-25 17:50:32] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-database-unified.php
+[2025-08-25 17:50:32] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-database-unified.php took 0.0010430812835693 seconds
+[2025-08-25 17:50:32] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-post-types.php
+[2025-08-25 17:50:32] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-post-types.php
+[2025-08-25 17:50:32] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-post-types.php took 0.0011768341064453 seconds
+[2025-08-25 17:50:32] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-taxonomies.php
+[2025-08-25 17:50:32] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-taxonomies.php
+[2025-08-25 17:50:32] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-taxonomies.php took 0.0010199546813965 seconds
+[2025-08-25 17:50:32] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-frontend.php
+[2025-08-25 17:50:32] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-frontend.php
+[2025-08-25 17:50:32] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-frontend.php took 0.0012640953063965 seconds
+[2025-08-25 17:50:32] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-admin.php
+[2025-08-25 17:50:32] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-admin.php
+[2025-08-25 17:50:32] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-admin.php took 0.0010209083557129 seconds
+[2025-08-25 17:50:32] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-admin-dashboard.php
+[2025-08-25 17:50:32] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-admin-dashboard.php
+[2025-08-25 17:50:32] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-admin-dashboard.php took 0.000823974609375 seconds
+[2025-08-25 17:50:32] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-admin-bookings.php
+[2025-08-25 17:50:32] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-admin-bookings.php
+[2025-08-25 17:50:32] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-admin-bookings.php took 0.0011210441589355 seconds
+[2025-08-25 17:50:32] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-admin-companies.php
+[2025-08-25 17:50:32] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-admin-companies.php
+[2025-08-25 17:50:32] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-admin-companies.php took 0.0010569095611572 seconds
+[2025-08-25 17:50:32] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-admin-settings.php
+[2025-08-25 17:50:32] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-admin-settings.php
+[2025-08-25 17:50:32] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-admin-settings.php took 0.0013840198516846 seconds
+[2025-08-25 17:50:32] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-ajax.php
+[2025-08-25 17:50:32] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-ajax.php
+[2025-08-25 17:50:32] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-ajax.php took 0.00094008445739746 seconds
+[2025-08-25 17:50:32] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-email.php
+[2025-08-25 17:50:32] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-email.php
+[2025-08-25 17:50:32] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-email.php took 0.0011849403381348 seconds
+[2025-08-25 17:50:32] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-data-manager.php
+[2025-08-25 17:50:32] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-data-manager.php
+[2025-08-25 17:50:32] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-data-manager.php took 0.0013141632080078 seconds
+[2025-08-25 17:50:32] [INIT] [booking-system-pro-final.php:234:include_files] File inclusion completed
+[2025-08-25 17:50:32] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_files took 0.023979902267456 seconds
+[2025-08-25 17:50:32] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: init_components
+[2025-08-25 17:50:32] [INIT] [booking-system-pro-final.php:254:init_components] Starting component initialization
+[2025-08-25 17:50:32] [INIT] [booking-system-pro-final.php:259:init_components] BSP_Utilities class available
+[2025-08-25 17:50:32] [DATABASE] [class-database-unified.php:42:__construct] BSP_Database_Unified initialized
+[2025-08-25 17:50:32] [DATABASE] [class-database-unified.php:49:__construct] Database tables initialized | Context: {"bookings":"wp_bsp_bookings","companies":"wp_bsp_companies","services":"wp_bsp_services","customers":"wp_bsp_customers","availability":"wp_bsp_availability","email_logs":"wp_bsp_email_logs","settings":"wp_bsp_settings"}
+[2025-08-25 17:50:32] [INIT] [booking-system-pro-final.php:265:init_components] Database component initialized
+[2025-08-25 17:50:32] [INIT] [booking-system-pro-final.php:273:init_components] Post types component initialized
+[2025-08-25 17:50:32] [INIT] [booking-system-pro-final.php:280:init_components] Taxonomies component initialized
+[2025-08-25 17:50:32] [FRONTEND] [class-frontend.php:21:__construct] BSP_Frontend initialized
+[2025-08-25 17:50:32] [INIT] [booking-system-pro-final.php:288:init_components] Frontend component initialized
+[2025-08-25 17:50:32] [AJAX] [class-ajax.php:21:__construct] BSP_Ajax initialized
+[2025-08-25 17:50:32] [AJAX] [class-ajax.php:37:__construct] AJAX endpoints registered: bsp_get_availability, bsp_submit_booking, bsp_get_slots, bsp_test_webhook
+[2025-08-25 17:50:32] [INIT] [booking-system-pro-final.php:296:init_components] AJAX component initialized
+[2025-08-25 17:50:32] [INIT] [booking-system-pro-final.php:304:init_components] Email component initialized
+[2025-08-25 17:50:32] [INIT] [booking-system-pro-final.php:321:init_components] Component initialization completed
+[2025-08-25 17:50:32] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: init_components took 0.0078089237213135 seconds
+[2025-08-25 17:50:32] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: setup_hooks
+[2025-08-25 17:50:32] [INIT] [booking-system-pro-final.php:379:setup_hooks] Setting up hooks
+[2025-08-25 17:50:32] [INIT] [booking-system-pro-final.php:396:setup_hooks] Hooks setup completed
+[2025-08-25 17:50:32] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: setup_hooks took 0.0016078948974609 seconds
+[2025-08-25 17:50:32] [INIT] [booking-system-pro-final.php:401:init_legacy_compatibility] Initializing legacy compatibility
+[2025-08-25 17:50:32] [INIT] [booking-system-pro-final.php:412:init_legacy_compatibility] Created legacy shortcode: booking_system_form
+[2025-08-25 17:50:32] [INIT] [booking-system-pro-final.php:415:init_legacy_compatibility] Legacy compatibility initialized
+[2025-08-25 17:50:32] [TOAST] [booking-system-pro-final.php:733:init_toast_notifications] Toast notification system initialized
+[2025-08-25 17:50:32] [INIT] [booking-system-pro-final.php:177:init] Plugin initialization completed successfully
+[2025-08-25 17:50:32] [MEMORY] [booking-system-pro-final.php:87:bsp_memory_log] MEMORY at init_end: 4MB (Peak: 4MB)
+[2025-08-25 17:50:32] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: plugin_init took 0.04283881187439 seconds
+[2025-08-25 17:50:32] [SYSTEM] [booking-system-pro-final.php:108:bsp_system_info_log] SYSTEM INFO: {"PHP Version":"8.2.27","WordPress Version":"6.8.2","Plugin Version":"2.1.0","Active Theme":"Hello Elementor","Server Software":"nginx\/1.26.1","Memory Limit":"256M","Max Execution Time":"1200","Upload Max Size":"300M","Post Max Size":"1000M"}
+[2025-08-25 17:50:32] [DEBUG] [booking-system-pro-final.php:149:early_debug_init] === EARLY DEBUG INITIALIZATION ===
+[2025-08-25 17:50:32] [HOOK] [booking-system-pro-final.php:419:init_hooks] Additional initialization hooks
+[2025-08-25 17:50:32] [FRONTEND] [class-frontend.php:146:register_shortcodes] Registering frontend shortcodes
+[2025-08-25 17:50:32] [FRONTEND] [class-frontend.php:157:register_shortcodes] Frontend shortcodes registered: booking_form, booking_calendar, booking_services, booking_system_form
+[2025-08-25 17:50:33] [MEMORY] [booking-system-pro-final.php:87:bsp_memory_log] MEMORY at shutdown: 4MB (Peak: 4MB)
+[2025-08-25 17:50:33] [DEBUG] [booking-system-pro-final.php:544:debug_shutdown] === PLUGIN SHUTDOWN ===
+[2025-08-25 17:50:33] [DEBUG] [booking-system-pro-final.php:548:debug_shutdown] Environment: local
+[2025-08-25 17:52:05] [INIT] [booking-system-pro-final.php:132:__construct] === PLUGIN CONSTRUCTOR START ===
+[2025-08-25 17:52:05] [MEMORY] [booking-system-pro-final.php:87:bsp_memory_log] MEMORY at constructor_start: 4MB (Peak: 4MB)
+[2025-08-25 17:52:05] [INIT] [booking-system-pro-final.php:142:__construct] Plugin constructor completed
+[2025-08-25 17:52:05] [MEMORY] [booking-system-pro-final.php:87:bsp_memory_log] MEMORY at constructor_end: 4MB (Peak: 4MB)
+[2025-08-25 17:52:05] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: plugin_init
+[2025-08-25 17:52:05] [INIT] [booking-system-pro-final.php:155:init] === PLUGIN INITIALIZATION START ===
+[2025-08-25 17:52:05] [MEMORY] [booking-system-pro-final.php:87:bsp_memory_log] MEMORY at init_start: 4MB (Peak: 4MB)
+[2025-08-25 17:52:05] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: load_textdomain
+[2025-08-25 17:52:05] [INIT] [booking-system-pro-final.php:206:load_textdomain] Text domain loaded: Success
+[2025-08-25 17:52:05] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: load_textdomain took 0.00095701217651367 seconds
+[2025-08-25 17:52:05] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_files
+[2025-08-25 17:52:05] [INIT] [booking-system-pro-final.php:212:include_files] Starting file inclusion
+[2025-08-25 17:52:05] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-utilities.php
+[2025-08-25 17:52:05] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-utilities.php
+[2025-08-25 17:52:05] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-utilities.php took 0.0011630058288574 seconds
+[2025-08-25 17:52:05] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-database-unified.php
+[2025-08-25 17:52:05] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-database-unified.php
+[2025-08-25 17:52:05] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-database-unified.php took 0.0012650489807129 seconds
+[2025-08-25 17:52:05] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-post-types.php
+[2025-08-25 17:52:05] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-post-types.php
+[2025-08-25 17:52:05] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-post-types.php took 0.0011119842529297 seconds
+[2025-08-25 17:52:05] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-taxonomies.php
+[2025-08-25 17:52:05] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-taxonomies.php
+[2025-08-25 17:52:05] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-taxonomies.php took 0.001183032989502 seconds
+[2025-08-25 17:52:05] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-frontend.php
+[2025-08-25 17:52:05] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-frontend.php
+[2025-08-25 17:52:05] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-frontend.php took 0.0011489391326904 seconds
+[2025-08-25 17:52:05] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-admin.php
+[2025-08-25 17:52:05] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-admin.php
+[2025-08-25 17:52:05] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-admin.php took 0.0013821125030518 seconds
+[2025-08-25 17:52:05] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-admin-dashboard.php
+[2025-08-25 17:52:05] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-admin-dashboard.php
+[2025-08-25 17:52:05] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-admin-dashboard.php took 0.0012819766998291 seconds
+[2025-08-25 17:52:05] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-admin-bookings.php
+[2025-08-25 17:52:05] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-admin-bookings.php
+[2025-08-25 17:52:05] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-admin-bookings.php took 0.0009920597076416 seconds
+[2025-08-25 17:52:05] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-admin-companies.php
+[2025-08-25 17:52:05] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-admin-companies.php
+[2025-08-25 17:52:05] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-admin-companies.php took 0.0017130374908447 seconds
+[2025-08-25 17:52:05] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-admin-settings.php
+[2025-08-25 17:52:05] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-admin-settings.php
+[2025-08-25 17:52:05] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-admin-settings.php took 0.0014560222625732 seconds
+[2025-08-25 17:52:05] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-ajax.php
+[2025-08-25 17:52:05] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-ajax.php
+[2025-08-25 17:52:05] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-ajax.php took 0.0014309883117676 seconds
+[2025-08-25 17:52:05] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-email.php
+[2025-08-25 17:52:05] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-email.php
+[2025-08-25 17:52:05] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-email.php took 0.0012991428375244 seconds
+[2025-08-25 17:52:05] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-data-manager.php
+[2025-08-25 17:52:05] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-data-manager.php
+[2025-08-25 17:52:05] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-data-manager.php took 0.0011270046234131 seconds
+[2025-08-25 17:52:05] [INIT] [booking-system-pro-final.php:234:include_files] File inclusion completed
+[2025-08-25 17:52:05] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_files took 0.028214931488037 seconds
+[2025-08-25 17:52:05] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: init_components
+[2025-08-25 17:52:05] [INIT] [booking-system-pro-final.php:254:init_components] Starting component initialization
+[2025-08-25 17:52:05] [INIT] [booking-system-pro-final.php:259:init_components] BSP_Utilities class available
+[2025-08-25 17:52:05] [DATABASE] [class-database-unified.php:42:__construct] BSP_Database_Unified initialized
+[2025-08-25 17:52:05] [DATABASE] [class-database-unified.php:49:__construct] Database tables initialized | Context: {"bookings":"wp_bsp_bookings","companies":"wp_bsp_companies","services":"wp_bsp_services","customers":"wp_bsp_customers","availability":"wp_bsp_availability","email_logs":"wp_bsp_email_logs","settings":"wp_bsp_settings"}
+[2025-08-25 17:52:05] [INIT] [booking-system-pro-final.php:265:init_components] Database component initialized
+[2025-08-25 17:52:05] [INIT] [booking-system-pro-final.php:273:init_components] Post types component initialized
+[2025-08-25 17:52:05] [INIT] [booking-system-pro-final.php:280:init_components] Taxonomies component initialized
+[2025-08-25 17:52:05] [FRONTEND] [class-frontend.php:21:__construct] BSP_Frontend initialized
+[2025-08-25 17:52:05] [INIT] [booking-system-pro-final.php:288:init_components] Frontend component initialized
+[2025-08-25 17:52:05] [AJAX] [class-ajax.php:21:__construct] BSP_Ajax initialized
+[2025-08-25 17:52:05] [AJAX] [class-ajax.php:37:__construct] AJAX endpoints registered: bsp_get_availability, bsp_submit_booking, bsp_get_slots, bsp_test_webhook
+[2025-08-25 17:52:05] [INIT] [booking-system-pro-final.php:296:init_components] AJAX component initialized
+[2025-08-25 17:52:05] [INIT] [booking-system-pro-final.php:304:init_components] Email component initialized
+[2025-08-25 17:52:05] [INIT] [booking-system-pro-final.php:321:init_components] Component initialization completed
+[2025-08-25 17:52:05] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: init_components took 0.0098340511322021 seconds
+[2025-08-25 17:52:05] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: setup_hooks
+[2025-08-25 17:52:05] [INIT] [booking-system-pro-final.php:379:setup_hooks] Setting up hooks
+[2025-08-25 17:52:05] [INIT] [booking-system-pro-final.php:396:setup_hooks] Hooks setup completed
+[2025-08-25 17:52:05] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: setup_hooks took 0.0017998218536377 seconds
+[2025-08-25 17:52:05] [INIT] [booking-system-pro-final.php:401:init_legacy_compatibility] Initializing legacy compatibility
+[2025-08-25 17:52:05] [INIT] [booking-system-pro-final.php:412:init_legacy_compatibility] Created legacy shortcode: booking_system_form
+[2025-08-25 17:52:05] [INIT] [booking-system-pro-final.php:415:init_legacy_compatibility] Legacy compatibility initialized
+[2025-08-25 17:52:05] [TOAST] [booking-system-pro-final.php:733:init_toast_notifications] Toast notification system initialized
+[2025-08-25 17:52:05] [INIT] [booking-system-pro-final.php:177:init] Plugin initialization completed successfully
+[2025-08-25 17:52:05] [MEMORY] [booking-system-pro-final.php:87:bsp_memory_log] MEMORY at init_end: 4MB (Peak: 4MB)
+[2025-08-25 17:52:05] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: plugin_init took 0.049093008041382 seconds
+[2025-08-25 17:52:05] [SYSTEM] [booking-system-pro-final.php:108:bsp_system_info_log] SYSTEM INFO: {"PHP Version":"8.2.27","WordPress Version":"6.8.2","Plugin Version":"2.1.0","Active Theme":"Hello Elementor","Server Software":"nginx\/1.26.1","Memory Limit":"256M","Max Execution Time":"1200","Upload Max Size":"300M","Post Max Size":"1000M"}
+[2025-08-25 17:52:05] [DEBUG] [booking-system-pro-final.php:149:early_debug_init] === EARLY DEBUG INITIALIZATION ===
+[2025-08-25 17:52:05] [HOOK] [booking-system-pro-final.php:419:init_hooks] Additional initialization hooks
+[2025-08-25 17:52:05] [FRONTEND] [class-frontend.php:146:register_shortcodes] Registering frontend shortcodes
+[2025-08-25 17:52:05] [FRONTEND] [class-frontend.php:157:register_shortcodes] Frontend shortcodes registered: booking_form, booking_calendar, booking_services, booking_system_form
+[2025-08-25 17:52:06] [SHORTCODE] [booking-system-pro-final.php:505:has_booking_shortcode] Found shortcode: booking_form
+[2025-08-25 17:52:06] [ASSETS] [booking-system-pro-final.php:430:frontend_assets] Loading frontend assets
+[2025-08-25 17:52:06] [ASSETS] [booking-system-pro-final.php:470:frontend_assets] Frontend assets loaded
+[2025-08-25 17:52:06] [MEMORY] [booking-system-pro-final.php:87:bsp_memory_log] MEMORY at footer: 8MB (Peak: 8MB)
+[2025-08-25 17:52:06] [MEMORY] [booking-system-pro-final.php:87:bsp_memory_log] MEMORY at shutdown: 8MB (Peak: 8MB)
+[2025-08-25 17:52:06] [DEBUG] [booking-system-pro-final.php:544:debug_shutdown] === PLUGIN SHUTDOWN ===
+[2025-08-25 17:52:06] [DEBUG] [booking-system-pro-final.php:548:debug_shutdown] Environment: local
+[2025-08-25 17:52:07] [INIT] [booking-system-pro-final.php:132:__construct] === PLUGIN CONSTRUCTOR START ===
+[2025-08-25 17:52:07] [MEMORY] [booking-system-pro-final.php:87:bsp_memory_log] MEMORY at constructor_start: 4MB (Peak: 4MB)
+[2025-08-25 17:52:07] [INIT] [booking-system-pro-final.php:142:__construct] Plugin constructor completed
+[2025-08-25 17:52:07] [MEMORY] [booking-system-pro-final.php:87:bsp_memory_log] MEMORY at constructor_end: 4MB (Peak: 4MB)
+[2025-08-25 17:52:07] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: plugin_init
+[2025-08-25 17:52:07] [INIT] [booking-system-pro-final.php:155:init] === PLUGIN INITIALIZATION START ===
+[2025-08-25 17:52:07] [MEMORY] [booking-system-pro-final.php:87:bsp_memory_log] MEMORY at init_start: 4MB (Peak: 4MB)
+[2025-08-25 17:52:07] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: load_textdomain
+[2025-08-25 17:52:07] [INIT] [booking-system-pro-final.php:206:load_textdomain] Text domain loaded: Success
+[2025-08-25 17:52:07] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: load_textdomain took 0.00097107887268066 seconds
+[2025-08-25 17:52:07] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_files
+[2025-08-25 17:52:07] [INIT] [booking-system-pro-final.php:212:include_files] Starting file inclusion
+[2025-08-25 17:52:07] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-utilities.php
+[2025-08-25 17:52:07] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-utilities.php
+[2025-08-25 17:52:07] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-utilities.php took 0.0012848377227783 seconds
+[2025-08-25 17:52:07] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-database-unified.php
+[2025-08-25 17:52:07] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-database-unified.php
+[2025-08-25 17:52:07] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-database-unified.php took 0.0011088848114014 seconds
+[2025-08-25 17:52:07] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-post-types.php
+[2025-08-25 17:52:07] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-post-types.php
+[2025-08-25 17:52:07] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-post-types.php took 0.0010709762573242 seconds
+[2025-08-25 17:52:07] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-taxonomies.php
+[2025-08-25 17:52:07] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-taxonomies.php
+[2025-08-25 17:52:07] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-taxonomies.php took 0.0017359256744385 seconds
+[2025-08-25 17:52:07] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-frontend.php
+[2025-08-25 17:52:07] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-frontend.php
+[2025-08-25 17:52:07] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-frontend.php took 0.0011582374572754 seconds
+[2025-08-25 17:52:07] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-admin.php
+[2025-08-25 17:52:07] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-admin.php
+[2025-08-25 17:52:07] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-admin.php took 0.0011270046234131 seconds
+[2025-08-25 17:52:07] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-admin-dashboard.php
+[2025-08-25 17:52:07] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-admin-dashboard.php
+[2025-08-25 17:52:07] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-admin-dashboard.php took 0.0010788440704346 seconds
+[2025-08-25 17:52:07] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-admin-bookings.php
+[2025-08-25 17:52:07] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-admin-bookings.php
+[2025-08-25 17:52:07] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-admin-bookings.php took 0.0011301040649414 seconds
+[2025-08-25 17:52:07] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-admin-companies.php
+[2025-08-25 17:52:07] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-admin-companies.php
+[2025-08-25 17:52:07] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-admin-companies.php took 0.0010509490966797 seconds
+[2025-08-25 17:52:07] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-admin-settings.php
+[2025-08-25 17:52:07] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-admin-settings.php
+[2025-08-25 17:52:07] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-admin-settings.php took 0.0010778903961182 seconds
+[2025-08-25 17:52:07] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-ajax.php
+[2025-08-25 17:52:07] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-ajax.php
+[2025-08-25 17:52:07] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-ajax.php took 0.00099802017211914 seconds
+[2025-08-25 17:52:07] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-email.php
+[2025-08-25 17:52:07] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-email.php
+[2025-08-25 17:52:07] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-email.php took 0.0010910034179688 seconds
+[2025-08-25 17:52:07] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-data-manager.php
+[2025-08-25 17:52:07] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-data-manager.php
+[2025-08-25 17:52:07] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-data-manager.php took 0.0010838508605957 seconds
+[2025-08-25 17:52:07] [INIT] [booking-system-pro-final.php:234:include_files] File inclusion completed
+[2025-08-25 17:52:07] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_files took 0.028198957443237 seconds
+[2025-08-25 17:52:07] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: init_components
+[2025-08-25 17:52:07] [INIT] [booking-system-pro-final.php:254:init_components] Starting component initialization
+[2025-08-25 17:52:07] [INIT] [booking-system-pro-final.php:259:init_components] BSP_Utilities class available
+[2025-08-25 17:52:07] [DATABASE] [class-database-unified.php:42:__construct] BSP_Database_Unified initialized
+[2025-08-25 17:52:07] [DATABASE] [class-database-unified.php:49:__construct] Database tables initialized | Context: {"bookings":"wp_bsp_bookings","companies":"wp_bsp_companies","services":"wp_bsp_services","customers":"wp_bsp_customers","availability":"wp_bsp_availability","email_logs":"wp_bsp_email_logs","settings":"wp_bsp_settings"}
+[2025-08-25 17:52:07] [INIT] [booking-system-pro-final.php:265:init_components] Database component initialized
+[2025-08-25 17:52:07] [INIT] [booking-system-pro-final.php:273:init_components] Post types component initialized
+[2025-08-25 17:52:07] [INIT] [booking-system-pro-final.php:280:init_components] Taxonomies component initialized
+[2025-08-25 17:52:07] [FRONTEND] [class-frontend.php:21:__construct] BSP_Frontend initialized
+[2025-08-25 17:52:07] [INIT] [booking-system-pro-final.php:288:init_components] Frontend component initialized
+[2025-08-25 17:52:07] [AJAX] [class-ajax.php:21:__construct] BSP_Ajax initialized
+[2025-08-25 17:52:07] [AJAX] [class-ajax.php:37:__construct] AJAX endpoints registered: bsp_get_availability, bsp_submit_booking, bsp_get_slots, bsp_test_webhook
+[2025-08-25 17:52:07] [INIT] [booking-system-pro-final.php:296:init_components] AJAX component initialized
+[2025-08-25 17:52:07] [INIT] [booking-system-pro-final.php:304:init_components] Email component initialized
+[2025-08-25 17:52:07] [INIT] [booking-system-pro-final.php:326:init_admin_components] Initializing admin components
+[2025-08-25 17:52:07] [ADMIN] [class-admin.php:33:__construct] BSP_Admin initialized
+[2025-08-25 17:52:07] [ADMIN] [class-admin.php:61:__construct] Admin hooks and AJAX handlers registered
+[2025-08-25 17:52:07] [INIT] [booking-system-pro-final.php:331:init_admin_components] Admin component initialized
+[2025-08-25 17:52:07] [INIT] [booking-system-pro-final.php:339:init_admin_components] Admin dashboard component initialized
+[2025-08-25 17:52:07] [INIT] [booking-system-pro-final.php:347:init_admin_components] Admin bookings component initialized
+[2025-08-25 17:52:07] [INIT] [booking-system-pro-final.php:355:init_admin_components] Admin companies component initialized
+[2025-08-25 17:52:07] [INIT] [booking-system-pro-final.php:363:init_admin_components] Admin settings component initialized
+[2025-08-25 17:52:07] [INIT] [booking-system-pro-final.php:371:init_admin_components] Data manager component initialized
+[2025-08-25 17:52:07] [INIT] [booking-system-pro-final.php:321:init_components] Component initialization completed
+[2025-08-25 17:52:07] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: init_components took 0.014940977096558 seconds
+[2025-08-25 17:52:07] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: setup_hooks
+[2025-08-25 17:52:07] [INIT] [booking-system-pro-final.php:379:setup_hooks] Setting up hooks
+[2025-08-25 17:52:07] [INIT] [booking-system-pro-final.php:396:setup_hooks] Hooks setup completed
+[2025-08-25 17:52:07] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: setup_hooks took 0.003737211227417 seconds
+[2025-08-25 17:52:07] [INIT] [booking-system-pro-final.php:401:init_legacy_compatibility] Initializing legacy compatibility
+[2025-08-25 17:52:07] [INIT] [booking-system-pro-final.php:412:init_legacy_compatibility] Created legacy shortcode: booking_system_form
+[2025-08-25 17:52:07] [INIT] [booking-system-pro-final.php:415:init_legacy_compatibility] Legacy compatibility initialized
+[2025-08-25 17:52:07] [TOAST] [booking-system-pro-final.php:733:init_toast_notifications] Toast notification system initialized
+[2025-08-25 17:52:07] [INIT] [booking-system-pro-final.php:177:init] Plugin initialization completed successfully
+[2025-08-25 17:52:07] [INIT] [booking-system-pro-final.php:132:__construct] === PLUGIN CONSTRUCTOR START ===
+[2025-08-25 17:52:07] [MEMORY] [booking-system-pro-final.php:87:bsp_memory_log] MEMORY at init_end: 4MB (Peak: 4MB)
+[2025-08-25 17:52:07] [MEMORY] [booking-system-pro-final.php:87:bsp_memory_log] MEMORY at constructor_start: 6MB (Peak: 6MB)
+[2025-08-25 17:52:07] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: plugin_init took 0.05538010597229 seconds
+[2025-08-25 17:52:07] [INIT] [booking-system-pro-final.php:142:__construct] Plugin constructor completed
+[2025-08-25 17:52:07] [MEMORY] [booking-system-pro-final.php:87:bsp_memory_log] MEMORY at constructor_end: 6MB (Peak: 6MB)
+[2025-08-25 17:52:07] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: plugin_init
+[2025-08-25 17:52:07] [INIT] [booking-system-pro-final.php:155:init] === PLUGIN INITIALIZATION START ===
+[2025-08-25 17:52:07] [MEMORY] [booking-system-pro-final.php:87:bsp_memory_log] MEMORY at init_start: 6MB (Peak: 6MB)
+[2025-08-25 17:52:07] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: load_textdomain
+[2025-08-25 17:52:07] [INIT] [booking-system-pro-final.php:206:load_textdomain] Text domain loaded: Success
+[2025-08-25 17:52:07] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: load_textdomain took 0.0011191368103027 seconds
+[2025-08-25 17:52:07] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_files
+[2025-08-25 17:52:07] [INIT] [booking-system-pro-final.php:212:include_files] Starting file inclusion
+[2025-08-25 17:52:07] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-utilities.php
+[2025-08-25 17:52:07] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-utilities.php
+[2025-08-25 17:52:07] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-utilities.php took 0.001166820526123 seconds
+[2025-08-25 17:52:07] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-database-unified.php
+[2025-08-25 17:52:07] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-database-unified.php
+[2025-08-25 17:52:07] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-database-unified.php took 0.001755952835083 seconds
+[2025-08-25 17:52:07] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-post-types.php
+[2025-08-25 17:52:07] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-post-types.php
+[2025-08-25 17:52:07] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-post-types.php took 0.00089001655578613 seconds
+[2025-08-25 17:52:07] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-taxonomies.php
+[2025-08-25 17:52:07] [SYSTEM] [booking-system-pro-final.php:108:bsp_system_info_log] SYSTEM INFO: {"PHP Version":"8.2.27","WordPress Version":"6.8.2","Plugin Version":"2.1.0","Active Theme":"Hello Elementor","Server Software":"nginx\/1.26.1","Memory Limit":"256M","Max Execution Time":"1200","Upload Max Size":"300M","Post Max Size":"1000M"}
+[2025-08-25 17:52:07] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-taxonomies.php
+[2025-08-25 17:52:07] [DEBUG] [booking-system-pro-final.php:149:early_debug_init] === EARLY DEBUG INITIALIZATION ===
+[2025-08-25 17:52:07] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-taxonomies.php took 0.0010659694671631 seconds
+[2025-08-25 17:52:07] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-frontend.php
+[2025-08-25 17:52:07] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-frontend.php
+[2025-08-25 17:52:07] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-frontend.php took 0.0011959075927734 seconds
+[2025-08-25 17:52:07] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-admin.php
+[2025-08-25 17:52:07] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-admin.php
+[2025-08-25 17:52:07] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-admin.php took 0.0010139942169189 seconds
+[2025-08-25 17:52:07] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-admin-dashboard.php
+[2025-08-25 17:52:07] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-admin-dashboard.php
+[2025-08-25 17:52:07] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-admin-dashboard.php took 0.0011389255523682 seconds
+[2025-08-25 17:52:07] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-admin-bookings.php
+[2025-08-25 17:52:07] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-admin-bookings.php
+[2025-08-25 17:52:07] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-admin-bookings.php took 0.0014331340789795 seconds
+[2025-08-25 17:52:07] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-admin-companies.php
+[2025-08-25 17:52:07] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-admin-companies.php
+[2025-08-25 17:52:07] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-admin-companies.php took 0.0012588500976562 seconds
+[2025-08-25 17:52:07] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-admin-settings.php
+[2025-08-25 17:52:07] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-admin-settings.php
+[2025-08-25 17:52:07] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-admin-settings.php took 0.00095987319946289 seconds
+[2025-08-25 17:52:07] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-ajax.php
+[2025-08-25 17:52:07] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-ajax.php
+[2025-08-25 17:52:07] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-ajax.php took 0.0013539791107178 seconds
+[2025-08-25 17:52:07] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-email.php
+[2025-08-25 17:52:07] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-email.php
+[2025-08-25 17:52:07] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-email.php took 0.001054048538208 seconds
+[2025-08-25 17:52:07] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-data-manager.php
+[2025-08-25 17:52:07] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-data-manager.php
+[2025-08-25 17:52:07] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-data-manager.php took 0.0012149810791016 seconds
+[2025-08-25 17:52:07] [INIT] [booking-system-pro-final.php:234:include_files] File inclusion completed
+[2025-08-25 17:52:07] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_files took 0.031630992889404 seconds
+[2025-08-25 17:52:07] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: init_components
+[2025-08-25 17:52:07] [INIT] [booking-system-pro-final.php:254:init_components] Starting component initialization
+[2025-08-25 17:52:07] [INIT] [booking-system-pro-final.php:259:init_components] BSP_Utilities class available
+[2025-08-25 17:52:07] [DATABASE] [class-database-unified.php:42:__construct] BSP_Database_Unified initialized
+[2025-08-25 17:52:07] [DATABASE] [class-database-unified.php:49:__construct] Database tables initialized | Context: {"bookings":"wp_bsp_bookings","companies":"wp_bsp_companies","services":"wp_bsp_services","customers":"wp_bsp_customers","availability":"wp_bsp_availability","email_logs":"wp_bsp_email_logs","settings":"wp_bsp_settings"}
+[2025-08-25 17:52:07] [INIT] [booking-system-pro-final.php:265:init_components] Database component initialized
+[2025-08-25 17:52:07] [INIT] [booking-system-pro-final.php:273:init_components] Post types component initialized
+[2025-08-25 17:52:07] [INIT] [booking-system-pro-final.php:280:init_components] Taxonomies component initialized
+[2025-08-25 17:52:07] [FRONTEND] [class-frontend.php:21:__construct] BSP_Frontend initialized
+[2025-08-25 17:52:07] [INIT] [booking-system-pro-final.php:288:init_components] Frontend component initialized
+[2025-08-25 17:52:07] [AJAX] [class-ajax.php:21:__construct] BSP_Ajax initialized
+[2025-08-25 17:52:07] [AJAX] [class-ajax.php:37:__construct] AJAX endpoints registered: bsp_get_availability, bsp_submit_booking, bsp_get_slots, bsp_test_webhook
+[2025-08-25 17:52:07] [INIT] [booking-system-pro-final.php:296:init_components] AJAX component initialized
+[2025-08-25 17:52:07] [INIT] [booking-system-pro-final.php:304:init_components] Email component initialized
+[2025-08-25 17:52:07] [INIT] [booking-system-pro-final.php:326:init_admin_components] Initializing admin components
+[2025-08-25 17:52:07] [ADMIN] [class-admin.php:33:__construct] BSP_Admin initialized
+[2025-08-25 17:52:07] [ADMIN] [class-admin.php:61:__construct] Admin hooks and AJAX handlers registered
+[2025-08-25 17:52:07] [INIT] [booking-system-pro-final.php:331:init_admin_components] Admin component initialized
+[2025-08-25 17:52:07] [INIT] [booking-system-pro-final.php:339:init_admin_components] Admin dashboard component initialized
+[2025-08-25 17:52:07] [INIT] [booking-system-pro-final.php:347:init_admin_components] Admin bookings component initialized
+[2025-08-25 17:52:07] [INIT] [booking-system-pro-final.php:355:init_admin_components] Admin companies component initialized
+[2025-08-25 17:52:07] [INIT] [booking-system-pro-final.php:363:init_admin_components] Admin settings component initialized
+[2025-08-25 17:52:07] [INIT] [booking-system-pro-final.php:371:init_admin_components] Data manager component initialized
+[2025-08-25 17:52:07] [INIT] [booking-system-pro-final.php:321:init_components] Component initialization completed
+[2025-08-25 17:52:07] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: init_components took 0.016173839569092 seconds
+[2025-08-25 17:52:07] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: setup_hooks
+[2025-08-25 17:52:07] [INIT] [booking-system-pro-final.php:379:setup_hooks] Setting up hooks
+[2025-08-25 17:52:07] [INIT] [booking-system-pro-final.php:396:setup_hooks] Hooks setup completed
+[2025-08-25 17:52:07] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: setup_hooks took 0.0024411678314209 seconds
+[2025-08-25 17:52:07] [INIT] [booking-system-pro-final.php:401:init_legacy_compatibility] Initializing legacy compatibility
+[2025-08-25 17:52:07] [INIT] [booking-system-pro-final.php:412:init_legacy_compatibility] Created legacy shortcode: booking_system_form
+[2025-08-25 17:52:07] [INIT] [booking-system-pro-final.php:415:init_legacy_compatibility] Legacy compatibility initialized
+[2025-08-25 17:52:07] [TOAST] [booking-system-pro-final.php:733:init_toast_notifications] Toast notification system initialized
+[2025-08-25 17:52:07] [INIT] [booking-system-pro-final.php:177:init] Plugin initialization completed successfully
+[2025-08-25 17:52:07] [MEMORY] [booking-system-pro-final.php:87:bsp_memory_log] MEMORY at init_end: 6MB (Peak: 6MB)
+[2025-08-25 17:52:07] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: plugin_init took 0.058907985687256 seconds
+[2025-08-25 17:52:07] [SYSTEM] [booking-system-pro-final.php:108:bsp_system_info_log] SYSTEM INFO: {"PHP Version":"8.2.27","WordPress Version":"6.8.2","Plugin Version":"2.1.0","Active Theme":"Hello Elementor","Server Software":"nginx\/1.26.1","Memory Limit":"256M","Max Execution Time":"1200","Upload Max Size":"300M","Post Max Size":"1000M"}
+[2025-08-25 17:52:07] [DEBUG] [booking-system-pro-final.php:149:early_debug_init] === EARLY DEBUG INITIALIZATION ===
+[2025-08-25 17:52:07] [HOOK] [booking-system-pro-final.php:419:init_hooks] Additional initialization hooks
+[2025-08-25 17:52:07] [HOOK] [booking-system-pro-final.php:419:init_hooks] Additional initialization hooks
+[2025-08-25 17:52:07] [FRONTEND] [class-frontend.php:146:register_shortcodes] Registering frontend shortcodes
+[2025-08-25 17:52:07] [FRONTEND] [class-frontend.php:157:register_shortcodes] Frontend shortcodes registered: booking_form, booking_calendar, booking_services, booking_system_form
+[2025-08-25 17:52:07] [HOOK] [booking-system-pro-final.php:424:admin_init] Admin initialization
+[2025-08-25 17:52:07] [MEMORY] [booking-system-pro-final.php:87:bsp_memory_log] MEMORY at shutdown: 6MB (Peak: 6MB)
+[2025-08-25 17:52:07] [DEBUG] [booking-system-pro-final.php:544:debug_shutdown] === PLUGIN SHUTDOWN ===
+[2025-08-25 17:52:07] [DEBUG] [booking-system-pro-final.php:548:debug_shutdown] Environment: local
+[2025-08-25 17:52:07] [FRONTEND] [class-frontend.php:146:register_shortcodes] Registering frontend shortcodes
+[2025-08-25 17:52:07] [FRONTEND] [class-frontend.php:157:register_shortcodes] Frontend shortcodes registered: booking_form, booking_calendar, booking_services, booking_system_form
+[2025-08-25 17:52:07] [HOOK] [booking-system-pro-final.php:424:admin_init] Admin initialization
+[2025-08-25 17:52:07] [MEMORY] [booking-system-pro-final.php:87:bsp_memory_log] MEMORY at shutdown: 4MB (Peak: 4MB)
+[2025-08-25 17:52:07] [DEBUG] [booking-system-pro-final.php:544:debug_shutdown] === PLUGIN SHUTDOWN ===
+[2025-08-25 17:52:07] [DEBUG] [booking-system-pro-final.php:548:debug_shutdown] Environment: local
+[2025-08-25 17:52:10] [INIT] [booking-system-pro-final.php:132:__construct] === PLUGIN CONSTRUCTOR START ===
+[2025-08-25 17:52:10] [MEMORY] [booking-system-pro-final.php:87:bsp_memory_log] MEMORY at constructor_start: 4MB (Peak: 4MB)
+[2025-08-25 17:52:10] [INIT] [booking-system-pro-final.php:142:__construct] Plugin constructor completed
+[2025-08-25 17:52:10] [MEMORY] [booking-system-pro-final.php:87:bsp_memory_log] MEMORY at constructor_end: 4MB (Peak: 4MB)
+[2025-08-25 17:52:11] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: plugin_init
+[2025-08-25 17:52:11] [INIT] [booking-system-pro-final.php:155:init] === PLUGIN INITIALIZATION START ===
+[2025-08-25 17:52:11] [MEMORY] [booking-system-pro-final.php:87:bsp_memory_log] MEMORY at init_start: 4MB (Peak: 4MB)
+[2025-08-25 17:52:11] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: load_textdomain
+[2025-08-25 17:52:11] [INIT] [booking-system-pro-final.php:206:load_textdomain] Text domain loaded: Success
+[2025-08-25 17:52:11] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: load_textdomain took 0.0010020732879639 seconds
+[2025-08-25 17:52:11] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_files
+[2025-08-25 17:52:11] [INIT] [booking-system-pro-final.php:212:include_files] Starting file inclusion
+[2025-08-25 17:52:11] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-utilities.php
+[2025-08-25 17:52:11] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-utilities.php
+[2025-08-25 17:52:11] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-utilities.php took 0.0010709762573242 seconds
+[2025-08-25 17:52:11] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-database-unified.php
+[2025-08-25 17:52:11] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-database-unified.php
+[2025-08-25 17:52:11] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-database-unified.php took 0.0012619495391846 seconds
+[2025-08-25 17:52:11] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-post-types.php
+[2025-08-25 17:52:11] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-post-types.php
+[2025-08-25 17:52:11] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-post-types.php took 0.0010581016540527 seconds
+[2025-08-25 17:52:11] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-taxonomies.php
+[2025-08-25 17:52:11] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-taxonomies.php
+[2025-08-25 17:52:11] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-taxonomies.php took 0.00084614753723145 seconds
+[2025-08-25 17:52:11] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-frontend.php
+[2025-08-25 17:52:11] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-frontend.php
+[2025-08-25 17:52:11] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-frontend.php took 0.00085687637329102 seconds
+[2025-08-25 17:52:11] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-admin.php
+[2025-08-25 17:52:11] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-admin.php
+[2025-08-25 17:52:11] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-admin.php took 0.00085592269897461 seconds
+[2025-08-25 17:52:11] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-admin-dashboard.php
+[2025-08-25 17:52:11] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-admin-dashboard.php
+[2025-08-25 17:52:11] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-admin-dashboard.php took 0.00092482566833496 seconds
+[2025-08-25 17:52:11] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-admin-bookings.php
+[2025-08-25 17:52:11] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-admin-bookings.php
+[2025-08-25 17:52:11] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-admin-bookings.php took 0.0013959407806396 seconds
+[2025-08-25 17:52:11] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-admin-companies.php
+[2025-08-25 17:52:11] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-admin-companies.php
+[2025-08-25 17:52:11] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-admin-companies.php took 0.0011188983917236 seconds
+[2025-08-25 17:52:11] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-admin-settings.php
+[2025-08-25 17:52:11] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-admin-settings.php
+[2025-08-25 17:52:11] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-admin-settings.php took 0.00089001655578613 seconds
+[2025-08-25 17:52:11] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-ajax.php
+[2025-08-25 17:52:11] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-ajax.php
+[2025-08-25 17:52:11] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-ajax.php took 0.0011019706726074 seconds
+[2025-08-25 17:52:11] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-email.php
+[2025-08-25 17:52:11] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-email.php
+[2025-08-25 17:52:11] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-email.php took 0.0014479160308838 seconds
+[2025-08-25 17:52:11] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-data-manager.php
+[2025-08-25 17:52:11] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-data-manager.php
+[2025-08-25 17:52:11] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-data-manager.php took 0.0013210773468018 seconds
+[2025-08-25 17:52:11] [INIT] [booking-system-pro-final.php:234:include_files] File inclusion completed
+[2025-08-25 17:52:11] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_files took 0.024630069732666 seconds
+[2025-08-25 17:52:11] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: init_components
+[2025-08-25 17:52:11] [INIT] [booking-system-pro-final.php:254:init_components] Starting component initialization
+[2025-08-25 17:52:11] [INIT] [booking-system-pro-final.php:259:init_components] BSP_Utilities class available
+[2025-08-25 17:52:11] [DATABASE] [class-database-unified.php:42:__construct] BSP_Database_Unified initialized
+[2025-08-25 17:52:11] [DATABASE] [class-database-unified.php:49:__construct] Database tables initialized | Context: {"bookings":"wp_bsp_bookings","companies":"wp_bsp_companies","services":"wp_bsp_services","customers":"wp_bsp_customers","availability":"wp_bsp_availability","email_logs":"wp_bsp_email_logs","settings":"wp_bsp_settings"}
+[2025-08-25 17:52:11] [INIT] [booking-system-pro-final.php:265:init_components] Database component initialized
+[2025-08-25 17:52:11] [INIT] [booking-system-pro-final.php:273:init_components] Post types component initialized
+[2025-08-25 17:52:11] [INIT] [booking-system-pro-final.php:280:init_components] Taxonomies component initialized
+[2025-08-25 17:52:11] [FRONTEND] [class-frontend.php:21:__construct] BSP_Frontend initialized
+[2025-08-25 17:52:11] [INIT] [booking-system-pro-final.php:288:init_components] Frontend component initialized
+[2025-08-25 17:52:11] [AJAX] [class-ajax.php:21:__construct] BSP_Ajax initialized
+[2025-08-25 17:52:11] [AJAX] [class-ajax.php:37:__construct] AJAX endpoints registered: bsp_get_availability, bsp_submit_booking, bsp_get_slots, bsp_test_webhook
+[2025-08-25 17:52:11] [INIT] [booking-system-pro-final.php:296:init_components] AJAX component initialized
+[2025-08-25 17:52:11] [INIT] [booking-system-pro-final.php:304:init_components] Email component initialized
+[2025-08-25 17:52:11] [INIT] [booking-system-pro-final.php:321:init_components] Component initialization completed
+[2025-08-25 17:52:11] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: init_components took 0.0067551136016846 seconds
+[2025-08-25 17:52:11] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: setup_hooks
+[2025-08-25 17:52:11] [INIT] [booking-system-pro-final.php:379:setup_hooks] Setting up hooks
+[2025-08-25 17:52:11] [INIT] [booking-system-pro-final.php:396:setup_hooks] Hooks setup completed
+[2025-08-25 17:52:11] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: setup_hooks took 0.0012340545654297 seconds
+[2025-08-25 17:52:11] [INIT] [booking-system-pro-final.php:401:init_legacy_compatibility] Initializing legacy compatibility
+[2025-08-25 17:52:11] [INIT] [booking-system-pro-final.php:412:init_legacy_compatibility] Created legacy shortcode: booking_system_form
+[2025-08-25 17:52:11] [INIT] [booking-system-pro-final.php:415:init_legacy_compatibility] Legacy compatibility initialized
+[2025-08-25 17:52:11] [TOAST] [booking-system-pro-final.php:733:init_toast_notifications] Toast notification system initialized
+[2025-08-25 17:52:11] [INIT] [booking-system-pro-final.php:177:init] Plugin initialization completed successfully
+[2025-08-25 17:52:11] [MEMORY] [booking-system-pro-final.php:87:bsp_memory_log] MEMORY at init_end: 4MB (Peak: 4MB)
+[2025-08-25 17:52:11] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: plugin_init took 0.041143178939819 seconds
+[2025-08-25 17:52:11] [SYSTEM] [booking-system-pro-final.php:108:bsp_system_info_log] SYSTEM INFO: {"PHP Version":"8.2.27","WordPress Version":"6.8.2","Plugin Version":"2.1.0","Active Theme":"Hello Elementor","Server Software":"nginx\/1.26.1","Memory Limit":"256M","Max Execution Time":"1200","Upload Max Size":"300M","Post Max Size":"1000M"}
+[2025-08-25 17:52:11] [DEBUG] [booking-system-pro-final.php:149:early_debug_init] === EARLY DEBUG INITIALIZATION ===
+[2025-08-25 17:52:11] [HOOK] [booking-system-pro-final.php:419:init_hooks] Additional initialization hooks
+[2025-08-25 17:52:11] [FRONTEND] [class-frontend.php:146:register_shortcodes] Registering frontend shortcodes
+[2025-08-25 17:52:11] [FRONTEND] [class-frontend.php:157:register_shortcodes] Frontend shortcodes registered: booking_form, booking_calendar, booking_services, booking_system_form
+[2025-08-25 17:52:11] [MEMORY] [booking-system-pro-final.php:87:bsp_memory_log] MEMORY at shutdown: 4MB (Peak: 4MB)
+[2025-08-25 17:52:11] [DEBUG] [booking-system-pro-final.php:544:debug_shutdown] === PLUGIN SHUTDOWN ===
+[2025-08-25 17:52:11] [DEBUG] [booking-system-pro-final.php:548:debug_shutdown] Environment: local
+[2025-08-25 17:52:21] [INIT] [booking-system-pro-final.php:132:__construct] === PLUGIN CONSTRUCTOR START ===
+[2025-08-25 17:52:21] [MEMORY] [booking-system-pro-final.php:87:bsp_memory_log] MEMORY at constructor_start: 4MB (Peak: 4MB)
+[2025-08-25 17:52:21] [INIT] [booking-system-pro-final.php:142:__construct] Plugin constructor completed
+[2025-08-25 17:52:21] [MEMORY] [booking-system-pro-final.php:87:bsp_memory_log] MEMORY at constructor_end: 4MB (Peak: 4MB)
+[2025-08-25 17:52:21] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: plugin_init
+[2025-08-25 17:52:21] [INIT] [booking-system-pro-final.php:155:init] === PLUGIN INITIALIZATION START ===
+[2025-08-25 17:52:21] [MEMORY] [booking-system-pro-final.php:87:bsp_memory_log] MEMORY at init_start: 4MB (Peak: 4MB)
+[2025-08-25 17:52:21] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: load_textdomain
+[2025-08-25 17:52:21] [INIT] [booking-system-pro-final.php:206:load_textdomain] Text domain loaded: Success
+[2025-08-25 17:52:21] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: load_textdomain took 0.00091886520385742 seconds
+[2025-08-25 17:52:21] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_files
+[2025-08-25 17:52:21] [INIT] [booking-system-pro-final.php:212:include_files] Starting file inclusion
+[2025-08-25 17:52:21] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-utilities.php
+[2025-08-25 17:52:21] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-utilities.php
+[2025-08-25 17:52:21] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-utilities.php took 0.0012280941009521 seconds
+[2025-08-25 17:52:21] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-database-unified.php
+[2025-08-25 17:52:21] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-database-unified.php
+[2025-08-25 17:52:21] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-database-unified.php took 0.00136399269104 seconds
+[2025-08-25 17:52:21] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-post-types.php
+[2025-08-25 17:52:21] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-post-types.php
+[2025-08-25 17:52:21] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-post-types.php took 0.0012049674987793 seconds
+[2025-08-25 17:52:21] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-taxonomies.php
+[2025-08-25 17:52:21] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-taxonomies.php
+[2025-08-25 17:52:21] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-taxonomies.php took 0.0012099742889404 seconds
+[2025-08-25 17:52:21] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-frontend.php
+[2025-08-25 17:52:21] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-frontend.php
+[2025-08-25 17:52:21] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-frontend.php took 0.0010879039764404 seconds
+[2025-08-25 17:52:21] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-admin.php
+[2025-08-25 17:52:21] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-admin.php
+[2025-08-25 17:52:21] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-admin.php took 0.0012161731719971 seconds
+[2025-08-25 17:52:21] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-admin-dashboard.php
+[2025-08-25 17:52:21] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-admin-dashboard.php
+[2025-08-25 17:52:21] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-admin-dashboard.php took 0.0010089874267578 seconds
+[2025-08-25 17:52:21] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-admin-bookings.php
+[2025-08-25 17:52:21] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-admin-bookings.php
+[2025-08-25 17:52:21] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-admin-bookings.php took 0.0010430812835693 seconds
+[2025-08-25 17:52:21] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-admin-companies.php
+[2025-08-25 17:52:21] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-admin-companies.php
+[2025-08-25 17:52:21] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-admin-companies.php took 0.00095200538635254 seconds
+[2025-08-25 17:52:21] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-admin-settings.php
+[2025-08-25 17:52:21] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-admin-settings.php
+[2025-08-25 17:52:21] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-admin-settings.php took 0.00099802017211914 seconds
+[2025-08-25 17:52:21] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-ajax.php
+[2025-08-25 17:52:21] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-ajax.php
+[2025-08-25 17:52:21] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-ajax.php took 0.00091195106506348 seconds
+[2025-08-25 17:52:21] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-email.php
+[2025-08-25 17:52:21] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-email.php
+[2025-08-25 17:52:21] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-email.php took 0.0017380714416504 seconds
+[2025-08-25 17:52:21] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-data-manager.php
+[2025-08-25 17:52:21] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-data-manager.php
+[2025-08-25 17:52:21] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-data-manager.php took 0.0010378360748291 seconds
+[2025-08-25 17:52:21] [INIT] [booking-system-pro-final.php:234:include_files] File inclusion completed
+[2025-08-25 17:52:21] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_files took 0.024188995361328 seconds
+[2025-08-25 17:52:21] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: init_components
+[2025-08-25 17:52:21] [INIT] [booking-system-pro-final.php:254:init_components] Starting component initialization
+[2025-08-25 17:52:21] [INIT] [booking-system-pro-final.php:259:init_components] BSP_Utilities class available
+[2025-08-25 17:52:21] [DATABASE] [class-database-unified.php:42:__construct] BSP_Database_Unified initialized
+[2025-08-25 17:52:21] [DATABASE] [class-database-unified.php:49:__construct] Database tables initialized | Context: {"bookings":"wp_bsp_bookings","companies":"wp_bsp_companies","services":"wp_bsp_services","customers":"wp_bsp_customers","availability":"wp_bsp_availability","email_logs":"wp_bsp_email_logs","settings":"wp_bsp_settings"}
+[2025-08-25 17:52:21] [INIT] [booking-system-pro-final.php:265:init_components] Database component initialized
+[2025-08-25 17:52:21] [INIT] [booking-system-pro-final.php:273:init_components] Post types component initialized
+[2025-08-25 17:52:21] [INIT] [booking-system-pro-final.php:280:init_components] Taxonomies component initialized
+[2025-08-25 17:52:21] [FRONTEND] [class-frontend.php:21:__construct] BSP_Frontend initialized
+[2025-08-25 17:52:21] [INIT] [booking-system-pro-final.php:288:init_components] Frontend component initialized
+[2025-08-25 17:52:21] [AJAX] [class-ajax.php:21:__construct] BSP_Ajax initialized
+[2025-08-25 17:52:21] [AJAX] [class-ajax.php:37:__construct] AJAX endpoints registered: bsp_get_availability, bsp_submit_booking, bsp_get_slots, bsp_test_webhook
+[2025-08-25 17:52:21] [INIT] [booking-system-pro-final.php:296:init_components] AJAX component initialized
+[2025-08-25 17:52:21] [INIT] [booking-system-pro-final.php:304:init_components] Email component initialized
+[2025-08-25 17:52:21] [INIT] [booking-system-pro-final.php:321:init_components] Component initialization completed
+[2025-08-25 17:52:21] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: init_components took 0.007850170135498 seconds
+[2025-08-25 17:52:21] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: setup_hooks
+[2025-08-25 17:52:21] [INIT] [booking-system-pro-final.php:379:setup_hooks] Setting up hooks
+[2025-08-25 17:52:21] [INIT] [booking-system-pro-final.php:396:setup_hooks] Hooks setup completed
+[2025-08-25 17:52:21] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: setup_hooks took 0.00130295753479 seconds
+[2025-08-25 17:52:21] [INIT] [booking-system-pro-final.php:401:init_legacy_compatibility] Initializing legacy compatibility
+[2025-08-25 17:52:21] [INIT] [booking-system-pro-final.php:412:init_legacy_compatibility] Created legacy shortcode: booking_system_form
+[2025-08-25 17:52:21] [INIT] [booking-system-pro-final.php:415:init_legacy_compatibility] Legacy compatibility initialized
+[2025-08-25 17:52:21] [TOAST] [booking-system-pro-final.php:733:init_toast_notifications] Toast notification system initialized
+[2025-08-25 17:52:21] [INIT] [booking-system-pro-final.php:177:init] Plugin initialization completed successfully
+[2025-08-25 17:52:21] [MEMORY] [booking-system-pro-final.php:87:bsp_memory_log] MEMORY at init_end: 4MB (Peak: 4MB)
+[2025-08-25 17:52:21] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: plugin_init took 0.042227983474731 seconds
+[2025-08-25 17:52:21] [SYSTEM] [booking-system-pro-final.php:108:bsp_system_info_log] SYSTEM INFO: {"PHP Version":"8.2.27","WordPress Version":"6.8.2","Plugin Version":"2.1.0","Active Theme":"Hello Elementor","Server Software":"nginx\/1.26.1","Memory Limit":"256M","Max Execution Time":"1200","Upload Max Size":"300M","Post Max Size":"1000M"}
+[2025-08-25 17:52:21] [DEBUG] [booking-system-pro-final.php:149:early_debug_init] === EARLY DEBUG INITIALIZATION ===
+[2025-08-25 17:52:22] [HOOK] [booking-system-pro-final.php:419:init_hooks] Additional initialization hooks
+[2025-08-25 17:52:22] [FRONTEND] [class-frontend.php:146:register_shortcodes] Registering frontend shortcodes
+[2025-08-25 17:52:22] [FRONTEND] [class-frontend.php:157:register_shortcodes] Frontend shortcodes registered: booking_form, booking_calendar, booking_services, booking_system_form
+[2025-08-25 17:52:22] [SHORTCODE] [booking-system-pro-final.php:505:has_booking_shortcode] Found shortcode: booking_form
+[2025-08-25 17:52:22] [ASSETS] [booking-system-pro-final.php:430:frontend_assets] Loading frontend assets
+[2025-08-25 17:52:22] [ASSETS] [booking-system-pro-final.php:470:frontend_assets] Frontend assets loaded
+[2025-08-25 17:52:22] [MEMORY] [booking-system-pro-final.php:87:bsp_memory_log] MEMORY at footer: 8MB (Peak: 8MB)
+[2025-08-25 17:52:22] [MEMORY] [booking-system-pro-final.php:87:bsp_memory_log] MEMORY at shutdown: 8MB (Peak: 8MB)
+[2025-08-25 17:52:22] [DEBUG] [booking-system-pro-final.php:544:debug_shutdown] === PLUGIN SHUTDOWN ===
+[2025-08-25 17:52:22] [DEBUG] [booking-system-pro-final.php:548:debug_shutdown] Environment: local
+[2025-08-25 17:52:23] [INIT] [booking-system-pro-final.php:132:__construct] === PLUGIN CONSTRUCTOR START ===
+[2025-08-25 17:52:23] [MEMORY] [booking-system-pro-final.php:87:bsp_memory_log] MEMORY at constructor_start: 4MB (Peak: 4MB)
+[2025-08-25 17:52:23] [INIT] [booking-system-pro-final.php:142:__construct] Plugin constructor completed
+[2025-08-25 17:52:23] [MEMORY] [booking-system-pro-final.php:87:bsp_memory_log] MEMORY at constructor_end: 4MB (Peak: 4MB)
+[2025-08-25 17:52:23] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: plugin_init
+[2025-08-25 17:52:23] [INIT] [booking-system-pro-final.php:155:init] === PLUGIN INITIALIZATION START ===
+[2025-08-25 17:52:23] [MEMORY] [booking-system-pro-final.php:87:bsp_memory_log] MEMORY at init_start: 4MB (Peak: 4MB)
+[2025-08-25 17:52:23] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: load_textdomain
+[2025-08-25 17:52:23] [INIT] [booking-system-pro-final.php:206:load_textdomain] Text domain loaded: Success
+[2025-08-25 17:52:23] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: load_textdomain took 0.0014009475708008 seconds
+[2025-08-25 17:52:23] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_files
+[2025-08-25 17:52:23] [INIT] [booking-system-pro-final.php:212:include_files] Starting file inclusion
+[2025-08-25 17:52:23] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-utilities.php
+[2025-08-25 17:52:23] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-utilities.php
+[2025-08-25 17:52:23] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-utilities.php took 0.0014591217041016 seconds
+[2025-08-25 17:52:23] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-database-unified.php
+[2025-08-25 17:52:23] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-database-unified.php
+[2025-08-25 17:52:23] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-database-unified.php took 0.0015461444854736 seconds
+[2025-08-25 17:52:23] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-post-types.php
+[2025-08-25 17:52:23] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-post-types.php
+[2025-08-25 17:52:23] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-post-types.php took 0.0013260841369629 seconds
+[2025-08-25 17:52:23] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-taxonomies.php
+[2025-08-25 17:52:23] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-taxonomies.php
+[2025-08-25 17:52:23] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-taxonomies.php took 0.0016570091247559 seconds
+[2025-08-25 17:52:23] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-frontend.php
+[2025-08-25 17:52:23] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-frontend.php
+[2025-08-25 17:52:23] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-frontend.php took 0.0017020702362061 seconds
+[2025-08-25 17:52:23] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-admin.php
+[2025-08-25 17:52:23] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-admin.php
+[2025-08-25 17:52:23] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-admin.php took 0.0016040802001953 seconds
+[2025-08-25 17:52:23] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-admin-dashboard.php
+[2025-08-25 17:52:23] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-admin-dashboard.php
+[2025-08-25 17:52:23] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-admin-dashboard.php took 0.0017480850219727 seconds
+[2025-08-25 17:52:23] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-admin-bookings.php
+[2025-08-25 17:52:23] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-admin-bookings.php
+[2025-08-25 17:52:23] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-admin-bookings.php took 0.0013470649719238 seconds
+[2025-08-25 17:52:23] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-admin-companies.php
+[2025-08-25 17:52:23] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-admin-companies.php
+[2025-08-25 17:52:23] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-admin-companies.php took 0.0019710063934326 seconds
+[2025-08-25 17:52:23] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-admin-settings.php
+[2025-08-25 17:52:23] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-admin-settings.php
+[2025-08-25 17:52:23] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-admin-settings.php took 0.0019230842590332 seconds
+[2025-08-25 17:52:23] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-ajax.php
+[2025-08-25 17:52:23] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-ajax.php
+[2025-08-25 17:52:23] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-ajax.php took 0.0016758441925049 seconds
+[2025-08-25 17:52:23] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-email.php
+[2025-08-25 17:52:23] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-email.php
+[2025-08-25 17:52:23] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-email.php took 0.0016500949859619 seconds
+[2025-08-25 17:52:23] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-data-manager.php
+[2025-08-25 17:52:23] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-data-manager.php
+[2025-08-25 17:52:23] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-data-manager.php took 0.0015180110931396 seconds
+[2025-08-25 17:52:23] [INIT] [booking-system-pro-final.php:234:include_files] File inclusion completed
+[2025-08-25 17:52:23] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_files took 0.037142992019653 seconds
+[2025-08-25 17:52:23] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: init_components
+[2025-08-25 17:52:23] [INIT] [booking-system-pro-final.php:254:init_components] Starting component initialization
+[2025-08-25 17:52:23] [INIT] [booking-system-pro-final.php:259:init_components] BSP_Utilities class available
+[2025-08-25 17:52:23] [DATABASE] [class-database-unified.php:42:__construct] BSP_Database_Unified initialized
+[2025-08-25 17:52:23] [DATABASE] [class-database-unified.php:49:__construct] Database tables initialized | Context: {"bookings":"wp_bsp_bookings","companies":"wp_bsp_companies","services":"wp_bsp_services","customers":"wp_bsp_customers","availability":"wp_bsp_availability","email_logs":"wp_bsp_email_logs","settings":"wp_bsp_settings"}
+[2025-08-25 17:52:23] [INIT] [booking-system-pro-final.php:265:init_components] Database component initialized
+[2025-08-25 17:52:23] [INIT] [booking-system-pro-final.php:273:init_components] Post types component initialized
+[2025-08-25 17:52:23] [INIT] [booking-system-pro-final.php:280:init_components] Taxonomies component initialized
+[2025-08-25 17:52:23] [FRONTEND] [class-frontend.php:21:__construct] BSP_Frontend initialized
+[2025-08-25 17:52:23] [INIT] [booking-system-pro-final.php:288:init_components] Frontend component initialized
+[2025-08-25 17:52:23] [AJAX] [class-ajax.php:21:__construct] BSP_Ajax initialized
+[2025-08-25 17:52:23] [AJAX] [class-ajax.php:37:__construct] AJAX endpoints registered: bsp_get_availability, bsp_submit_booking, bsp_get_slots, bsp_test_webhook
+[2025-08-25 17:52:23] [INIT] [booking-system-pro-final.php:296:init_components] AJAX component initialized
+[2025-08-25 17:52:23] [INIT] [booking-system-pro-final.php:304:init_components] Email component initialized
+[2025-08-25 17:52:23] [INIT] [booking-system-pro-final.php:326:init_admin_components] Initializing admin components
+[2025-08-25 17:52:23] [ADMIN] [class-admin.php:33:__construct] BSP_Admin initialized
+[2025-08-25 17:52:23] [ADMIN] [class-admin.php:61:__construct] Admin hooks and AJAX handlers registered
+[2025-08-25 17:52:23] [INIT] [booking-system-pro-final.php:331:init_admin_components] Admin component initialized
+[2025-08-25 17:52:23] [INIT] [booking-system-pro-final.php:339:init_admin_components] Admin dashboard component initialized
+[2025-08-25 17:52:23] [INIT] [booking-system-pro-final.php:347:init_admin_components] Admin bookings component initialized
+[2025-08-25 17:52:23] [INIT] [booking-system-pro-final.php:355:init_admin_components] Admin companies component initialized
+[2025-08-25 17:52:23] [INIT] [booking-system-pro-final.php:363:init_admin_components] Admin settings component initialized
+[2025-08-25 17:52:23] [INIT] [booking-system-pro-final.php:371:init_admin_components] Data manager component initialized
+[2025-08-25 17:52:23] [INIT] [booking-system-pro-final.php:321:init_components] Component initialization completed
+[2025-08-25 17:52:23] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: init_components took 0.024327039718628 seconds
+[2025-08-25 17:52:23] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: setup_hooks
+[2025-08-25 17:52:23] [INIT] [booking-system-pro-final.php:379:setup_hooks] Setting up hooks
+[2025-08-25 17:52:23] [INIT] [booking-system-pro-final.php:132:__construct] === PLUGIN CONSTRUCTOR START ===
+[2025-08-25 17:52:23] [INIT] [booking-system-pro-final.php:396:setup_hooks] Hooks setup completed
+[2025-08-25 17:52:23] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: setup_hooks took 0.0027451515197754 seconds
+[2025-08-25 17:52:23] [MEMORY] [booking-system-pro-final.php:87:bsp_memory_log] MEMORY at constructor_start: 6MB (Peak: 6MB)
+[2025-08-25 17:52:23] [INIT] [booking-system-pro-final.php:401:init_legacy_compatibility] Initializing legacy compatibility
+[2025-08-25 17:52:23] [INIT] [booking-system-pro-final.php:142:__construct] Plugin constructor completed
+[2025-08-25 17:52:23] [INIT] [booking-system-pro-final.php:412:init_legacy_compatibility] Created legacy shortcode: booking_system_form
+[2025-08-25 17:52:23] [MEMORY] [booking-system-pro-final.php:87:bsp_memory_log] MEMORY at constructor_end: 6MB (Peak: 6MB)
+[2025-08-25 17:52:23] [INIT] [booking-system-pro-final.php:415:init_legacy_compatibility] Legacy compatibility initialized
+[2025-08-25 17:52:23] [TOAST] [booking-system-pro-final.php:733:init_toast_notifications] Toast notification system initialized
+[2025-08-25 17:52:23] [INIT] [booking-system-pro-final.php:177:init] Plugin initialization completed successfully
+[2025-08-25 17:52:23] [MEMORY] [booking-system-pro-final.php:87:bsp_memory_log] MEMORY at init_end: 4MB (Peak: 4MB)
+[2025-08-25 17:52:23] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: plugin_init took 0.075938940048218 seconds
+[2025-08-25 17:52:23] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: plugin_init
+[2025-08-25 17:52:23] [INIT] [booking-system-pro-final.php:155:init] === PLUGIN INITIALIZATION START ===
+[2025-08-25 17:52:23] [MEMORY] [booking-system-pro-final.php:87:bsp_memory_log] MEMORY at init_start: 6MB (Peak: 6MB)
+[2025-08-25 17:52:23] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: load_textdomain
+[2025-08-25 17:52:23] [INIT] [booking-system-pro-final.php:206:load_textdomain] Text domain loaded: Success
+[2025-08-25 17:52:23] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: load_textdomain took 0.001680850982666 seconds
+[2025-08-25 17:52:23] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_files
+[2025-08-25 17:52:23] [INIT] [booking-system-pro-final.php:212:include_files] Starting file inclusion
+[2025-08-25 17:52:23] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-utilities.php
+[2025-08-25 17:52:23] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-utilities.php
+[2025-08-25 17:52:23] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-utilities.php took 0.0026388168334961 seconds
+[2025-08-25 17:52:23] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-database-unified.php
+[2025-08-25 17:52:23] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-database-unified.php
+[2025-08-25 17:52:23] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-database-unified.php took 0.0016591548919678 seconds
+[2025-08-25 17:52:23] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-post-types.php
+[2025-08-25 17:52:23] [SYSTEM] [booking-system-pro-final.php:108:bsp_system_info_log] SYSTEM INFO: {"PHP Version":"8.2.27","WordPress Version":"6.8.2","Plugin Version":"2.1.0","Active Theme":"Hello Elementor","Server Software":"nginx\/1.26.1","Memory Limit":"256M","Max Execution Time":"1200","Upload Max Size":"300M","Post Max Size":"1000M"}
+[2025-08-25 17:52:23] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-post-types.php
+[2025-08-25 17:52:23] [DEBUG] [booking-system-pro-final.php:149:early_debug_init] === EARLY DEBUG INITIALIZATION ===
+[2025-08-25 17:52:23] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-post-types.php took 0.0018298625946045 seconds
+[2025-08-25 17:52:23] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-taxonomies.php
+[2025-08-25 17:52:23] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-taxonomies.php
+[2025-08-25 17:52:23] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-taxonomies.php took 0.0013420581817627 seconds
+[2025-08-25 17:52:23] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-frontend.php
+[2025-08-25 17:52:23] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-frontend.php
+[2025-08-25 17:52:23] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-frontend.php took 0.0019690990447998 seconds
+[2025-08-25 17:52:23] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-admin.php
+[2025-08-25 17:52:23] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-admin.php
+[2025-08-25 17:52:23] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-admin.php took 0.0015058517456055 seconds
+[2025-08-25 17:52:23] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-admin-dashboard.php
+[2025-08-25 17:52:23] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-admin-dashboard.php
+[2025-08-25 17:52:23] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-admin-dashboard.php took 0.0019841194152832 seconds
+[2025-08-25 17:52:23] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-admin-bookings.php
+[2025-08-25 17:52:23] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-admin-bookings.php
+[2025-08-25 17:52:23] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-admin-bookings.php took 0.0015871524810791 seconds
+[2025-08-25 17:52:23] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-admin-companies.php
+[2025-08-25 17:52:23] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-admin-companies.php
+[2025-08-25 17:52:23] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-admin-companies.php took 0.0018110275268555 seconds
+[2025-08-25 17:52:23] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-admin-settings.php
+[2025-08-25 17:52:23] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-admin-settings.php
+[2025-08-25 17:52:23] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-admin-settings.php took 0.0048110485076904 seconds
+[2025-08-25 17:52:23] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-ajax.php
+[2025-08-25 17:52:23] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-ajax.php
+[2025-08-25 17:52:23] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-ajax.php took 0.0036330223083496 seconds
+[2025-08-25 17:52:23] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-email.php
+[2025-08-25 17:52:23] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-email.php
+[2025-08-25 17:52:23] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-email.php took 0.002518892288208 seconds
+[2025-08-25 17:52:23] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-data-manager.php
+[2025-08-25 17:52:23] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-data-manager.php
+[2025-08-25 17:52:23] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-data-manager.php took 0.00152587890625 seconds
+[2025-08-25 17:52:23] [INIT] [booking-system-pro-final.php:234:include_files] File inclusion completed
+[2025-08-25 17:52:23] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_files took 0.048343896865845 seconds
+[2025-08-25 17:52:23] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: init_components
+[2025-08-25 17:52:23] [INIT] [booking-system-pro-final.php:254:init_components] Starting component initialization
+[2025-08-25 17:52:23] [INIT] [booking-system-pro-final.php:259:init_components] BSP_Utilities class available
+[2025-08-25 17:52:23] [DATABASE] [class-database-unified.php:42:__construct] BSP_Database_Unified initialized
+[2025-08-25 17:52:23] [DATABASE] [class-database-unified.php:49:__construct] Database tables initialized | Context: {"bookings":"wp_bsp_bookings","companies":"wp_bsp_companies","services":"wp_bsp_services","customers":"wp_bsp_customers","availability":"wp_bsp_availability","email_logs":"wp_bsp_email_logs","settings":"wp_bsp_settings"}
+[2025-08-25 17:52:23] [INIT] [booking-system-pro-final.php:265:init_components] Database component initialized
+[2025-08-25 17:52:23] [INIT] [booking-system-pro-final.php:273:init_components] Post types component initialized
+[2025-08-25 17:52:23] [INIT] [booking-system-pro-final.php:280:init_components] Taxonomies component initialized
+[2025-08-25 17:52:23] [FRONTEND] [class-frontend.php:21:__construct] BSP_Frontend initialized
+[2025-08-25 17:52:23] [INIT] [booking-system-pro-final.php:288:init_components] Frontend component initialized
+[2025-08-25 17:52:23] [AJAX] [class-ajax.php:21:__construct] BSP_Ajax initialized
+[2025-08-25 17:52:23] [AJAX] [class-ajax.php:37:__construct] AJAX endpoints registered: bsp_get_availability, bsp_submit_booking, bsp_get_slots, bsp_test_webhook
+[2025-08-25 17:52:23] [INIT] [booking-system-pro-final.php:296:init_components] AJAX component initialized
+[2025-08-25 17:52:23] [INIT] [booking-system-pro-final.php:304:init_components] Email component initialized
+[2025-08-25 17:52:23] [INIT] [booking-system-pro-final.php:326:init_admin_components] Initializing admin components
+[2025-08-25 17:52:23] [ADMIN] [class-admin.php:33:__construct] BSP_Admin initialized
+[2025-08-25 17:52:23] [ADMIN] [class-admin.php:61:__construct] Admin hooks and AJAX handlers registered
+[2025-08-25 17:52:23] [INIT] [booking-system-pro-final.php:331:init_admin_components] Admin component initialized
+[2025-08-25 17:52:23] [INIT] [booking-system-pro-final.php:339:init_admin_components] Admin dashboard component initialized
+[2025-08-25 17:52:23] [INIT] [booking-system-pro-final.php:347:init_admin_components] Admin bookings component initialized
+[2025-08-25 17:52:23] [INIT] [booking-system-pro-final.php:355:init_admin_components] Admin companies component initialized
+[2025-08-25 17:52:23] [INIT] [booking-system-pro-final.php:363:init_admin_components] Admin settings component initialized
+[2025-08-25 17:52:23] [INIT] [booking-system-pro-final.php:371:init_admin_components] Data manager component initialized
+[2025-08-25 17:52:23] [INIT] [booking-system-pro-final.php:321:init_components] Component initialization completed
+[2025-08-25 17:52:23] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: init_components took 0.020540952682495 seconds
+[2025-08-25 17:52:23] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: setup_hooks
+[2025-08-25 17:52:23] [INIT] [booking-system-pro-final.php:379:setup_hooks] Setting up hooks
+[2025-08-25 17:52:23] [INIT] [booking-system-pro-final.php:396:setup_hooks] Hooks setup completed
+[2025-08-25 17:52:23] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: setup_hooks took 0.0027589797973633 seconds
+[2025-08-25 17:52:23] [INIT] [booking-system-pro-final.php:401:init_legacy_compatibility] Initializing legacy compatibility
+[2025-08-25 17:52:23] [INIT] [booking-system-pro-final.php:412:init_legacy_compatibility] Created legacy shortcode: booking_system_form
+[2025-08-25 17:52:23] [INIT] [booking-system-pro-final.php:415:init_legacy_compatibility] Legacy compatibility initialized
+[2025-08-25 17:52:23] [TOAST] [booking-system-pro-final.php:733:init_toast_notifications] Toast notification system initialized
+[2025-08-25 17:52:23] [INIT] [booking-system-pro-final.php:177:init] Plugin initialization completed successfully
+[2025-08-25 17:52:23] [MEMORY] [booking-system-pro-final.php:87:bsp_memory_log] MEMORY at init_end: 6MB (Peak: 6MB)
+[2025-08-25 17:52:23] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: plugin_init took 0.088977098464966 seconds
+[2025-08-25 17:52:23] [SYSTEM] [booking-system-pro-final.php:108:bsp_system_info_log] SYSTEM INFO: {"PHP Version":"8.2.27","WordPress Version":"6.8.2","Plugin Version":"2.1.0","Active Theme":"Hello Elementor","Server Software":"nginx\/1.26.1","Memory Limit":"256M","Max Execution Time":"1200","Upload Max Size":"300M","Post Max Size":"1000M"}
+[2025-08-25 17:52:23] [DEBUG] [booking-system-pro-final.php:149:early_debug_init] === EARLY DEBUG INITIALIZATION ===
+[2025-08-25 17:52:23] [HOOK] [booking-system-pro-final.php:419:init_hooks] Additional initialization hooks
+[2025-08-25 17:52:23] [FRONTEND] [class-frontend.php:146:register_shortcodes] Registering frontend shortcodes
+[2025-08-25 17:52:23] [FRONTEND] [class-frontend.php:157:register_shortcodes] Frontend shortcodes registered: booking_form, booking_calendar, booking_services, booking_system_form
+[2025-08-25 17:52:23] [HOOK] [booking-system-pro-final.php:424:admin_init] Admin initialization
+[2025-08-25 17:52:23] [MEMORY] [booking-system-pro-final.php:87:bsp_memory_log] MEMORY at shutdown: 4MB (Peak: 4MB)
+[2025-08-25 17:52:23] [DEBUG] [booking-system-pro-final.php:544:debug_shutdown] === PLUGIN SHUTDOWN ===
+[2025-08-25 17:52:23] [DEBUG] [booking-system-pro-final.php:548:debug_shutdown] Environment: local
+[2025-08-25 17:52:23] [HOOK] [booking-system-pro-final.php:419:init_hooks] Additional initialization hooks
+[2025-08-25 17:52:23] [FRONTEND] [class-frontend.php:146:register_shortcodes] Registering frontend shortcodes
+[2025-08-25 17:52:23] [FRONTEND] [class-frontend.php:157:register_shortcodes] Frontend shortcodes registered: booking_form, booking_calendar, booking_services, booking_system_form
+[2025-08-25 17:52:23] [HOOK] [booking-system-pro-final.php:424:admin_init] Admin initialization
+[2025-08-25 17:52:23] [MEMORY] [booking-system-pro-final.php:87:bsp_memory_log] MEMORY at shutdown: 6MB (Peak: 6MB)
+[2025-08-25 17:52:23] [DEBUG] [booking-system-pro-final.php:544:debug_shutdown] === PLUGIN SHUTDOWN ===
+[2025-08-25 17:52:23] [DEBUG] [booking-system-pro-final.php:548:debug_shutdown] Environment: local
+[2025-08-25 17:52:23] [INIT] [booking-system-pro-final.php:132:__construct] === PLUGIN CONSTRUCTOR START ===
+[2025-08-25 17:52:23] [MEMORY] [booking-system-pro-final.php:87:bsp_memory_log] MEMORY at constructor_start: 4MB (Peak: 4MB)
+[2025-08-25 17:52:23] [INIT] [booking-system-pro-final.php:142:__construct] Plugin constructor completed
+[2025-08-25 17:52:23] [MEMORY] [booking-system-pro-final.php:87:bsp_memory_log] MEMORY at constructor_end: 4MB (Peak: 4MB)
+[2025-08-25 17:52:23] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: plugin_init
+[2025-08-25 17:52:23] [INIT] [booking-system-pro-final.php:155:init] === PLUGIN INITIALIZATION START ===
+[2025-08-25 17:52:23] [MEMORY] [booking-system-pro-final.php:87:bsp_memory_log] MEMORY at init_start: 4MB (Peak: 4MB)
+[2025-08-25 17:52:23] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: load_textdomain
+[2025-08-25 17:52:23] [INIT] [booking-system-pro-final.php:206:load_textdomain] Text domain loaded: Success
+[2025-08-25 17:52:23] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: load_textdomain took 0.0016458034515381 seconds
+[2025-08-25 17:52:23] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_files
+[2025-08-25 17:52:23] [INIT] [booking-system-pro-final.php:212:include_files] Starting file inclusion
+[2025-08-25 17:52:23] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-utilities.php
+[2025-08-25 17:52:23] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-utilities.php
+[2025-08-25 17:52:23] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-utilities.php took 0.0032970905303955 seconds
+[2025-08-25 17:52:23] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-database-unified.php
+[2025-08-25 17:52:23] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-database-unified.php
+[2025-08-25 17:52:23] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-database-unified.php took 0.0035650730133057 seconds
+[2025-08-25 17:52:23] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-post-types.php
+[2025-08-25 17:52:23] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-post-types.php
+[2025-08-25 17:52:23] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-post-types.php took 0.0040159225463867 seconds
+[2025-08-25 17:52:23] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-taxonomies.php
+[2025-08-25 17:52:23] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-taxonomies.php
+[2025-08-25 17:52:23] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-taxonomies.php took 0.0056750774383545 seconds
+[2025-08-25 17:52:23] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-frontend.php
+[2025-08-25 17:52:23] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-frontend.php
+[2025-08-25 17:52:23] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-frontend.php took 0.0033559799194336 seconds
+[2025-08-25 17:52:23] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-admin.php
+[2025-08-25 17:52:23] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-admin.php
+[2025-08-25 17:52:23] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-admin.php took 0.0064878463745117 seconds
+[2025-08-25 17:52:23] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-admin-dashboard.php
+[2025-08-25 17:52:23] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-admin-dashboard.php
+[2025-08-25 17:52:23] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-admin-dashboard.php took 0.0021021366119385 seconds
+[2025-08-25 17:52:23] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-admin-bookings.php
+[2025-08-25 17:52:23] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-admin-bookings.php
+[2025-08-25 17:52:23] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-admin-bookings.php took 0.0017080307006836 seconds
+[2025-08-25 17:52:23] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-admin-companies.php
+[2025-08-25 17:52:23] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-admin-companies.php
+[2025-08-25 17:52:23] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-admin-companies.php took 0.010005950927734 seconds
+[2025-08-25 17:52:23] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-admin-settings.php
+[2025-08-25 17:52:23] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-admin-settings.php
+[2025-08-25 17:52:23] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-admin-settings.php took 0.0030629634857178 seconds
+[2025-08-25 17:52:23] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-ajax.php
+[2025-08-25 17:52:23] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-ajax.php
+[2025-08-25 17:52:23] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-ajax.php took 0.051869869232178 seconds
+[2025-08-25 17:52:23] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-email.php
+[2025-08-25 17:52:23] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-email.php
+[2025-08-25 17:52:23] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-email.php took 0.0026869773864746 seconds
+[2025-08-25 17:52:23] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-data-manager.php
+[2025-08-25 17:52:23] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-data-manager.php
+[2025-08-25 17:52:23] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-data-manager.php took 0.0021629333496094 seconds
+[2025-08-25 17:52:23] [INIT] [booking-system-pro-final.php:234:include_files] File inclusion completed
+[2025-08-25 17:52:23] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_files took 0.12599110603333 seconds
+[2025-08-25 17:52:23] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: init_components
+[2025-08-25 17:52:23] [INIT] [booking-system-pro-final.php:254:init_components] Starting component initialization
+[2025-08-25 17:52:23] [INIT] [booking-system-pro-final.php:259:init_components] BSP_Utilities class available
+[2025-08-25 17:52:23] [DATABASE] [class-database-unified.php:42:__construct] BSP_Database_Unified initialized
+[2025-08-25 17:52:23] [DATABASE] [class-database-unified.php:49:__construct] Database tables initialized | Context: {"bookings":"wp_bsp_bookings","companies":"wp_bsp_companies","services":"wp_bsp_services","customers":"wp_bsp_customers","availability":"wp_bsp_availability","email_logs":"wp_bsp_email_logs","settings":"wp_bsp_settings"}
+[2025-08-25 17:52:23] [INIT] [booking-system-pro-final.php:265:init_components] Database component initialized
+[2025-08-25 17:52:23] [INIT] [booking-system-pro-final.php:273:init_components] Post types component initialized
+[2025-08-25 17:52:23] [INIT] [booking-system-pro-final.php:280:init_components] Taxonomies component initialized
+[2025-08-25 17:52:23] [FRONTEND] [class-frontend.php:21:__construct] BSP_Frontend initialized
+[2025-08-25 17:52:23] [INIT] [booking-system-pro-final.php:288:init_components] Frontend component initialized
+[2025-08-25 17:52:23] [AJAX] [class-ajax.php:21:__construct] BSP_Ajax initialized
+[2025-08-25 17:52:23] [AJAX] [class-ajax.php:37:__construct] AJAX endpoints registered: bsp_get_availability, bsp_submit_booking, bsp_get_slots, bsp_test_webhook
+[2025-08-25 17:52:23] [INIT] [booking-system-pro-final.php:296:init_components] AJAX component initialized
+[2025-08-25 17:52:23] [INIT] [booking-system-pro-final.php:304:init_components] Email component initialized
+[2025-08-25 17:52:23] [INIT] [booking-system-pro-final.php:321:init_components] Component initialization completed
+[2025-08-25 17:52:23] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: init_components took 0.051620960235596 seconds
+[2025-08-25 17:52:23] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: setup_hooks
+[2025-08-25 17:52:23] [INIT] [booking-system-pro-final.php:379:setup_hooks] Setting up hooks
+[2025-08-25 17:52:23] [INIT] [booking-system-pro-final.php:396:setup_hooks] Hooks setup completed
+[2025-08-25 17:52:23] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: setup_hooks took 0.0029091835021973 seconds
+[2025-08-25 17:52:23] [INIT] [booking-system-pro-final.php:401:init_legacy_compatibility] Initializing legacy compatibility
+[2025-08-25 17:52:23] [INIT] [booking-system-pro-final.php:412:init_legacy_compatibility] Created legacy shortcode: booking_system_form
+[2025-08-25 17:52:23] [INIT] [booking-system-pro-final.php:415:init_legacy_compatibility] Legacy compatibility initialized
+[2025-08-25 17:52:23] [TOAST] [booking-system-pro-final.php:733:init_toast_notifications] Toast notification system initialized
+[2025-08-25 17:52:23] [INIT] [booking-system-pro-final.php:177:init] Plugin initialization completed successfully
+[2025-08-25 17:52:23] [MEMORY] [booking-system-pro-final.php:87:bsp_memory_log] MEMORY at init_end: 4MB (Peak: 4MB)
+[2025-08-25 17:52:23] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: plugin_init took 0.19484496116638 seconds
+[2025-08-25 17:52:23] [SYSTEM] [booking-system-pro-final.php:108:bsp_system_info_log] SYSTEM INFO: {"PHP Version":"8.2.27","WordPress Version":"6.8.2","Plugin Version":"2.1.0","Active Theme":"Hello Elementor","Server Software":"nginx\/1.26.1","Memory Limit":"256M","Max Execution Time":"1200","Upload Max Size":"300M","Post Max Size":"1000M"}
+[2025-08-25 17:52:23] [DEBUG] [booking-system-pro-final.php:149:early_debug_init] === EARLY DEBUG INITIALIZATION ===
+[2025-08-25 17:52:23] [HOOK] [booking-system-pro-final.php:419:init_hooks] Additional initialization hooks
+[2025-08-25 17:52:23] [FRONTEND] [class-frontend.php:146:register_shortcodes] Registering frontend shortcodes
+[2025-08-25 17:52:23] [FRONTEND] [class-frontend.php:157:register_shortcodes] Frontend shortcodes registered: booking_form, booking_calendar, booking_services, booking_system_form
+[2025-08-25 17:52:24] [MEMORY] [booking-system-pro-final.php:87:bsp_memory_log] MEMORY at shutdown: 4MB (Peak: 4MB)
+[2025-08-25 17:52:24] [DEBUG] [booking-system-pro-final.php:544:debug_shutdown] === PLUGIN SHUTDOWN ===
+[2025-08-25 17:52:24] [DEBUG] [booking-system-pro-final.php:548:debug_shutdown] Environment: local
+[2025-08-25 17:54:04] [INIT] [booking-system-pro-final.php:132:__construct] === PLUGIN CONSTRUCTOR START ===
+[2025-08-25 17:54:04] [MEMORY] [booking-system-pro-final.php:87:bsp_memory_log] MEMORY at constructor_start: 4MB (Peak: 4MB)
+[2025-08-25 17:54:04] [INIT] [booking-system-pro-final.php:142:__construct] Plugin constructor completed
+[2025-08-25 17:54:04] [MEMORY] [booking-system-pro-final.php:87:bsp_memory_log] MEMORY at constructor_end: 4MB (Peak: 4MB)
+[2025-08-25 17:54:04] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: plugin_init
+[2025-08-25 17:54:04] [INIT] [booking-system-pro-final.php:155:init] === PLUGIN INITIALIZATION START ===
+[2025-08-25 17:54:04] [MEMORY] [booking-system-pro-final.php:87:bsp_memory_log] MEMORY at init_start: 4MB (Peak: 4MB)
+[2025-08-25 17:54:04] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: load_textdomain
+[2025-08-25 17:54:04] [INIT] [booking-system-pro-final.php:206:load_textdomain] Text domain loaded: Success
+[2025-08-25 17:54:04] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: load_textdomain took 0.0013339519500732 seconds
+[2025-08-25 17:54:04] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_files
+[2025-08-25 17:54:04] [INIT] [booking-system-pro-final.php:212:include_files] Starting file inclusion
+[2025-08-25 17:54:04] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-utilities.php
+[2025-08-25 17:54:04] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-utilities.php
+[2025-08-25 17:54:04] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-utilities.php took 0.001209020614624 seconds
+[2025-08-25 17:54:04] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-database-unified.php
+[2025-08-25 17:54:04] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-database-unified.php
+[2025-08-25 17:54:04] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-database-unified.php took 0.0014801025390625 seconds
+[2025-08-25 17:54:04] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-post-types.php
+[2025-08-25 17:54:04] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-post-types.php
+[2025-08-25 17:54:04] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-post-types.php took 0.0010731220245361 seconds
+[2025-08-25 17:54:04] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-taxonomies.php
+[2025-08-25 17:54:04] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-taxonomies.php
+[2025-08-25 17:54:04] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-taxonomies.php took 0.0012650489807129 seconds
+[2025-08-25 17:54:04] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-frontend.php
+[2025-08-25 17:54:04] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-frontend.php
+[2025-08-25 17:54:04] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-frontend.php took 0.0014979839324951 seconds
+[2025-08-25 17:54:04] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-admin.php
+[2025-08-25 17:54:04] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-admin.php
+[2025-08-25 17:54:04] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-admin.php took 0.0010669231414795 seconds
+[2025-08-25 17:54:04] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-admin-dashboard.php
+[2025-08-25 17:54:04] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-admin-dashboard.php
+[2025-08-25 17:54:04] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-admin-dashboard.php took 0.0011320114135742 seconds
+[2025-08-25 17:54:04] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-admin-bookings.php
+[2025-08-25 17:54:04] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-admin-bookings.php
+[2025-08-25 17:54:04] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-admin-bookings.php took 0.0013198852539062 seconds
+[2025-08-25 17:54:04] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-admin-companies.php
+[2025-08-25 17:54:04] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-admin-companies.php
+[2025-08-25 17:54:04] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-admin-companies.php took 0.0011999607086182 seconds
+[2025-08-25 17:54:04] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-admin-settings.php
+[2025-08-25 17:54:04] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-admin-settings.php
+[2025-08-25 17:54:04] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-admin-settings.php took 0.0010020732879639 seconds
+[2025-08-25 17:54:04] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-ajax.php
+[2025-08-25 17:54:04] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-ajax.php
+[2025-08-25 17:54:04] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-ajax.php took 0.0010049343109131 seconds
+[2025-08-25 17:54:04] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-email.php
+[2025-08-25 17:54:04] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-email.php
+[2025-08-25 17:54:04] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-email.php took 0.0010490417480469 seconds
+[2025-08-25 17:54:04] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-data-manager.php
+[2025-08-25 17:54:04] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-data-manager.php
+[2025-08-25 17:54:04] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-data-manager.php took 0.0011210441589355 seconds
+[2025-08-25 17:54:04] [INIT] [booking-system-pro-final.php:234:include_files] File inclusion completed
+[2025-08-25 17:54:04] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_files took 0.028470993041992 seconds
+[2025-08-25 17:54:04] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: init_components
+[2025-08-25 17:54:04] [INIT] [booking-system-pro-final.php:254:init_components] Starting component initialization
+[2025-08-25 17:54:04] [INIT] [booking-system-pro-final.php:259:init_components] BSP_Utilities class available
+[2025-08-25 17:54:04] [DATABASE] [class-database-unified.php:42:__construct] BSP_Database_Unified initialized
+[2025-08-25 17:54:04] [DATABASE] [class-database-unified.php:49:__construct] Database tables initialized | Context: {"bookings":"wp_bsp_bookings","companies":"wp_bsp_companies","services":"wp_bsp_services","customers":"wp_bsp_customers","availability":"wp_bsp_availability","email_logs":"wp_bsp_email_logs","settings":"wp_bsp_settings"}
+[2025-08-25 17:54:04] [INIT] [booking-system-pro-final.php:265:init_components] Database component initialized
+[2025-08-25 17:54:04] [INIT] [booking-system-pro-final.php:273:init_components] Post types component initialized
+[2025-08-25 17:54:04] [INIT] [booking-system-pro-final.php:280:init_components] Taxonomies component initialized
+[2025-08-25 17:54:04] [FRONTEND] [class-frontend.php:21:__construct] BSP_Frontend initialized
+[2025-08-25 17:54:04] [INIT] [booking-system-pro-final.php:288:init_components] Frontend component initialized
+[2025-08-25 17:54:04] [AJAX] [class-ajax.php:21:__construct] BSP_Ajax initialized
+[2025-08-25 17:54:04] [AJAX] [class-ajax.php:37:__construct] AJAX endpoints registered: bsp_get_availability, bsp_submit_booking, bsp_get_slots, bsp_test_webhook
+[2025-08-25 17:54:04] [INIT] [booking-system-pro-final.php:296:init_components] AJAX component initialized
+[2025-08-25 17:54:04] [INIT] [booking-system-pro-final.php:304:init_components] Email component initialized
+[2025-08-25 17:54:04] [INIT] [booking-system-pro-final.php:321:init_components] Component initialization completed
+[2025-08-25 17:54:04] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: init_components took 0.0077180862426758 seconds
+[2025-08-25 17:54:04] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: setup_hooks
+[2025-08-25 17:54:04] [INIT] [booking-system-pro-final.php:379:setup_hooks] Setting up hooks
+[2025-08-25 17:54:04] [INIT] [booking-system-pro-final.php:396:setup_hooks] Hooks setup completed
+[2025-08-25 17:54:04] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: setup_hooks took 0.0013461112976074 seconds
+[2025-08-25 17:54:04] [INIT] [booking-system-pro-final.php:401:init_legacy_compatibility] Initializing legacy compatibility
+[2025-08-25 17:54:04] [INIT] [booking-system-pro-final.php:412:init_legacy_compatibility] Created legacy shortcode: booking_system_form
+[2025-08-25 17:54:04] [INIT] [booking-system-pro-final.php:415:init_legacy_compatibility] Legacy compatibility initialized
+[2025-08-25 17:54:04] [TOAST] [booking-system-pro-final.php:733:init_toast_notifications] Toast notification system initialized
+[2025-08-25 17:54:04] [INIT] [booking-system-pro-final.php:177:init] Plugin initialization completed successfully
+[2025-08-25 17:54:04] [MEMORY] [booking-system-pro-final.php:87:bsp_memory_log] MEMORY at init_end: 4MB (Peak: 4MB)
+[2025-08-25 17:54:04] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: plugin_init took 0.048291206359863 seconds
+[2025-08-25 17:54:04] [SYSTEM] [booking-system-pro-final.php:108:bsp_system_info_log] SYSTEM INFO: {"PHP Version":"8.2.27","WordPress Version":"6.8.2","Plugin Version":"2.1.0","Active Theme":"Hello Elementor","Server Software":"nginx\/1.26.1","Memory Limit":"256M","Max Execution Time":"1200","Upload Max Size":"300M","Post Max Size":"1000M"}
+[2025-08-25 17:54:04] [DEBUG] [booking-system-pro-final.php:149:early_debug_init] === EARLY DEBUG INITIALIZATION ===
+[2025-08-25 17:54:04] [HOOK] [booking-system-pro-final.php:419:init_hooks] Additional initialization hooks
+[2025-08-25 17:54:04] [FRONTEND] [class-frontend.php:146:register_shortcodes] Registering frontend shortcodes
+[2025-08-25 17:54:04] [FRONTEND] [class-frontend.php:157:register_shortcodes] Frontend shortcodes registered: booking_form, booking_calendar, booking_services, booking_system_form
+[2025-08-25 17:54:04] [SHORTCODE] [booking-system-pro-final.php:505:has_booking_shortcode] Found shortcode: booking_form
+[2025-08-25 17:54:04] [ASSETS] [booking-system-pro-final.php:430:frontend_assets] Loading frontend assets
+[2025-08-25 17:54:04] [ASSETS] [booking-system-pro-final.php:470:frontend_assets] Frontend assets loaded
+[2025-08-25 17:54:04] [MEMORY] [booking-system-pro-final.php:87:bsp_memory_log] MEMORY at footer: 8MB (Peak: 8MB)
+[2025-08-25 17:54:04] [MEMORY] [booking-system-pro-final.php:87:bsp_memory_log] MEMORY at shutdown: 8MB (Peak: 8MB)
+[2025-08-25 17:54:04] [DEBUG] [booking-system-pro-final.php:544:debug_shutdown] === PLUGIN SHUTDOWN ===
+[2025-08-25 17:54:04] [DEBUG] [booking-system-pro-final.php:548:debug_shutdown] Environment: local
+[2025-08-25 17:54:05] [INIT] [booking-system-pro-final.php:132:__construct] === PLUGIN CONSTRUCTOR START ===
+[2025-08-25 17:54:05] [MEMORY] [booking-system-pro-final.php:87:bsp_memory_log] MEMORY at constructor_start: 4MB (Peak: 4MB)
+[2025-08-25 17:54:05] [INIT] [booking-system-pro-final.php:142:__construct] Plugin constructor completed
+[2025-08-25 17:54:05] [MEMORY] [booking-system-pro-final.php:87:bsp_memory_log] MEMORY at constructor_end: 4MB (Peak: 4MB)
+[2025-08-25 17:54:05] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: plugin_init
+[2025-08-25 17:54:05] [INIT] [booking-system-pro-final.php:155:init] === PLUGIN INITIALIZATION START ===
+[2025-08-25 17:54:05] [MEMORY] [booking-system-pro-final.php:87:bsp_memory_log] MEMORY at init_start: 4MB (Peak: 4MB)
+[2025-08-25 17:54:05] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: load_textdomain
+[2025-08-25 17:54:05] [INIT] [booking-system-pro-final.php:206:load_textdomain] Text domain loaded: Success
+[2025-08-25 17:54:05] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: load_textdomain took 0.0010941028594971 seconds
+[2025-08-25 17:54:05] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_files
+[2025-08-25 17:54:05] [INIT] [booking-system-pro-final.php:212:include_files] Starting file inclusion
+[2025-08-25 17:54:05] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-utilities.php
+[2025-08-25 17:54:05] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-utilities.php
+[2025-08-25 17:54:05] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-utilities.php took 0.0012161731719971 seconds
+[2025-08-25 17:54:05] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-database-unified.php
+[2025-08-25 17:54:05] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-database-unified.php
+[2025-08-25 17:54:05] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-database-unified.php took 0.00096702575683594 seconds
+[2025-08-25 17:54:05] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-post-types.php
+[2025-08-25 17:54:05] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-post-types.php
+[2025-08-25 17:54:05] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-post-types.php took 0.0010299682617188 seconds
+[2025-08-25 17:54:05] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-taxonomies.php
+[2025-08-25 17:54:05] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-taxonomies.php
+[2025-08-25 17:54:05] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-taxonomies.php took 0.001168966293335 seconds
+[2025-08-25 17:54:05] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-frontend.php
+[2025-08-25 17:54:05] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-frontend.php
+[2025-08-25 17:54:05] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-frontend.php took 0.0017480850219727 seconds
+[2025-08-25 17:54:05] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-admin.php
+[2025-08-25 17:54:05] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-admin.php
+[2025-08-25 17:54:05] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-admin.php took 0.0011570453643799 seconds
+[2025-08-25 17:54:05] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-admin-dashboard.php
+[2025-08-25 17:54:05] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-admin-dashboard.php
+[2025-08-25 17:54:05] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-admin-dashboard.php took 0.001025915145874 seconds
+[2025-08-25 17:54:05] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-admin-bookings.php
+[2025-08-25 17:54:05] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-admin-bookings.php
+[2025-08-25 17:54:05] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-admin-bookings.php took 0.0011191368103027 seconds
+[2025-08-25 17:54:05] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-admin-companies.php
+[2025-08-25 17:54:05] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-admin-companies.php
+[2025-08-25 17:54:05] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-admin-companies.php took 0.0010812282562256 seconds
+[2025-08-25 17:54:05] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-admin-settings.php
+[2025-08-25 17:54:05] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-admin-settings.php
+[2025-08-25 17:54:05] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-admin-settings.php took 0.0011940002441406 seconds
+[2025-08-25 17:54:05] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-ajax.php
+[2025-08-25 17:54:05] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-ajax.php
+[2025-08-25 17:54:05] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-ajax.php took 0.0010950565338135 seconds
+[2025-08-25 17:54:05] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-email.php
+[2025-08-25 17:54:05] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-email.php
+[2025-08-25 17:54:05] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-email.php took 0.0018467903137207 seconds
+[2025-08-25 17:54:05] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-data-manager.php
+[2025-08-25 17:54:05] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-data-manager.php
+[2025-08-25 17:54:05] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-data-manager.php took 0.0010812282562256 seconds
+[2025-08-25 17:54:05] [INIT] [booking-system-pro-final.php:234:include_files] File inclusion completed
+[2025-08-25 17:54:05] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_files took 0.028318881988525 seconds
+[2025-08-25 17:54:05] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: init_components
+[2025-08-25 17:54:05] [INIT] [booking-system-pro-final.php:254:init_components] Starting component initialization
+[2025-08-25 17:54:05] [INIT] [booking-system-pro-final.php:259:init_components] BSP_Utilities class available
+[2025-08-25 17:54:05] [DATABASE] [class-database-unified.php:42:__construct] BSP_Database_Unified initialized
+[2025-08-25 17:54:05] [DATABASE] [class-database-unified.php:49:__construct] Database tables initialized | Context: {"bookings":"wp_bsp_bookings","companies":"wp_bsp_companies","services":"wp_bsp_services","customers":"wp_bsp_customers","availability":"wp_bsp_availability","email_logs":"wp_bsp_email_logs","settings":"wp_bsp_settings"}
+[2025-08-25 17:54:05] [INIT] [booking-system-pro-final.php:265:init_components] Database component initialized
+[2025-08-25 17:54:05] [INIT] [booking-system-pro-final.php:273:init_components] Post types component initialized
+[2025-08-25 17:54:05] [INIT] [booking-system-pro-final.php:280:init_components] Taxonomies component initialized
+[2025-08-25 17:54:05] [FRONTEND] [class-frontend.php:21:__construct] BSP_Frontend initialized
+[2025-08-25 17:54:05] [INIT] [booking-system-pro-final.php:288:init_components] Frontend component initialized
+[2025-08-25 17:54:05] [AJAX] [class-ajax.php:21:__construct] BSP_Ajax initialized
+[2025-08-25 17:54:05] [AJAX] [class-ajax.php:37:__construct] AJAX endpoints registered: bsp_get_availability, bsp_submit_booking, bsp_get_slots, bsp_test_webhook
+[2025-08-25 17:54:05] [INIT] [booking-system-pro-final.php:296:init_components] AJAX component initialized
+[2025-08-25 17:54:05] [INIT] [booking-system-pro-final.php:304:init_components] Email component initialized
+[2025-08-25 17:54:05] [INIT] [booking-system-pro-final.php:326:init_admin_components] Initializing admin components
+[2025-08-25 17:54:05] [ADMIN] [class-admin.php:33:__construct] BSP_Admin initialized
+[2025-08-25 17:54:05] [ADMIN] [class-admin.php:61:__construct] Admin hooks and AJAX handlers registered
+[2025-08-25 17:54:05] [INIT] [booking-system-pro-final.php:331:init_admin_components] Admin component initialized
+[2025-08-25 17:54:05] [INIT] [booking-system-pro-final.php:339:init_admin_components] Admin dashboard component initialized
+[2025-08-25 17:54:05] [INIT] [booking-system-pro-final.php:347:init_admin_components] Admin bookings component initialized
+[2025-08-25 17:54:05] [INIT] [booking-system-pro-final.php:355:init_admin_components] Admin companies component initialized
+[2025-08-25 17:54:05] [INIT] [booking-system-pro-final.php:363:init_admin_components] Admin settings component initialized
+[2025-08-25 17:54:05] [INIT] [booking-system-pro-final.php:371:init_admin_components] Data manager component initialized
+[2025-08-25 17:54:05] [INIT] [booking-system-pro-final.php:321:init_components] Component initialization completed
+[2025-08-25 17:54:05] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: init_components took 0.017956972122192 seconds
+[2025-08-25 17:54:05] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: setup_hooks
+[2025-08-25 17:54:05] [INIT] [booking-system-pro-final.php:379:setup_hooks] Setting up hooks
+[2025-08-25 17:54:05] [INIT] [booking-system-pro-final.php:396:setup_hooks] Hooks setup completed
+[2025-08-25 17:54:05] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: setup_hooks took 0.0020580291748047 seconds
+[2025-08-25 17:54:05] [INIT] [booking-system-pro-final.php:401:init_legacy_compatibility] Initializing legacy compatibility
+[2025-08-25 17:54:05] [INIT] [booking-system-pro-final.php:412:init_legacy_compatibility] Created legacy shortcode: booking_system_form
+[2025-08-25 17:54:05] [INIT] [booking-system-pro-final.php:415:init_legacy_compatibility] Legacy compatibility initialized
+[2025-08-25 17:54:05] [TOAST] [booking-system-pro-final.php:733:init_toast_notifications] Toast notification system initialized
+[2025-08-25 17:54:05] [INIT] [booking-system-pro-final.php:177:init] Plugin initialization completed successfully
+[2025-08-25 17:54:05] [MEMORY] [booking-system-pro-final.php:87:bsp_memory_log] MEMORY at init_end: 4MB (Peak: 4MB)
+[2025-08-25 17:54:05] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: plugin_init took 0.056248188018799 seconds
+[2025-08-25 17:54:05] [INIT] [booking-system-pro-final.php:132:__construct] === PLUGIN CONSTRUCTOR START ===
+[2025-08-25 17:54:05] [MEMORY] [booking-system-pro-final.php:87:bsp_memory_log] MEMORY at constructor_start: 6MB (Peak: 6MB)
+[2025-08-25 17:54:05] [INIT] [booking-system-pro-final.php:142:__construct] Plugin constructor completed
+[2025-08-25 17:54:05] [MEMORY] [booking-system-pro-final.php:87:bsp_memory_log] MEMORY at constructor_end: 6MB (Peak: 6MB)
+[2025-08-25 17:54:05] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: plugin_init
+[2025-08-25 17:54:05] [INIT] [booking-system-pro-final.php:155:init] === PLUGIN INITIALIZATION START ===
+[2025-08-25 17:54:05] [MEMORY] [booking-system-pro-final.php:87:bsp_memory_log] MEMORY at init_start: 6MB (Peak: 6MB)
+[2025-08-25 17:54:05] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: load_textdomain
+[2025-08-25 17:54:05] [INIT] [booking-system-pro-final.php:206:load_textdomain] Text domain loaded: Success
+[2025-08-25 17:54:05] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: load_textdomain took 0.0010161399841309 seconds
+[2025-08-25 17:54:05] [SYSTEM] [booking-system-pro-final.php:108:bsp_system_info_log] SYSTEM INFO: {"PHP Version":"8.2.27","WordPress Version":"6.8.2","Plugin Version":"2.1.0","Active Theme":"Hello Elementor","Server Software":"nginx\/1.26.1","Memory Limit":"256M","Max Execution Time":"1200","Upload Max Size":"300M","Post Max Size":"1000M"}
+[2025-08-25 17:54:05] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_files
+[2025-08-25 17:54:05] [DEBUG] [booking-system-pro-final.php:149:early_debug_init] === EARLY DEBUG INITIALIZATION ===
+[2025-08-25 17:54:05] [INIT] [booking-system-pro-final.php:212:include_files] Starting file inclusion
+[2025-08-25 17:54:05] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-utilities.php
+[2025-08-25 17:54:05] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-utilities.php
+[2025-08-25 17:54:05] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-utilities.php took 0.00089383125305176 seconds
+[2025-08-25 17:54:05] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-database-unified.php
+[2025-08-25 17:54:05] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-database-unified.php
+[2025-08-25 17:54:05] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-database-unified.php took 0.00095295906066895 seconds
+[2025-08-25 17:54:05] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-post-types.php
+[2025-08-25 17:54:05] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-post-types.php
+[2025-08-25 17:54:05] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-post-types.php took 0.00094795227050781 seconds
+[2025-08-25 17:54:05] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-taxonomies.php
+[2025-08-25 17:54:05] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-taxonomies.php
+[2025-08-25 17:54:05] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-taxonomies.php took 0.0011658668518066 seconds
+[2025-08-25 17:54:05] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-frontend.php
+[2025-08-25 17:54:05] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-frontend.php
+[2025-08-25 17:54:05] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-frontend.php took 0.00079917907714844 seconds
+[2025-08-25 17:54:05] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-admin.php
+[2025-08-25 17:54:05] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-admin.php
+[2025-08-25 17:54:05] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-admin.php took 0.00082707405090332 seconds
+[2025-08-25 17:54:05] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-admin-dashboard.php
+[2025-08-25 17:54:05] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-admin-dashboard.php
+[2025-08-25 17:54:05] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-admin-dashboard.php took 0.00080609321594238 seconds
+[2025-08-25 17:54:05] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-admin-bookings.php
+[2025-08-25 17:54:05] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-admin-bookings.php
+[2025-08-25 17:54:05] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-admin-bookings.php took 0.010408878326416 seconds
+[2025-08-25 17:54:05] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-admin-companies.php
+[2025-08-25 17:54:05] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-admin-companies.php
+[2025-08-25 17:54:05] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-admin-companies.php took 0.0040380954742432 seconds
+[2025-08-25 17:54:05] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-admin-settings.php
+[2025-08-25 17:54:05] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-admin-settings.php
+[2025-08-25 17:54:05] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-admin-settings.php took 0.007580041885376 seconds
+[2025-08-25 17:54:05] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-ajax.php
+[2025-08-25 17:54:05] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-ajax.php
+[2025-08-25 17:54:05] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-ajax.php took 0.0011181831359863 seconds
+[2025-08-25 17:54:05] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-email.php
+[2025-08-25 17:54:05] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-email.php
+[2025-08-25 17:54:05] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-email.php took 0.0015640258789062 seconds
+[2025-08-25 17:54:05] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: include_includes/class-data-manager.php
+[2025-08-25 17:54:05] [INIT] [booking-system-pro-final.php:245:include_file] Included: includes/class-data-manager.php
+[2025-08-25 17:54:05] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_includes/class-data-manager.php took 0.0010387897491455 seconds
+[2025-08-25 17:54:05] [INIT] [booking-system-pro-final.php:234:include_files] File inclusion completed
+[2025-08-25 17:54:05] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: include_files took 0.046109914779663 seconds
+[2025-08-25 17:54:05] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: init_components
+[2025-08-25 17:54:05] [INIT] [booking-system-pro-final.php:254:init_components] Starting component initialization
+[2025-08-25 17:54:05] [INIT] [booking-system-pro-final.php:259:init_components] BSP_Utilities class available
+[2025-08-25 17:54:05] [DATABASE] [class-database-unified.php:42:__construct] BSP_Database_Unified initialized
+[2025-08-25 17:54:05] [DATABASE] [class-database-unified.php:49:__construct] Database tables initialized | Context: {"bookings":"wp_bsp_bookings","companies":"wp_bsp_companies","services":"wp_bsp_services","customers":"wp_bsp_customers","availability":"wp_bsp_availability","email_logs":"wp_bsp_email_logs","settings":"wp_bsp_settings"}
+[2025-08-25 17:54:05] [INIT] [booking-system-pro-final.php:265:init_components] Database component initialized
+[2025-08-25 17:54:05] [INIT] [booking-system-pro-final.php:273:init_components] Post types component initialized
+[2025-08-25 17:54:05] [INIT] [booking-system-pro-final.php:280:init_components] Taxonomies component initialized
+[2025-08-25 17:54:05] [FRONTEND] [class-frontend.php:21:__construct] BSP_Frontend initialized
+[2025-08-25 17:54:05] [INIT] [booking-system-pro-final.php:288:init_components] Frontend component initialized
+[2025-08-25 17:54:05] [AJAX] [class-ajax.php:21:__construct] BSP_Ajax initialized
+[2025-08-25 17:54:05] [AJAX] [class-ajax.php:37:__construct] AJAX endpoints registered: bsp_get_availability, bsp_submit_booking, bsp_get_slots, bsp_test_webhook
+[2025-08-25 17:54:05] [INIT] [booking-system-pro-final.php:296:init_components] AJAX component initialized
+[2025-08-25 17:54:05] [INIT] [booking-system-pro-final.php:304:init_components] Email component initialized
+[2025-08-25 17:54:05] [INIT] [booking-system-pro-final.php:326:init_admin_components] Initializing admin components
+[2025-08-25 17:54:05] [ADMIN] [class-admin.php:33:__construct] BSP_Admin initialized
+[2025-08-25 17:54:05] [ADMIN] [class-admin.php:61:__construct] Admin hooks and AJAX handlers registered
+[2025-08-25 17:54:05] [INIT] [booking-system-pro-final.php:331:init_admin_components] Admin component initialized
+[2025-08-25 17:54:05] [INIT] [booking-system-pro-final.php:339:init_admin_components] Admin dashboard component initialized
+[2025-08-25 17:54:05] [INIT] [booking-system-pro-final.php:347:init_admin_components] Admin bookings component initialized
+[2025-08-25 17:54:05] [INIT] [booking-system-pro-final.php:355:init_admin_components] Admin companies component initialized
+[2025-08-25 17:54:05] [INIT] [booking-system-pro-final.php:363:init_admin_components] Admin settings component initialized
+[2025-08-25 17:54:05] [INIT] [booking-system-pro-final.php:371:init_admin_components] Data manager component initialized
+[2025-08-25 17:54:05] [INIT] [booking-system-pro-final.php:321:init_components] Component initialization completed
+[2025-08-25 17:54:05] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: init_components took 0.013696908950806 seconds
+[2025-08-25 17:54:05] [PERF] [booking-system-pro-final.php:69:bsp_performance_log] PERFORMANCE START: setup_hooks
+[2025-08-25 17:54:05] [INIT] [booking-system-pro-final.php:379:setup_hooks] Setting up hooks
+[2025-08-25 17:54:05] [INIT] [booking-system-pro-final.php:396:setup_hooks] Hooks setup completed
+[2025-08-25 17:54:05] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: setup_hooks took 0.0022881031036377 seconds
+[2025-08-25 17:54:05] [INIT] [booking-system-pro-final.php:401:init_legacy_compatibility] Initializing legacy compatibility
+[2025-08-25 17:54:05] [INIT] [booking-system-pro-final.php:412:init_legacy_compatibility] Created legacy shortcode: booking_system_form
+[2025-08-25 17:54:05] [INIT] [booking-system-pro-final.php:415:init_legacy_compatibility] Legacy compatibility initialized
+[2025-08-25 17:54:05] [TOAST] [booking-system-pro-final.php:733:init_toast_notifications] Toast notification system initialized
+[2025-08-25 17:54:05] [INIT] [booking-system-pro-final.php:177:init] Plugin initialization completed successfully
+[2025-08-25 17:54:05] [MEMORY] [booking-system-pro-final.php:87:bsp_memory_log] MEMORY at init_end: 6MB (Peak: 6MB)
+[2025-08-25 17:54:05] [PERF] [booking-system-pro-final.php:74:bsp_performance_log] PERFORMANCE END: plugin_init took 0.071547985076904 seconds
+[2025-08-25 17:54:05] [SYSTEM] [booking-system-pro-final.php:108:bsp_system_info_log] SYSTEM INFO: {"PHP Version":"8.2.27","WordPress Version":"6.8.2","Plugin Version":"2.1.0","Active Theme":"Hello Elementor","Server Software":"nginx\/1.26.1","Memory Limit":"256M","Max Execution Time":"1200","Upload Max Size":"300M","Post Max Size":"1000M"}
+[2025-08-25 17:54:05] [DEBUG] [booking-system-pro-final.php:149:early_debug_init] === EARLY DEBUG INITIALIZATION ===
+[2025-08-25 17:54:05] [HOOK] [booking-system-pro-final.php:419:init_hooks] Additional initialization hooks
+[2025-08-25 17:54:05] [FRONTEND] [class-frontend.php:146:register_shortcodes] Registering frontend shortcodes
+[2025-08-25 17:54:05] [FRONTEND] [class-frontend.php:157:register_shortcodes] Frontend shortcodes registered: booking_form, booking_calendar, booking_services, booking_system_form
+[2025-08-25 17:54:05] [HOOK] [booking-system-pro-final.php:424:admin_init] Admin initialization
+[2025-08-25 17:54:05] [MEMORY] [booking-system-pro-final.php:87:bsp_memory_log] MEMORY at shutdown: 4MB (Peak: 4MB)
+[2025-08-25 17:54:05] [DEBUG] [booking-system-pro-final.php:544:debug_shutdown] === PLUGIN SHUTDOWN ===
+[2025-08-25 17:54:05] [DEBUG] [booking-system-pro-final.php:548:debug_shutdown] Environment: local
+[2025-08-25 17:54:05] [HOOK] [booking-system-pro-final.php:419:init_hooks] Additional initialization hooks
+[2025-08-25 17:54:05] [FRONTEND] [class-frontend.php:146:register_shortcodes] Registering frontend shortcodes
+[2025-08-25 17:54:05] [FRONTEND] [class-frontend.php:157:register_shortcodes] Frontend shortcodes registered: booking_form, booking_calendar, booking_services, booking_system_form
+[2025-08-25 17:54:05] [HOOK] [booking-system-pro-final.php:424:admin_init] Admin initialization
+[2025-08-25 17:54:05] [MEMORY] [booking-system-pro-final.php:87:bsp_memory_log] MEMORY at shutdown: 6MB (Peak: 6MB)
+[2025-08-25 17:54:05] [DEBUG] [booking-system-pro-final.php:544:debug_shutdown] === PLUGIN SHUTDOWN ===
+[2025-08-25 17:54:05] [DEBUG] [booking-system-pro-final.php:548:debug_shutdown] Environment: local

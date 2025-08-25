@@ -400,7 +400,7 @@ body .booking-system-form .service-options,
 
 body .booking-system-form .service-option,
 .booking-system-form .service-option {
-    background: #fff !important;
+    background: transparent !important;
     color: #004d00 !important;
     border: none;
     border-radius: 8px;
@@ -410,22 +410,20 @@ body .booking-system-form .service-option,
     cursor: pointer;
     transition: all 0.3s ease;
     text-align: center;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    box-shadow: none;
     font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
 }
 
 body .booking-system-form .service-option:hover,
 .booking-system-form .service-option:hover {
-    opacity: 0.8;
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+    cursor: pointer;
 }
 
 body .booking-system-form .service-option.selected,
 .booking-system-form .service-option.selected {
-    background: #79B62F !important;
-    color: #fff !important;
-    transform: translateY(-2px);
+    background: transparent !important;
+    color: #8DBF57 !important;
+    transform: none;
 }
 
 /* ─── OPTION BUTTONS ──────────────────────────────────── */
@@ -1895,9 +1893,6 @@ body .booking-system-form .rs-step-1 .service-option,
 
 body .booking-system-form .rs-step-1 .service-icon-box,
 .booking-system-form .rs-step-1 .service-icon-box {
-    background: white;
-    border: 2px solid #e0e0e0;
-    border-radius: 8px;
     padding: 6px;
     transition: all 0.3s ease;
     display: flex;
@@ -1906,32 +1901,22 @@ body .booking-system-form .rs-step-1 .service-icon-box,
     width: 90px;
     height: 90px;
     box-sizing: border-box;
-    -webkit-border-radius: 8px;
-    -moz-border-radius: 8px;
-    -ms-border-radius: 8px;
-    -o-border-radius: 8px;
 }
 
 body .booking-system-form .rs-step-1 .service-option:hover .service-icon-box,
 .booking-system-form .rs-step-1 .service-option:hover .service-icon-box {
-    border-color: #78B643 !important;
-    background: #78B643 !important;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 15px rgba(121, 182, 47, 0.3);
+    cursor: pointer;
 }
 
 body .booking-system-form .rs-step-1 .service-option.selected .service-icon-box,
 .booking-system-form .rs-step-1 .service-option.selected .service-icon-box {
-    background: #8DBF57 !important;
-    border-color: #689F38 !important;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 15px rgba(121, 182, 47, 0.3);
+    transform: none;
+    box-shadow: none;
 }
 
 body .booking-system-form .rs-step-1 .service-option:hover,
 .booking-system-form .rs-step-1 .service-option:hover {
-    transform: none;
-    box-shadow: none;
+    cursor: pointer;
 }
 
 body .booking-system-form .rs-step-1 .service-option.selected,
@@ -1944,11 +1929,7 @@ body .booking-system-form .rs-step-1 .service-option.selected,
 
 body .booking-system-form .rs-step-1 .service-option:hover,
 .booking-system-form .rs-step-1 .service-option:hover {
-    border-color: transparent !important;
-    background: transparent !important;
-    color: #1E773B !important;
-    transform: none;
-    box-shadow: none;
+    cursor: pointer;
 }
 
 body .booking-system-form .rs-step-1 .service-option.selected,
@@ -1975,84 +1956,56 @@ body .booking-system-form .rs-step-1 .service-icon,
 body .booking-system-form .rs-step-1 .service-name,
 .booking-system-form .rs-step-1 .service-name {
     font-size: 22px !important;
-    font-weight: 600 !important;
+    font-weight: 500 !important;
     margin: 0;
     transition: color 0.3s ease;
     line-height: 1.1;
-    color: #8DBF58 !important;
+    color: white !important;
 }
 
 body .booking-system-form .rs-step-1 .service-option:hover .service-name,
 .booking-system-form .rs-step-1 .service-option:hover .service-name {
-    color: #8DBF58 !important;
+    cursor: pointer;
 }
 
 body .booking-system-form .rs-step-1 .service-option.selected .service-name,
 .booking-system-form .rs-step-1 .service-option.selected .service-name {
-    color: #8DBF57 !important;
+    color: white !important;
 }
 
-/* Service-specific icon backgrounds */
+/* Service-specific icon backgrounds - now using "after" images as default */
 body .booking-system-form .rs-step-1 .service-option[data-service="Roof"] .service-icon,
 .booking-system-form .rs-step-1 .service-option[data-service="Roof"] .service-icon {
-    background-image: url('../images/roofing-before.png');
-}
-body .booking-system-form .rs-step-1 .service-option[data-service="Roof"]:hover .service-icon,
-.booking-system-form .rs-step-1 .service-option[data-service="Roof"].selected .service-icon {
     background-image: url('../images/roofing-after.svg');
 }
 
 body .booking-system-form .rs-step-1 .service-option[data-service="Windows"] .service-icon,
 .booking-system-form .rs-step-1 .service-option[data-service="Windows"] .service-icon {
-    background-image: url('../images/windows-before.png');
-}
-body .booking-system-form .rs-step-1 .service-option[data-service="Windows"]:hover .service-icon,
-.booking-system-form .rs-step-1 .service-option[data-service="Windows"].selected .service-icon {
     background-image: url('../images/windows-after.svg');
 }
 
 body .booking-system-form .rs-step-1 .service-option[data-service="Bathroom"] .service-icon,
 .booking-system-form .rs-step-1 .service-option[data-service="Bathroom"] .service-icon {
-    background-image: url('../images/bathroom-before.png');
-}
-body .booking-system-form .rs-step-1 .service-option[data-service="Bathroom"]:hover .service-icon,
-.booking-system-form .rs-step-1 .service-option[data-service="Bathroom"].selected .service-icon {
     background-image: url('../images/bathroom-after.svg');
 }
 
 body .booking-system-form .rs-step-1 .service-option[data-service="Siding"] .service-icon,
 .booking-system-form .rs-step-1 .service-option[data-service="Siding"] .service-icon {
-    background-image: url('../images/siding-before.png');
-}
-body .booking-system-form .rs-step-1 .service-option[data-service="Siding"]:hover .service-icon,
-.booking-system-form .rs-step-1 .service-option[data-service="Siding"].selected .service-icon {
     background-image: url('../images/siding-after.svg');
 }
 
 body .booking-system-form .rs-step-1 .service-option[data-service="Kitchen"] .service-icon,
 .booking-system-form .rs-step-1 .service-option[data-service="Kitchen"] .service-icon {
-    background-image: url('../images/kitchen-before.png');
-}
-body .booking-system-form .rs-step-1 .service-option[data-service="Kitchen"]:hover .service-icon,
-.booking-system-form .rs-step-1 .service-option[data-service="Kitchen"].selected .service-icon {
     background-image: url('../images/kitchen-after.svg');
 }
 
 body .booking-system-form .rs-step-1 .service-option[data-service="Decks"] .service-icon,
 .booking-system-form .rs-step-1 .service-option[data-service="Decks"] .service-icon {
-    background-image: url('../images/deck-before.png');
-}
-body .booking-system-form .rs-step-1 .service-option[data-service="Decks"]:hover .service-icon,
-.booking-system-form .rs-step-1 .service-option[data-service="Decks"].selected .service-icon {
     background-image: url('../images/deck-after.png');
 }
 
 body .booking-system-form .rs-step-1 .service-option[data-service="ADU"] .service-icon,
 .booking-system-form .rs-step-1 .service-option[data-service="ADU"] .service-icon {
-    background-image: url('../images/adu-before.png');
-}
-body .booking-system-form .rs-step-1 .service-option[data-service="ADU"]:hover .service-icon,
-.booking-system-form .rs-step-1 .service-option[data-service="ADU"].selected .service-icon {
     background-image: url('../images/adu-after.svg');
 }
 

@@ -72,7 +72,6 @@ class Booking_System_Pro {
         ['id'=>'decks_material','depends_on'=>['service','Decks'],'type'=>'single-choice','question'=>'What material?','options'=>['Cedar','Redwood']],
         
         // ADU
-        ['id'=>'adu_action','depends_on'=>['service','ADU'],'type'=>'single-choice','question'=>'Are you looking to replace or repair your ADU?','options'=>['Replace','Repair']],
         ['id'=>'adu_type','depends_on'=>['service','ADU'],'type'=>'single-choice','question'=>'What type of ADU project?','options'=>['New Build','Addition','Garage Conversion']],
         
         // Common
