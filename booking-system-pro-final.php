@@ -19,54 +19,25 @@ define('BSP_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('BSP_PLUGIN_FILE', __FILE__);
 define('BSP_DB_VERSION', '2.1');
 
-// Debug constants - TEMPORARILY ENABLED for testing
-define('BSP_DEBUG_MODE', true); // Temporarily enabled for testing
+// Debug constants
+define('BSP_DEBUG_MODE', false);
 define('BSP_DEBUG_LOG_FILE', BSP_PLUGIN_DIR . 'debug.log');
 
 /**
- * Optimized Debug logging function - only logs important events
+ * Debug logging function - production optimized
  */
 function bsp_debug_log($message, $type = 'INFO', $context = []) {
-    // TEMPORARILY ENABLE ALL LOGGING FOR DEBUGGING - REMOVE WHEN ISSUES RESOLVED
-    // Only log essential events to prevent log spam:
-    // - BOOKING: Booking creation, completion, status changes
-    // - EMAIL: Email sending status
-    // - INTEGRATION: External API calls (Google Sheets, webhooks)
-    // - AJAX: AJAX request processing and responses
-    // - DATABASE: Database operations and queries
-    // - ERROR: All error conditions
-    // - BACKGROUND_*: Background job processing
-    // - AVAILABILITY: Temporary for debugging slot availability issues
-    // - SLOT_CHECK: Temporary for debugging slot checking
-    // - PERFORMANCE: Temporary for debugging performance bottlenecks
-    $allowed_types = [
-        'BOOKING', 'EMAIL', 'INTEGRATION', 'AJAX', 'DATABASE', 'ERROR', 
-        'BACKGROUND_PROCESSING', 'BACKGROUND_INTEGRATION', 'INTEGRATION_ERROR',
-        'AVAILABILITY', 'SLOT_CHECK', 'PERFORMANCE'
-    ];
+    if (!BSP_DEBUG_MODE) return;
     
-    if (!in_array($type, $allowed_types)) {
-        return; // Skip verbose logging
-    }
+    // Only log critical events in production
+    $critical_types = ['ERROR', 'FATAL', 'BOOKING', 'EMAIL', 'INTEGRATION'];
+    if (!in_array($type, $critical_types)) return;
     
     $debug_file = plugin_dir_path(__FILE__) . 'debug.log';
     $timestamp = date('Y-m-d H:i:s');
-    $context_str = '';
+    $context_str = !empty($context) ? ' | ' . wp_json_encode($context, JSON_UNESCAPED_UNICODE) : '';
     
-    if (!empty($context)) {
-        $context_str = ' | Context: ' . wp_json_encode($context, JSON_UNESCAPED_UNICODE);
-    }
-    
-    $caller = '';
-    if (function_exists('debug_backtrace')) {
-        $trace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2);
-        if (isset($trace[1])) {
-            $caller = ' [' . basename($trace[1]['file']) . ':' . $trace[1]['line'] . ':' . ($trace[1]['function'] ?? 'unknown') . ']';
-        }
-    }
-    
-    $log_message = "[$timestamp] [$type]$caller $message$context_str" . PHP_EOL;
-    
+    $log_message = "[$timestamp] [$type] $message$context_str" . PHP_EOL;
     error_log($log_message, 3, $debug_file);
 }
 
@@ -93,33 +64,42 @@ function bsp_rotate_log_file() {
 }
 
 /**
- * Performance monitoring function - disabled for production
+ * Performance monitoring function
  */
 function bsp_performance_log($action, $start_time = null) {
-    // Disabled to reduce log clutter - only enable for debugging performance issues
+    if (!BSP_DEBUG_MODE) return microtime(true);
+    
+    if ($start_time !== null) {
+        $duration = microtime(true) - $start_time;
+        if ($duration > 1.0) { // Only log slow operations
+            bsp_debug_log("Performance: {$action} took " . round($duration, 3) . "s", 'PERFORMANCE');
+        }
+    }
+    
     return microtime(true);
 }
 
 /**
- * Memory usage logging - disabled for production
+ * Memory usage logging
  */
 function bsp_memory_log($checkpoint) {
-    // Disabled to reduce log clutter - only enable for debugging memory issues
-    return;
+    if (!BSP_DEBUG_MODE) return;
+    
+    $memory = memory_get_usage(true);
+    if ($memory > 50 * 1024 * 1024) { // Only log if over 50MB
+        bsp_debug_log("Memory at {$checkpoint}: " . round($memory / 1024 / 1024, 2) . "MB", 'PERFORMANCE');
+    }
 }
 
 /**
- * System info logging - only log once on activation
+ * System info logging
  */
 function bsp_system_info_log() {
-    // Only log system info when plugin is activated or major errors occur
     if (!BSP_DEBUG_MODE) return;
     
-    // Check if we've already logged system info today
+    // Only log system info when plugin is activated
     $last_logged = get_option('bsp_system_info_logged', 0);
-    if (time() - $last_logged < 86400) { // 24 hours
-        return;
-    }
+    if (time() - $last_logged < 86400) return; // 24 hours
     
     $info = [
         'PHP Version' => PHP_VERSION,
@@ -128,7 +108,7 @@ function bsp_system_info_log() {
         'Server Software' => $_SERVER['SERVER_SOFTWARE'] ?? 'Unknown'
     ];
     
-    bsp_debug_log("SYSTEM INFO: " . json_encode($info), 'INFO');
+    bsp_debug_log("System info: " . json_encode($info), 'INFO');
     update_option('bsp_system_info_logged', time());
 }
 
@@ -153,32 +133,23 @@ final class Booking_System_Pro_Final {
     }
     
     private function __construct() {
-        bsp_debug_log("=== PLUGIN CONSTRUCTOR START ===", 'INIT');
-        bsp_memory_log('constructor_start');
-        
         add_action('plugins_loaded', [$this, 'init'], 10);
         register_activation_hook(__FILE__, [$this, 'activate']);
         register_deactivation_hook(__FILE__, [$this, 'deactivate']);
         
         // Early initialization for debugging
-        add_action('init', [$this, 'early_debug_init'], -999);
-        
-        bsp_debug_log("Plugin constructor completed", 'INIT');
-        bsp_memory_log('constructor_end');
+        if (BSP_DEBUG_MODE) {
+            add_action('init', [$this, 'early_debug_init'], -999);
+        }
     }
     
     public function early_debug_init() {
         if (BSP_DEBUG_MODE) {
             bsp_system_info_log();
-            bsp_debug_log("=== EARLY DEBUG INITIALIZATION ===", 'DEBUG');
         }
     }
     
     public function init() {
-        $perf_timer = bsp_performance_log('plugin_init');
-        bsp_debug_log("=== PLUGIN INITIALIZATION START ===", 'INIT');
-        bsp_memory_log('init_start');
-        
         try {
             // Load text domain
             $this->load_textdomain();
@@ -201,43 +172,28 @@ final class Booking_System_Pro_Final {
             // Initialize Toast Notification System (Always Active)
             $this->init_toast_notifications();
             
-            bsp_debug_log("Plugin initialization completed successfully", 'INIT');
-            bsp_memory_log('init_end');
-            
         } catch (Exception $e) {
-            bsp_debug_log("EXCEPTION during init: " . $e->getMessage(), 'ERROR', [
+            bsp_debug_log("Exception during init: " . $e->getMessage(), 'ERROR', [
                 'file' => $e->getFile(),
-                'line' => $e->getLine(),
-                'trace' => $e->getTraceAsString()
+                'line' => $e->getLine()
             ]);
         } catch (Error $e) {
-            bsp_debug_log("FATAL ERROR during init: " . $e->getMessage(), 'FATAL', [
+            bsp_debug_log("Fatal error during init: " . $e->getMessage(), 'FATAL', [
                 'file' => $e->getFile(),
-                'line' => $e->getLine(),
-                'trace' => $e->getTraceAsString()
+                'line' => $e->getLine()
             ]);
         }
-        
-        bsp_performance_log('plugin_init', $perf_timer);
     }
     
     private function load_textdomain() {
-        $perf_timer = bsp_performance_log('load_textdomain');
-        
-        $loaded = load_plugin_textdomain(
+        load_plugin_textdomain(
             'booking-system-pro', 
             false, 
             dirname(plugin_basename(__FILE__)) . '/languages'
         );
-        
-        bsp_debug_log("Text domain loaded: " . ($loaded ? 'Success' : 'Failed'), 'INIT');
-        bsp_performance_log('load_textdomain', $perf_timer);
     }
     
     private function include_files() {
-        $perf_timer = bsp_performance_log('include_files');
-        bsp_debug_log("Starting file inclusion", 'INIT');
-        
         $includes = [
             'includes/class-utilities.php',
             'includes/class-database-unified.php',
@@ -257,80 +213,60 @@ final class Booking_System_Pro_Final {
         foreach ($includes as $file) {
             $this->include_file($file);
         }
-        
-        bsp_debug_log("File inclusion completed", 'INIT');
-        bsp_performance_log('include_files', $perf_timer);
     }
     
     private function include_file($file) {
         $path = BSP_PLUGIN_DIR . $file;
         
         if (file_exists($path)) {
-            $file_perf = bsp_performance_log("include_{$file}");
             require_once $path;
             $this->components_loaded[] = $file;
-            bsp_debug_log("Included: {$file}", 'INIT');
-            bsp_performance_log("include_{$file}", $file_perf);
         } else {
-            bsp_debug_log("WARNING: File not found: {$file}", 'WARNING');
+            bsp_debug_log("File not found: {$file}", 'ERROR');
         }
     }
     
     private function init_components() {
-        $perf_timer = bsp_performance_log('init_components');
-        bsp_debug_log("Starting component initialization", 'INIT');
-        
         try {
-            // Initialize utilities first
-            if (class_exists('BSP_Utilities')) {
-                bsp_debug_log("BSP_Utilities class available", 'INIT');
-            }
-            
             // Initialize database first
             if (class_exists('BSP_Database_Unified')) {
                 $this->database = BSP_Database_Unified::get_instance();
-                bsp_debug_log("Database component initialized", 'INIT');
             } else {
-                bsp_debug_log("ERROR: BSP_Database_Unified class not found", 'ERROR');
+                bsp_debug_log("BSP_Database_Unified class not found", 'ERROR');
             }
             
             // Initialize post types and taxonomies
             if (class_exists('BSP_Post_Types')) {
                 $this->post_types = BSP_Post_Types::get_instance();
-                bsp_debug_log("Post types component initialized", 'INIT');
             } else {
-                bsp_debug_log("ERROR: BSP_Post_Types class not found", 'ERROR');
+                bsp_debug_log("BSP_Post_Types class not found", 'ERROR');
             }
             
             if (class_exists('BSP_Taxonomies')) {
                 $this->taxonomies = new BSP_Taxonomies();
-                bsp_debug_log("Taxonomies component initialized", 'INIT');
             } else {
-                bsp_debug_log("ERROR: BSP_Taxonomies class not found", 'ERROR');
+                bsp_debug_log("BSP_Taxonomies class not found", 'ERROR');
             }
             
             // Initialize frontend (always needed for shortcodes)
             if (class_exists('BSP_Frontend')) {
                 $this->frontend = BSP_Frontend::get_instance();
-                bsp_debug_log("Frontend component initialized", 'INIT');
             } else {
-                bsp_debug_log("ERROR: BSP_Frontend class not found", 'ERROR');
+                bsp_debug_log("BSP_Frontend class not found", 'ERROR');
             }
             
             // Initialize AJAX handlers (needed for both admin and frontend)
             if (class_exists('BSP_Ajax')) {
                 $this->ajax = BSP_Ajax::get_instance();
-                bsp_debug_log("AJAX component initialized", 'INIT');
             } else {
-                bsp_debug_log("ERROR: BSP_Ajax class not found", 'ERROR');
+                bsp_debug_log("BSP_Ajax class not found", 'ERROR');
             }
             
             // Initialize email system
             if (class_exists('BSP_Email')) {
                 $this->email = BSP_Email::get_instance();
-                bsp_debug_log("Email component initialized", 'INIT');
             } else {
-                bsp_debug_log("ERROR: BSP_Email class not found", 'ERROR');
+                bsp_debug_log("BSP_Email class not found", 'ERROR');
             }
             
             // Initialize admin components (only in admin area)
@@ -339,79 +275,52 @@ final class Booking_System_Pro_Final {
             }
             
         } catch (Exception $e) {
-            bsp_debug_log("ERROR initializing components: " . $e->getMessage(), 'ERROR', [
+            bsp_debug_log("Error initializing components: " . $e->getMessage(), 'ERROR', [
                 'file' => $e->getFile(),
                 'line' => $e->getLine()
             ]);
         }
-        
-        bsp_debug_log("Component initialization completed", 'INIT');
-        bsp_performance_log('init_components', $perf_timer);
     }
     
     private function init_admin_components() {
-        bsp_debug_log("Initializing admin components", 'INIT');
-        
         // Main admin class
         if (class_exists('BSP_Admin')) {
             $this->admin = BSP_Admin::get_instance();
-            bsp_debug_log("Admin component initialized", 'INIT');
         } else {
-            bsp_debug_log("ERROR: BSP_Admin class not found", 'ERROR');
+            bsp_debug_log("BSP_Admin class not found", 'ERROR');
         }
         
         // Admin dashboard
         if (class_exists('BSP_Admin_Dashboard')) {
             BSP_Admin_Dashboard::get_instance();
-            bsp_debug_log("Admin dashboard component initialized", 'INIT');
-        } else {
-            bsp_debug_log("WARNING: BSP_Admin_Dashboard class not found", 'WARNING');
         }
         
         // Admin bookings
         if (class_exists('BSP_Admin_Bookings')) {
             BSP_Admin_Bookings::get_instance();
-            bsp_debug_log("Admin bookings component initialized", 'INIT');
-        } else {
-            bsp_debug_log("WARNING: BSP_Admin_Bookings class not found", 'WARNING');
         }
         
         // Admin companies
         if (class_exists('BSP_Admin_Companies')) {
             BSP_Admin_Companies::get_instance();
-            bsp_debug_log("Admin companies component initialized", 'INIT');
-        } else {
-            bsp_debug_log("WARNING: BSP_Admin_Companies class not found", 'WARNING');
         }
         
         // Admin settings
         if (class_exists('BSP_Admin_Settings')) {
             BSP_Admin_Settings::get_instance();
-            bsp_debug_log("Admin settings component initialized", 'INIT');
-        } else {
-            bsp_debug_log("WARNING: BSP_Admin_Settings class not found", 'WARNING');
         }
         
         // Data manager
         if (class_exists('BSP_Data_Manager')) {
             BSP_Data_Manager::get_instance();
-            bsp_debug_log("Data manager component initialized", 'INIT');
-        } else {
-            bsp_debug_log("WARNING: BSP_Data_Manager class not found", 'WARNING');
         }
     }
     
     private function setup_hooks() {
-        $perf_timer = bsp_performance_log('setup_hooks');
-        bsp_debug_log("Setting up hooks", 'INIT');
-        
         add_action('init', [$this, 'init_hooks'], 0);
         add_action('admin_init', [$this, 'admin_init']);
         add_action('wp_enqueue_scripts', [$this, 'frontend_assets']);
         add_action('admin_enqueue_scripts', [$this, 'admin_assets']);
-        
-        // Background Google Sheets sync hook - REMOVED DUPLICATE HANDLER
-        // Only using the AJAX handler to prevent duplicate submissions
         
         // Debug hooks
         if (BSP_DEBUG_MODE) {
@@ -419,27 +328,18 @@ final class Booking_System_Pro_Final {
             add_action('admin_footer', [$this, 'debug_info_footer']);
             add_action('shutdown', [$this, 'debug_shutdown']);
         }
-        
-        bsp_debug_log("Hooks setup completed", 'INIT');
-        bsp_performance_log('setup_hooks', $perf_timer);
     }
     
     private function init_legacy_compatibility() {
-        bsp_debug_log("Initializing legacy compatibility", 'INIT');
-        
         // Ensure backward compatibility with old class names
         if (!class_exists('Booking_System_Admin') && class_exists('BSP_Admin')) {
             class_alias('BSP_Admin', 'Booking_System_Admin');
-            bsp_debug_log("Created legacy alias: Booking_System_Admin", 'INIT');
         }
         
         // Legacy shortcode compatibility
         if (!shortcode_exists('booking_system_form') && $this->frontend) {
             add_shortcode('booking_system_form', [$this->frontend, 'booking_form_shortcode']);
-            bsp_debug_log("Created legacy shortcode: booking_system_form", 'INIT');
         }
-        
-        bsp_debug_log("Legacy compatibility initialized", 'INIT');
     }
     
     /**
@@ -447,7 +347,6 @@ final class Booking_System_Pro_Final {
      */
     private function register_background_jobs() {
         if (!$this->ajax) {
-            bsp_debug_log("Cannot register background jobs: AJAX handler not initialized", 'WARNING');
             return;
         }
         
@@ -460,26 +359,20 @@ final class Booking_System_Pro_Final {
         // Booking extras processing handler
         add_action('bsp_process_booking_extras', [$this->ajax, 'handle_booking_extras'], 10, 2);
         
-        // Google Sheets sync handler - SINGLE HANDLER ONLY
+        // Google Sheets sync handler
         add_action('bsp_sync_google_sheets', [$this, 'handle_google_sheets_sync'], 10, 2);
-        
-        bsp_debug_log("Background job handlers registered for optimized form submission", 'INIT');
     }
     
     public function init_hooks() {
-        bsp_debug_log("Additional initialization hooks", 'HOOK');
         do_action('bsp_init');
     }
     
     public function admin_init() {
-        bsp_debug_log("Admin initialization", 'HOOK');
         do_action('bsp_admin_init');
     }
     
     public function frontend_assets() {
         if ($this->has_booking_shortcode()) {
-            bsp_debug_log("Loading frontend assets", 'ASSETS');
-            
             // Enqueue frontend assets
             wp_enqueue_style('bsp-frontend', BSP_PLUGIN_URL . 'assets/css/booking-system.css', [], BSP_VERSION);
             wp_enqueue_script('bsp-frontend', BSP_PLUGIN_URL . 'assets/js/booking-system.js', ['jquery'], BSP_VERSION, true);
@@ -517,8 +410,6 @@ final class Booking_System_Pro_Final {
                     'no_availability' => __('No availability found for selected dates.', 'booking-system-pro')
                 ]
             ]);
-            
-            bsp_debug_log("Frontend assets loaded", 'ASSETS');
         }
     }
     

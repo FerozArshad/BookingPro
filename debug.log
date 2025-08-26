@@ -152,3 +152,12 @@
 [2025-08-26 09:47:39] [DATABASE] [class-database-unified.php:32:__construct] Database tables initialized | Context: {"bookings":"wp_bsp_bookings","companies":"wp_bsp_companies","services":"wp_bsp_services","customers":"wp_bsp_customers","availability":"wp_bsp_availability","email_logs":"wp_bsp_email_logs","settings":"wp_bsp_settings"}
 [2025-08-26 09:47:39] [AJAX] [class-ajax.php:14:__construct] BSP_Ajax initialized
 [2025-08-26 09:47:39] [AJAX] [class-ajax.php:14:__construct] AJAX endpoints registered: bsp_get_availability, bsp_submit_booking, bsp_get_slots, bsp_test_webhook
+[2025-08-26 09:49:40] [DATABASE] [class-database-unified.php:32:__construct] BSP_Database_Unified initialized
+[2025-08-26 09:49:40] [DATABASE] [class-database-unified.php:32:__construct] Database tables initialized | Context: {"bookings":"wp_bsp_bookings","companies":"wp_bsp_companies","services":"wp_bsp_services","customers":"wp_bsp_customers","availability":"wp_bsp_availability","email_logs":"wp_bsp_email_logs","settings":"wp_bsp_settings"}
+[2025-08-26 09:49:40] [AJAX] [class-ajax.php:14:__construct] BSP_Ajax initialized
+[2025-08-26 09:49:40] [AJAX] [class-ajax.php:14:__construct] AJAX endpoints registered: bsp_get_availability, bsp_submit_booking, bsp_get_slots, bsp_test_webhook
+[2025-08-26 09:49:41] [DATABASE] [class-database-unified.php:32:__construct] BSP_Database_Unified initialized
+[2025-08-26 09:49:41] [DATABASE] [class-database-unified.php:32:__construct] Database tables initialized | Context: {"bookings":"wp_bsp_bookings","companies":"wp_bsp_companies","services":"wp_bsp_services","customers":"wp_bsp_customers","availability":"wp_bsp_availability","email_logs":"wp_bsp_email_logs","settings":"wp_bsp_settings"}
+[2025-08-26 09:49:41] [AJAX] [class-ajax.php:14:__construct] BSP_Ajax initialized
+[2025-08-26 09:49:41] [AJAX] [class-ajax.php:14:__construct] AJAX endpoints registered: bsp_get_availability, bsp_submit_booking, bsp_get_slots, bsp_test_webhook
+[2025-08-26 09:49:41] [BACKGROUND_PROCESSING] [class-wp-hook.php:324:handle_booking_extras] Processing booking extras for booking ID: 108
