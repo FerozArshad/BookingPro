@@ -19,135 +19,117 @@ define('BSP_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('BSP_PLUGIN_FILE', __FILE__);
 define('BSP_DB_VERSION', '2.1');
 
-// Debug constants
-define('BSP_DEBUG_MODE', defined('WP_DEBUG') && WP_DEBUG);
+// Debug constants - TEMPORARILY ENABLED for testing
+define('BSP_DEBUG_MODE', true); // Temporarily enabled for testing
 define('BSP_DEBUG_LOG_FILE', BSP_PLUGIN_DIR . 'debug.log');
 
 /**
- * Advanced Debug logging function with multiple levels
+ * Optimized Debug logging function - only logs important events
  */
-function bsp_debug_log($message, $level = 'INFO', $context = []) {
-    if (!BSP_DEBUG_MODE) return;
+function bsp_debug_log($message, $type = 'INFO', $context = []) {
+    // TEMPORARILY ENABLE ALL LOGGING FOR DEBUGGING - REMOVE WHEN ISSUES RESOLVED
+    // Only log essential events to prevent log spam:
+    // - BOOKING: Booking creation, completion, status changes
+    // - EMAIL: Email sending status
+    // - INTEGRATION: External API calls (Google Sheets, webhooks)
+    // - AJAX: AJAX request processing and responses
+    // - DATABASE: Database operations and queries
+    // - ERROR: All error conditions
+    // - BACKGROUND_*: Background job processing
+    // - AVAILABILITY: Temporary for debugging slot availability issues
+    // - SLOT_CHECK: Temporary for debugging slot checking
+    // - PERFORMANCE: Temporary for debugging performance bottlenecks
+    $allowed_types = [
+        'BOOKING', 'EMAIL', 'INTEGRATION', 'AJAX', 'DATABASE', 'ERROR', 
+        'BACKGROUND_PROCESSING', 'BACKGROUND_INTEGRATION', 'INTEGRATION_ERROR',
+        'AVAILABILITY', 'SLOT_CHECK', 'PERFORMANCE'
+    ];
     
-    // Ensure proper character encoding
-    if (!mb_check_encoding($message, 'UTF-8')) {
-        $message = mb_convert_encoding($message, 'UTF-8', 'auto');
+    if (!in_array($type, $allowed_types)) {
+        return; // Skip verbose logging
     }
     
+    $debug_file = plugin_dir_path(__FILE__) . 'debug.log';
     $timestamp = date('Y-m-d H:i:s');
-    $backtrace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2);
-    $caller = isset($backtrace[1]) ? $backtrace[1]['function'] : 'unknown';
-    $file = isset($backtrace[0]) ? basename($backtrace[0]['file']) : 'unknown';
-    $line = isset($backtrace[0]) ? $backtrace[0]['line'] : 'unknown';
-    
-    // Safely encode context data
     $context_str = '';
+    
     if (!empty($context)) {
-        $safe_context = array_map(function($item) {
-            if (is_string($item) && !mb_check_encoding($item, 'UTF-8')) {
-                return mb_convert_encoding($item, 'UTF-8', 'auto');
-            }
-            return $item;
-        }, $context);
-        $context_str = ' | Context: ' . wp_json_encode($safe_context, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        $context_str = ' | Context: ' . wp_json_encode($context, JSON_UNESCAPED_UNICODE);
     }
     
-    $log_message = sprintf(
-        "[%s] [%s] [%s:%s:%s] %s%s%s",
-        $timestamp,
-        $level,
-        $file,
-        $line,
-        $caller,
-        $message,
-        $context_str,
-        PHP_EOL
-    );
-    
-    // Use WordPress file system for safer writing
-    if (function_exists('wp_filesystem')) {
-        global $wp_filesystem;
-        if (!$wp_filesystem) {
-            require_once(ABSPATH . 'wp-admin/includes/file.php');
-            WP_Filesystem();
+    $caller = '';
+    if (function_exists('debug_backtrace')) {
+        $trace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2);
+        if (isset($trace[1])) {
+            $caller = ' [' . basename($trace[1]['file']) . ':' . $trace[1]['line'] . ':' . ($trace[1]['function'] ?? 'unknown') . ']';
         }
-        
-        if ($wp_filesystem) {
-            // Read existing content if file exists
-            $existing_content = '';
-            if ($wp_filesystem->exists(BSP_DEBUG_LOG_FILE)) {
-                $existing_content = $wp_filesystem->get_contents(BSP_DEBUG_LOG_FILE);
-            }
-            
-            // Append new log message
-            $new_content = $existing_content . $log_message;
-            
-            // Write with proper UTF-8 encoding
-            $wp_filesystem->put_contents(BSP_DEBUG_LOG_FILE, $new_content, FS_CHMOD_FILE);
-        }
-    } else {
-        // Fallback to file_put_contents with proper encoding
-        $log_message_utf8 = mb_convert_encoding($log_message, 'UTF-8', 'UTF-8');
-        file_put_contents(BSP_DEBUG_LOG_FILE, $log_message_utf8, FILE_APPEND | LOCK_EX);
     }
     
-    // Also log to WordPress debug.log if available
-    if (function_exists('error_log')) {
-        $safe_message = is_string($message) ? mb_convert_encoding($message, 'UTF-8', 'auto') : $message;
-        error_log("BSP [{$level}]: {$safe_message}");
-    }
+    $log_message = "[$timestamp] [$type]$caller $message$context_str" . PHP_EOL;
+    
+    error_log($log_message, 3, $debug_file);
 }
 
 /**
- * Performance monitoring function
+ * Rotate log file when it gets too large
+ */
+function bsp_rotate_log_file() {
+    if (!file_exists(BSP_DEBUG_LOG_FILE)) return;
+    
+    // Keep last 50 lines of important logs
+    $lines = file(BSP_DEBUG_LOG_FILE, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    if (!$lines) return;
+    
+    // Filter to keep only important logs and last 50 entries
+    $important_lines = array_filter($lines, function($line) {
+        return preg_match('/\[(ERROR|WARNING|BOOKING|EMAIL|INTEGRATION|AJAX|DATABASE)\]/', $line);
+    });
+    
+    $keep_lines = array_slice($important_lines, -50);
+    $rotated_content = "=== LOG ROTATED " . date('Y-m-d H:i:s') . " ===" . PHP_EOL;
+    $rotated_content .= implode(PHP_EOL, $keep_lines) . PHP_EOL;
+    
+    file_put_contents(BSP_DEBUG_LOG_FILE, $rotated_content, LOCK_EX);
+}
+
+/**
+ * Performance monitoring function - disabled for production
  */
 function bsp_performance_log($action, $start_time = null) {
-    if (!BSP_DEBUG_MODE) return microtime(true);
-    
-    static $timers = [];
-    
-    if ($start_time === null) {
-        $timers[$action] = microtime(true);
-        bsp_debug_log("PERFORMANCE START: {$action}", 'PERF');
-        return $timers[$action];
-    } else {
-        $end_time = microtime(true);
-        $duration = $end_time - $start_time;
-        bsp_debug_log("PERFORMANCE END: {$action} took {$duration} seconds", 'PERF');
-        return $duration;
-    }
+    // Disabled to reduce log clutter - only enable for debugging performance issues
+    return microtime(true);
 }
 
 /**
- * Memory usage logging
+ * Memory usage logging - disabled for production
  */
 function bsp_memory_log($checkpoint) {
-    if (!BSP_DEBUG_MODE) return;
-    
-    $memory_mb = round(memory_get_usage(true) / 1024 / 1024, 2);
-    $peak_mb = round(memory_get_peak_usage(true) / 1024 / 1024, 2);
-    bsp_debug_log("MEMORY at {$checkpoint}: {$memory_mb}MB (Peak: {$peak_mb}MB)", 'MEMORY');
+    // Disabled to reduce log clutter - only enable for debugging memory issues
+    return;
 }
 
 /**
- * System info logging
+ * System info logging - only log once on activation
  */
 function bsp_system_info_log() {
+    // Only log system info when plugin is activated or major errors occur
     if (!BSP_DEBUG_MODE) return;
+    
+    // Check if we've already logged system info today
+    $last_logged = get_option('bsp_system_info_logged', 0);
+    if (time() - $last_logged < 86400) { // 24 hours
+        return;
+    }
     
     $info = [
         'PHP Version' => PHP_VERSION,
         'WordPress Version' => get_bloginfo('version'),
         'Plugin Version' => BSP_VERSION,
-        'Active Theme' => wp_get_theme()->get('Name'),
-        'Server Software' => $_SERVER['SERVER_SOFTWARE'] ?? 'Unknown',
-        'Memory Limit' => ini_get('memory_limit'),
-        'Max Execution Time' => ini_get('max_execution_time'),
-        'Upload Max Size' => ini_get('upload_max_filesize'),
-        'Post Max Size' => ini_get('post_max_size')
+        'Server Software' => $_SERVER['SERVER_SOFTWARE'] ?? 'Unknown'
     ];
     
-    bsp_debug_log("SYSTEM INFO: " . json_encode($info), 'SYSTEM');
+    bsp_debug_log("SYSTEM INFO: " . json_encode($info), 'INFO');
+    update_option('bsp_system_info_logged', time());
 }
 
 // Main Plugin Class
@@ -206,6 +188,9 @@ final class Booking_System_Pro_Final {
             
             // Initialize components
             $this->init_components();
+            
+            // Register background job handlers for optimized form submission
+            $this->register_background_jobs();
             
             // Setup hooks
             $this->setup_hooks();
@@ -425,8 +410,8 @@ final class Booking_System_Pro_Final {
         add_action('wp_enqueue_scripts', [$this, 'frontend_assets']);
         add_action('admin_enqueue_scripts', [$this, 'admin_assets']);
         
-        // Background Google Sheets sync hook
-        add_action('bsp_sync_google_sheets', [$this, 'handle_google_sheets_sync'], 10, 2);
+        // Background Google Sheets sync hook - REMOVED DUPLICATE HANDLER
+        // Only using the AJAX handler to prevent duplicate submissions
         
         // Debug hooks
         if (BSP_DEBUG_MODE) {
@@ -455,6 +440,30 @@ final class Booking_System_Pro_Final {
         }
         
         bsp_debug_log("Legacy compatibility initialized", 'INIT');
+    }
+    
+    /**
+     * Register background job handlers for optimized form submission
+     */
+    private function register_background_jobs() {
+        if (!$this->ajax) {
+            bsp_debug_log("Cannot register background jobs: AJAX handler not initialized", 'WARNING');
+            return;
+        }
+        
+        // Customer email notification handler
+        add_action('bsp_send_customer_notification', [$this->ajax, 'handle_customer_notification'], 10, 2);
+        
+        // Admin email notification handler  
+        add_action('bsp_send_admin_notification', [$this->ajax, 'handle_admin_notification'], 10, 2);
+        
+        // Booking extras processing handler
+        add_action('bsp_process_booking_extras', [$this->ajax, 'handle_booking_extras'], 10, 2);
+        
+        // Google Sheets sync handler - SINGLE HANDLER ONLY
+        add_action('bsp_sync_google_sheets', [$this, 'handle_google_sheets_sync'], 10, 2);
+        
+        bsp_debug_log("Background job handlers registered for optimized form submission", 'INIT');
     }
     
     public function init_hooks() {

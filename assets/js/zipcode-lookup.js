@@ -19,21 +19,22 @@ class ZipCodeLookupService {
         this.loadZipData();
         this.initializeEventListeners();
         
-        console.log('🚀 ZIP Code Lookup Service initialized');
+        // ZIP Code Lookup Service initialization
+        // Handles US ZIP code validation and city/state lookup for form eligibility
     }
 
     async loadZipData() {
         if (this.isLoading || this.isDataLoaded) return;
         
         this.isLoading = true;
-        console.log('📦 Loading ZIP code data...');
+        // Loading ZIP code data from cache or server
         
         try {
             // Check cache first
             const cachedData = this.getCachedData();
             if (cachedData) {
                 this.processZipData(cachedData);
-                console.log('⚡ ZIP data loaded from cache:', cachedData.length, 'zip codes');
+                // Debug output removed for production
                 return;
             }
             
@@ -52,7 +53,7 @@ class ZipCodeLookupService {
             // Process the data
             this.processZipData(zipData);
             
-            console.log('✅ ZIP data loaded from server:', zipData.length, 'zip codes');
+            // Debug output removed for production
             
         } catch (error) {
             console.error('❌ Failed to load ZIP data:', error);
@@ -70,7 +71,7 @@ class ZipCodeLookupService {
         });
         
         this.isDataLoaded = true;
-        console.log('🗺️ ZIP data processed:', this.zipDataMap.size, 'entries');
+        // Debug output removed for production
     }
     
     getCachedData() {
@@ -99,13 +100,13 @@ class ZipCodeLookupService {
         if (scripts.length > 0) {
             const scriptSrc = scripts[0].src;
             const pluginPath = scriptSrc.replace(/\/assets\/js\/zipcode-lookup\.js.*$/, '');
-            console.log('🔍 Detected plugin path:', pluginPath);
+            // Debug output removed for production
             return pluginPath;
         }
         
         // Fallback to common WordPress plugin path
         const fallbackPath = '/wp-content/plugins/BookingPro';
-        console.log('⚠️ Using fallback plugin path:', fallbackPath);
+        // Debug output removed for production
         return fallbackPath;
     }
     
@@ -128,7 +129,7 @@ class ZipCodeLookupService {
             
             // Then try to set the main data
             localStorage.setItem(this.cacheKey, dataString);
-            console.log('💾 ZIP data cached for', this.cacheExpiryDays, 'day(s)');
+            // ZIP data cached for offline use
             
         } catch (error) {
             if (error.name === 'QuotaExceededError') {
@@ -165,7 +166,7 @@ class ZipCodeLookupService {
             });
             
             if (keysToRemove.length > 0) {
-                console.log(`🧹 Cleaned up ${keysToRemove.length} old cache items`);
+                // Debug output removed for production
             }
         } catch (error) {
             // Ignore cleanup errors
@@ -223,13 +224,13 @@ class ZipCodeLookupService {
     isValidZipCode(zipCode) {
         // First check basic format
         if (!zipCode || !/^\d{5}(?:-\d{4})?$/.test(zipCode)) {
-            console.log('❌ Invalid ZIP format:', zipCode);
+            // Debug output removed for production
             return false;
         }
         
         // If data not loaded yet, only validate format
         if (!this.isDataLoaded) {
-            console.log('⏳ ZIP data not loaded, format validation only');
+            // Debug output removed for production
             return /^\d{5}(?:-\d{4})?$/.test(zipCode);
         }
         
@@ -242,11 +243,11 @@ class ZipCodeLookupService {
         if (zipEntry) {
             this.currentCity = zipEntry.city;
             this.currentState = zipEntry.state_name;
-            console.log('✅ Valid ZIP:', cleanZip, '→', this.currentCity, ',', this.currentState);
+            // Debug output removed for production
             return true;
         }
         
-        console.log('❌ Invalid ZIP code:', cleanZip, 'not found in database');
+        // Debug output removed for production
         return false;
     }
 
@@ -294,10 +295,10 @@ class ZipCodeLookupService {
                 // Replace [City] placeholder or update content
                 if (element.textContent.includes('[City]')) {
                     element.textContent = element.textContent.replace('[City]', cityText);
-                    console.log('🏙️ City display updated:', element.textContent);
+                    // Debug output removed for production
                 } else if (element.id === 'city-name') {
                     element.textContent = cityText;
-                    console.log('🏙️ City name updated:', cityText);
+                    // Debug output removed for production
                 }
             }
         });
@@ -306,7 +307,7 @@ class ZipCodeLookupService {
         if (typeof formState !== 'undefined') {
             formState.detectedCity = this.currentCity;
             formState.detectedState = this.currentState;
-            console.log('📝 FormState updated with detected city/state');
+            // Debug output removed for production
         }
     }
 
@@ -341,7 +342,7 @@ class ZipCodeLookupService {
         // Insert error message after the input
         inputElement.parentNode.insertBefore(errorDiv, inputElement.nextSibling);
         
-        console.log('🚨 ZIP error shown:', message);
+        // Debug output removed for production
     }
 
     /**
@@ -372,7 +373,7 @@ class ZipCodeLookupService {
             inputElement.classList.remove('zip-success');
         }, 2000);
         
-        console.log('✅ ZIP success shown');
+        // Debug output removed for production
     }
 
     /**
@@ -404,7 +405,7 @@ class ZipCodeLookupService {
      */
     handleZipInput(inputElement) {
         const value = inputElement.value.trim();
-        console.log('📝 ZIP input detected:', inputElement.id, 'value:', value);
+        // Debug output removed for production
         
         // Clear previous debounce timer
         if (this.debounceTimer) {
@@ -470,7 +471,7 @@ class ZipCodeLookupService {
                 nextButton.classList.add('btn-disabled');
             }
             
-            console.log('🔘 Button state updated:', isValid ? 'enabled' : 'disabled');
+            // Debug output removed for production
         }
     }
 
@@ -495,7 +496,7 @@ class ZipCodeLookupService {
             e.preventDefault();
             e.stopImmediatePropagation();
             this.showZipError(zipInput, 'Please enter a 5-digit ZIP code');
-            console.log('🚫 Navigation blocked: ZIP code required');
+            // Debug output removed for production
             return false;
         }
         
@@ -503,11 +504,11 @@ class ZipCodeLookupService {
             e.preventDefault();
             e.stopImmediatePropagation();
             this.showZipError(zipInput, 'Please enter a valid US ZIP code');
-            console.log('🚫 Navigation blocked: Invalid ZIP code');
+            // Debug output removed for production
             return false;
         }
         
-        console.log('✅ Navigation allowed: Valid ZIP code');
+        // Debug output removed for production
         return true;
     }
 

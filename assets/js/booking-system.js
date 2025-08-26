@@ -1,6 +1,10 @@
 jQuery(document).ready(function($) {
     'use strict';
     
+    // ═══════════════════════════════════════════════════════════════════════════════════
+    // BOOKING SYSTEM CONFIGURATION
+    // Multi-step form configuration with service-specific dependencies and question flow
+    // ═══════════════════════════════════════════════════════════════════════════════════
 
     const CONFIG = {
         steps: [
@@ -208,8 +212,6 @@ jQuery(document).ready(function($) {
 
     // ─── FIND FIRST SERVICE-SPECIFIC STEP (SKIP SERVICE SELECTION) ───
     function findFirstServiceSpecificStep(service) {
-        console.log('🔧 Finding first service step for:', service);
-        
         // First, look for the generic zip_code step that appears after any service selection
         const zipCodeStepIndex = CONFIG.steps.findIndex(step => 
             step.id === 'zip_code' && 
@@ -217,8 +219,6 @@ jQuery(document).ready(function($) {
             step.depends_on[0] === 'service' && 
             step.depends_on.length === 1
         );
-        
-        console.log('🔧 Found zip_code step at index:', zipCodeStepIndex);
         
         if (zipCodeStepIndex !== -1) {
             return zipCodeStepIndex;
@@ -230,8 +230,6 @@ jQuery(document).ready(function($) {
             step.depends_on[0] === 'service' && 
             step.depends_on[1] === service
         );
-        
-        console.log('🔧 Found service-specific step at index:', serviceStepIndex);
         
         // For URL-based service selection, we skip the service selection step entirely
         // If no service-specific step found, something is wrong - go to service selection
@@ -283,13 +281,11 @@ jQuery(document).ready(function($) {
         const preselectedService = getServiceFromURL();
         
         if (preselectedService) {
-            console.log('🔧 Service preselected from URL:', preselectedService);
             // Auto-select service and skip service selection step
             formState.service = preselectedService;
             
             // Skip directly to first service-specific step (ZIP code step)
             const newStepIndex = findFirstServiceSpecificStep(preselectedService);
-            console.log('🔧 First service step index:', newStepIndex);
             currentStepIndex = newStepIndex;
         }
         
@@ -511,7 +507,10 @@ jQuery(document).ready(function($) {
 
     }
 
-    // ─── STEP STATE MANAGEMENT ─────────────────────────
+    // ═══════════════════════════════════════════════════════════════════════════════════
+    // STEP STATE MANAGEMENT
+    // Handles resetting and managing state between form steps
+    // ═══════════════════════════════════════════════════════════════════════════════════
     function resetStep2State() {
         // Reset step 2 to its default state (hide both text and choice elements initially)
         $('#step2-text-input').hide();
@@ -521,7 +520,10 @@ jQuery(document).ready(function($) {
         $('.booking-step[data-step="2"] .btn-next').prop('disabled', true); // Disable next button
     }
 
-    // ─── STEP NAVIGATION SYSTEM ──────────────────────
+    // ═══════════════════════════════════════════════════════════════════════════════════
+    // STEP NAVIGATION SYSTEM
+    // Core functions for moving between form steps and rendering step content
+    // ═══════════════════════════════════════════════════════════════════════════════════
     function renderCurrentStep() {
         const step = CONFIG.steps[currentStepIndex];
         
@@ -530,39 +532,30 @@ jQuery(document).ready(function($) {
             return;
         }
 
-        console.log('🔧 Rendering step:', currentStepIndex, step.id, step);
-
-        // Check dependencies
+        // Check dependencies before rendering step
         if (step.depends_on) {
             const [dependsKey, dependsValue] = step.depends_on;
-            console.log('🔧 Checking dependencies:', dependsKey, dependsValue, 'formState:', formState);
             
             // Handle the generic zip_code step dependency
             if (dependsKey === 'service' && step.depends_on.length === 1) {
-                console.log('🔧 Generic zip_code step detected');
                 // This is the generic zip_code step - show it if any service is selected
                 if (!formState.service) {
-                    console.log('🔧 No service selected, skipping zip_code step');
                     // Skip zip_code step if no service is selected
                     currentStepIndex++;
                     renderCurrentStep();
                     return;
                 }
-                console.log('🔧 Service selected, showing zip_code step for:', formState.service);
                 // Service is selected, continue to show the zip_code step
             } else if (dependsKey === 'service' && dependsValue) {
-                console.log('🔧 Service-specific step detected for:', dependsValue);
                 // This is a service-specific step - check if the service matches
                 if (formState[dependsKey] !== dependsValue) {
-                    console.log('🔧 Service mismatch, skipping step');
                     // Skip this step if service doesn't match
                     currentStepIndex++;
                     renderCurrentStep();
                     return;
                 }
-                console.log('🔧 Service matches, showing step');
+                // Service matches, show step
             } else if (formState[dependsKey] !== dependsValue) {
-                console.log('🔧 Other dependency mismatch, skipping step');
                 // Skip this step for other dependencies
                 currentStepIndex++;
                 renderCurrentStep();
@@ -2195,16 +2188,18 @@ jQuery(document).ready(function($) {
             }
         });
 
-        console.log("Submitting Booking Data:", JSON.stringify(bookingData, null, 2));
-
-        console.log("Submitting Booking Data:", JSON.stringify(bookingData, null, 2));
-        
-        // Show loading state immediately
+        // Show loading state immediately for user feedback
         $('.btn-submit').prop('disabled', true).html('Processing...');
+        
+        // ═══════════════════════════════════════════════════════════════════════════════════
+        // OPTIMIZED FORM SUBMISSION
+        // Fast response achieved through background processing - emails, Google Sheets sync,
+        // and notifications are deferred to background jobs for millisecond response times
+        // ═══════════════════════════════════════════════════════════════════════════════════
         
         // Check if WordPress AJAX is available
         if (typeof BSP_Ajax !== 'undefined' && BSP_Ajax.ajaxUrl) {
-            // Submit to WordPress with optimized settings
+            // Submit to WordPress with optimized settings for immediate response
             $.ajax({
                 url: BSP_Ajax.ajaxUrl,
                 type: 'POST',
@@ -2409,8 +2404,6 @@ jQuery(document).ready(function($) {
         
         if (!companyAppointment) {
             alert('Please select a date and time for ' + company + ' before requesting an estimate.');
-            console.log('Debug - Company:', company, 'CompanyId:', companyId);
-            console.log('Debug - Selected appointments:', selectedAppointments);
             return;
         }
         

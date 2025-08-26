@@ -127,22 +127,8 @@ class BSP_Ajax {
      * Get company availability for frontend calendar (REFACTORED for performance and accuracy)
      */
     public function get_availability() {
-        if (function_exists('bsp_debug_log')) {
-            bsp_debug_log("=== AVAILABILITY REQUEST RECEIVED ===", 'AVAILABILITY_DEBUG', [
-                'all_POST_data' => $_POST,
-                'server_time' => current_time('mysql'),
-                'request_method' => $_SERVER['REQUEST_METHOD'] ?? 'UNKNOWN'
-            ]);
-        }
-        
         // Verify nonce
         if (!wp_verify_nonce($_POST['nonce'], 'bsp_frontend_nonce')) {
-            if (function_exists('bsp_debug_log')) {
-                bsp_debug_log("AJAX nonce verification failed for get_availability", 'AVAILABILITY_DEBUG', [
-                    'received_nonce' => $_POST['nonce'] ?? 'MISSING',
-                    'expected_action' => 'bsp_frontend_nonce'
-                ]);
-            }
             wp_send_json_error('Security check failed.');
         }
         
@@ -158,26 +144,11 @@ class BSP_Ajax {
         $date_to = isset($_POST['date_to']) ? sanitize_text_field($_POST['date_to']) : $date_from;
         
         if (empty($company_ids) || !$date_from) {
-            if (function_exists('bsp_debug_log')) {
-                bsp_debug_log("AJAX get_availability missing parameters", 'AJAX', [
-                    'company_ids' => $company_ids,
-                    'date_from' => $date_from,
-                    'date_to' => $date_to
-                ]);
-            }
             wp_send_json_error('Missing required parameters.');
         }
         
         // PERFORMANCE OPTIMIZATION: Single database query to fetch ALL booked slots
         $all_booked_slots = $this->fetch_all_booked_slots($company_ids, $date_from, $date_to);
-        
-        if (function_exists('bsp_debug_log')) {
-            bsp_debug_log("Fetched booked slots for all companies", 'PERFORMANCE', [
-                'company_ids' => $company_ids,
-                'date_range' => $date_from . ' to ' . $date_to,
-                'booked_slots_count' => count($all_booked_slots)
-            ]);
-        }
         
         // Get companies and generate availability data using the fetched booked slots
         $db = BSP_Database_Unified::get_instance();
@@ -190,38 +161,16 @@ class BSP_Ajax {
                 // Generate availability for date range with pre-fetched booked slots
                 $company_booked_slots = isset($all_booked_slots[$company_id]) ? $all_booked_slots[$company_id] : [];
                 $availability_data[$company_id] = $this->generate_date_range_availability($company, $date_from, $date_to, $company_booked_slots);
-                
-                if (function_exists('bsp_debug_log')) {
-                    bsp_debug_log("Generated availability for company", 'AVAILABILITY_DEBUG', [
-                        'company_id' => $company_id,
-                        'company_name' => $company->name ?? 'UNKNOWN',
-                        'booked_slots_count' => count($company_booked_slots),
-                        'booked_slots' => $company_booked_slots,
-                        'availability_days_count' => count($availability_data[$company_id] ?? [])
-                    ]);
-                }
-            } else {
-                if (function_exists('bsp_debug_log')) {
-                    bsp_debug_log("Company not found in database", 'AVAILABILITY_DEBUG', [
-                        'company_id' => $company_id
-                    ]);
-                }
             }
-        }
-        
-        if (function_exists('bsp_debug_log')) {
-            bsp_debug_log("=== FINAL AVAILABILITY RESPONSE ===", 'AVAILABILITY_DEBUG', [
-                'response_data_structure' => array_keys($availability_data),
-                'total_companies' => count($availability_data)
-            ]);
         }
         
         wp_send_json_success($availability_data);
     }
     
     /**
-     * PERFORMANCE CRITICAL: Fetch ALL booked slots in ONE database query
+     * PERFORMANCE OPTIMIZATION: Fetch ALL booked slots in ONE database query
      * Returns array like: [company_id => ['2025-08-21_09:00', '2025-08-22_14:30']]
+     * FIXED: Properly handles comma-separated company IDs in database
      */
     private function fetch_all_booked_slots($company_ids, $date_from, $date_to) {
         global $wpdb;
@@ -230,54 +179,85 @@ class BSP_Ajax {
             return [];
         }
         
-        // Convert company IDs to a safe SQL IN clause
-        $company_ids_sql = implode(',', array_map('intval', $company_ids));
-        
-        // Single, efficient database query to get ALL booked slots
-        $query = $wpdb->prepare("
+        // FIXED: Build proper SQL query that handles comma-separated company IDs AND comma-separated dates
+        $query = "
             SELECT 
                 pm1.meta_value as booking_date,
                 pm2.meta_value as booking_time,
-                pm3.meta_value as company_id
+                pm3.meta_value as company_id,
+                p.ID as booking_id
             FROM {$wpdb->posts} p
             INNER JOIN {$wpdb->postmeta} pm1 ON p.ID = pm1.post_id AND pm1.meta_key = '_booking_date'
             INNER JOIN {$wpdb->postmeta} pm2 ON p.ID = pm2.post_id AND pm2.meta_key = '_booking_time'
             INNER JOIN {$wpdb->postmeta} pm3 ON p.ID = pm3.post_id AND pm3.meta_key = '_company_id'
             WHERE p.post_type = 'bsp_booking'
             AND p.post_status IN ('publish', 'pending')
-            AND pm3.meta_value IN ({$company_ids_sql})
-            AND pm1.meta_value >= %s
-            AND pm1.meta_value <= %s
-        ", $date_from, $date_to);
+        ";
+        
+        // FIXED: Handle comma-separated dates in booking_date field
+        // Instead of >= and <= which don't work with comma-separated values,
+        // we need to check if the date appears anywhere in the comma-separated string
+        $date_conditions = [];
+        
+        // Create date range for the requested period
+        $start_date = new DateTime($date_from);
+        $end_date = new DateTime($date_to);
+        
+        // Generate all dates in the range
+        $current = clone $start_date;
+        while ($current <= $end_date) {
+            $date_str = $current->format('Y-m-d');
+            $date_conditions[] = $wpdb->prepare("pm1.meta_value LIKE %s", '%' . $date_str . '%');
+            $current->add(new DateInterval('P1D'));
+        }
+        
+        if (!empty($date_conditions)) {
+            $query .= " AND (" . implode(' OR ', $date_conditions) . ")";
+        }
+        
+        // Build WHERE clause for company IDs (handles both single and comma-separated values)
+        $company_conditions = [];
+        foreach ($company_ids as $company_id) {
+            $company_conditions[] = $wpdb->prepare("(pm3.meta_value = %s OR pm3.meta_value LIKE %s OR pm3.meta_value LIKE %s OR pm3.meta_value LIKE %s)", 
+                $company_id, 
+                $company_id . ',%', 
+                '%,' . $company_id . ',%', 
+                '%,' . $company_id
+            );
+        }
+        
+        if (!empty($company_conditions)) {
+            $query .= " AND (" . implode(' OR ', $company_conditions) . ")";
+        }
         
         $results = $wpdb->get_results($query);
         
         // Organize results by company ID for fast lookup
         $booked_slots = [];
         foreach ($results as $row) {
-            $company_id = intval($row->company_id);
-            
-            // Handle comma-separated dates and times (multiple appointments)
+            // Handle comma-separated company IDs in database
+            $stored_company_ids = array_map('trim', explode(',', $row->company_id));
             $dates = array_map('trim', explode(',', $row->booking_date));
             $times = array_map('trim', explode(',', $row->booking_time));
             
-            foreach ($dates as $date) {
-                foreach ($times as $time) {
-                    $slot_key = $date . '_' . $time;
-                    if (!isset($booked_slots[$company_id])) {
-                        $booked_slots[$company_id] = [];
+            // Map each stored company ID to the slots
+            foreach ($stored_company_ids as $stored_company_id) {
+                $company_id = intval($stored_company_id);
+                
+                // Only include if this company was requested
+                if (in_array($company_id, $company_ids)) {
+                    // Create slots for each date/time combination
+                    foreach ($dates as $date_index => $date) {
+                        $time = isset($times[$date_index]) ? $times[$date_index] : $times[0];
+                        $slot_key = trim($date) . '_' . trim($time);
+                        
+                        if (!isset($booked_slots[$company_id])) {
+                            $booked_slots[$company_id] = [];
+                        }
+                        $booked_slots[$company_id][] = $slot_key;
                     }
-                    $booked_slots[$company_id][] = $slot_key;
                 }
             }
-        }
-        
-        if (function_exists('bsp_debug_log')) {
-            bsp_debug_log("Single query fetched booked slots", 'PERFORMANCE', [
-                'query_execution' => 'SUCCESS',
-                'total_bookings_found' => count($results),
-                'companies_with_bookings' => array_keys($booked_slots)
-            ]);
         }
         
         return $booked_slots;
@@ -520,31 +500,33 @@ class BSP_Ajax {
             wp_send_json_error('Failed to create any bookings.');
         }
         
-        // Send notifications for the first booking (or all if needed)
         $primary_booking_id = $created_booking_ids[0];
-        $this->send_booking_notifications($primary_booking_id, $booking_data);
         
-        // Schedule Google Sheets sync to run in background after successful submission
-        // This ensures fast form submission and reliable sync without blocking user experience
+        // FIXED: Single Google Sheets sync with proper deduplication
         if (function_exists('wp_schedule_single_event')) {
-            // Schedule immediate background sync (30 seconds after submission)
-            wp_schedule_single_event(time() + 30, 'bsp_sync_google_sheets', [$primary_booking_id, $booking_data]);
-            
-            // Schedule backup sync in case the first one fails (1.5 minutes after submission)
-            wp_schedule_single_event(time() + 90, 'bsp_sync_google_sheets', [$primary_booking_id, $booking_data]);
-            
-            if (function_exists('bsp_debug_log')) {
-                bsp_debug_log('Google Sheets sync scheduled with backup', 'INTEGRATION', [
-                    'booking_id' => $primary_booking_id,
-                    'primary_sync_time' => date('Y-m-d H:i:s', time() + 30),
-                    'backup_sync_time' => date('Y-m-d H:i:s', time() + 90),
-                    'primary_delay' => '30 seconds',
-                    'backup_delay' => '90 seconds (1.5 minutes)'
-                ]);
+            // Check if sync job already scheduled for this booking to prevent duplicates
+            $existing_sync = get_post_meta($primary_booking_id, '_google_sheets_sync_scheduled', true);
+            if (!$existing_sync) {
+                // Customer email notification (immediate - 5 seconds)
+                wp_schedule_single_event(time() + 5, 'bsp_send_customer_notification', [$primary_booking_id, $booking_data]);
+                
+                // Admin email notification (immediate - 10 seconds)
+                wp_schedule_single_event(time() + 10, 'bsp_send_admin_notification', [$primary_booking_id, $booking_data]);
+                
+                // Google Sheets sync (single attempt - 30 seconds) - ONLY ONE HANDLER NOW
+                wp_schedule_single_event(time() + 30, 'bsp_sync_google_sheets', [$primary_booking_id, $booking_data]);
+                update_post_meta($primary_booking_id, '_google_sheets_sync_scheduled', time());
+                
+                // Additional processing (notifications, etc. - 60 seconds)
+                wp_schedule_single_event(time() + 60, 'bsp_process_booking_extras', [$primary_booking_id, $booking_data]);
+            } else {
+                if (function_exists('bsp_debug_log')) {
+                    bsp_debug_log("Background jobs already scheduled for booking ID: $primary_booking_id", 'BOOKING');
+                }
             }
         }
         
-        // Send immediate success response to user (fast, no waiting for Google Sheets)
+        // Immediate success response - no waiting for any external services
         wp_send_json_success([
             'message' => 'Booking submitted successfully!',
             'booking_ids' => $created_booking_ids,
@@ -632,20 +614,110 @@ class BSP_Ajax {
     }
     
     /**
-     * Send booking notifications
+     * Background job: Send customer notification email
      */
-    private function send_booking_notifications($booking_id, $booking_data) {
-        // Get email settings
-        $email_settings = get_option('bsp_email_settings', []);
-        
-        // Send customer confirmation
-        if (!empty($email_settings['send_customer_confirmation'])) {
-            $this->send_customer_confirmation($booking_data);
+    public function handle_customer_notification($booking_id, $booking_data) {
+        if (function_exists('bsp_debug_log')) {
+            bsp_debug_log("Processing customer notification for booking ID: $booking_id", 'BACKGROUND_EMAIL');
         }
         
-        // Send admin notification
-        if (!empty($email_settings['send_admin_notification'])) {
-            $this->send_admin_notification($booking_id);
+        try {
+            $email_settings = get_option('bsp_email_settings', []);
+            
+            // Send customer confirmation if enabled
+            if (!empty($email_settings['customer_confirmation'])) {
+                $sent = $this->send_customer_confirmation($booking_data);
+                
+                if (!$sent) {
+                    // Retry once after 2 minutes if failed
+                    wp_schedule_single_event(time() + 120, 'bsp_send_customer_notification', [$booking_id, $booking_data]);
+                    if (function_exists('bsp_debug_log')) {
+                        bsp_debug_log("Customer email failed, scheduled retry", 'BACKGROUND_EMAIL');
+                    }
+                }
+            }
+        } catch (Exception $e) {
+            if (function_exists('bsp_debug_log')) {
+                bsp_debug_log("Customer notification error: " . $e->getMessage(), 'BACKGROUND_EMAIL');
+            }
+        }
+    }
+    
+    /**
+     * Background job: Send admin notification email  
+     */
+    public function handle_admin_notification($booking_id, $booking_data) {
+        if (function_exists('bsp_debug_log')) {
+            bsp_debug_log("Processing admin notification for booking ID: $booking_id", 'BACKGROUND_EMAIL');
+        }
+        
+        try {
+            $email_settings = get_option('bsp_email_settings', []);
+            
+            // Send admin notification if enabled
+            if (!empty($email_settings['admin_notifications'])) {
+                $sent = $this->send_admin_notification($booking_id);
+                
+                if (!$sent) {
+                    // Retry once after 3 minutes if failed
+                    wp_schedule_single_event(time() + 180, 'bsp_send_admin_notification', [$booking_id, $booking_data]);
+                    if (function_exists('bsp_debug_log')) {
+                        bsp_debug_log("Admin email failed, scheduled retry", 'BACKGROUND_EMAIL');
+                    }
+                }
+            }
+        } catch (Exception $e) {
+            if (function_exists('bsp_debug_log')) {
+                bsp_debug_log("Admin notification error: " . $e->getMessage(), 'BACKGROUND_EMAIL');
+            }
+        }
+    }
+    
+    /**
+     * Background job: Process additional booking tasks
+     */
+    public function handle_booking_extras($booking_id, $booking_data) {
+        if (function_exists('bsp_debug_log')) {
+            bsp_debug_log("Processing booking extras for booking ID: $booking_id", 'BACKGROUND_PROCESSING');
+        }
+        
+        try {
+            // Process toast notifications
+            do_action('bsp_booking_created', $booking_id, $booking_data);
+            
+            // Any other non-critical processing
+            do_action('bsp_booking_extras', $booking_id, $booking_data);
+        } catch (Exception $e) {
+            if (function_exists('bsp_debug_log')) {
+                bsp_debug_log("Booking extras error: " . $e->getMessage(), 'BACKGROUND_PROCESSING');
+            }
+        }
+    }
+    
+    /**
+     * Background job: Google Sheets sync
+     */
+    public function handle_google_sheets($booking_id, $booking_data) {
+        if (function_exists('bsp_debug_log')) {
+            bsp_debug_log("Processing Google Sheets sync for booking ID: $booking_id", 'BACKGROUND_INTEGRATION');
+        }
+        
+        try {
+            // Check if already successfully synced (prevent duplicates)
+            $sync_status = get_post_meta($booking_id, '_google_sheets_synced', true);
+            if ($sync_status === 'success') {
+                if (function_exists('bsp_debug_log')) {
+                    bsp_debug_log("Google Sheets sync skipped - booking ID $booking_id already synced successfully", 'BACKGROUND_INTEGRATION');
+                }
+                return;
+            }
+            
+            $this->send_to_google_sheets($booking_id, $booking_data);
+
+        } catch (Exception $e) {
+            if (function_exists('bsp_debug_log')) {
+                bsp_debug_log("Google Sheets sync error: " . $e->getMessage(), 'BACKGROUND_INTEGRATION');
+            }
         }
     }
     
@@ -663,7 +735,7 @@ class BSP_Ajax {
             $booking_data['company']
         );
         
-        wp_mail($booking_data['email'], $subject, $message);
+        return wp_mail($booking_data['email'], $subject, $message);
     }
     
     /**
@@ -781,6 +853,8 @@ class BSP_Ajax {
                 bsp_debug_log('Failed to send admin notification email for booking ID: ' . $booking_id, 'EMAIL_ERROR');
             }
         }
+        
+        return $sent;
     }
 
     /**
@@ -792,27 +866,20 @@ class BSP_Ajax {
             bsp_debug_log('Google Sheets Integration: Starting background sync for booking ID ' . $booking_id, 'INTEGRATION');
         }
         
-        // Check if this booking has already been successfully synced (prevent duplicates)
+        // Double-check sync status to prevent race conditions
         $sync_status = get_post_meta($booking_id, '_google_sheets_synced', true);
         if ($sync_status === 'success') {
             if (function_exists('bsp_debug_log')) {
-                bsp_debug_log('Google Sheets Integration: Booking ID ' . $booking_id . ' already synced successfully, skipping', 'INTEGRATION');
+                bsp_debug_log('Google Sheets Integration: Booking ID ' . $booking_id . ' already marked as success, skipping.', 'INTEGRATION');
             }
             return true;
         }
         
         $integration_settings = get_option('bsp_integration_settings', []);
 
-        if (empty($integration_settings['google_sheets_enabled'])) {
+        if (empty($integration_settings['google_sheets_enabled']) || empty($integration_settings['google_sheets_webhook_url'])) {
             if (function_exists('bsp_debug_log')) {
-                bsp_debug_log('Google Sheets sync disabled in settings.', 'INTEGRATION');
-            }
-            return false;
-        }
-        
-        if (empty($integration_settings['google_sheets_webhook_url'])) {
-            if (function_exists('bsp_debug_log')) {
-                bsp_debug_log('Google Sheets webhook URL not configured.', 'INTEGRATION_ERROR');
+                bsp_debug_log('Google Sheets sync disabled or webhook URL not configured.', 'INTEGRATION_ERROR');
             }
             return false;
         }
@@ -836,153 +903,107 @@ class BSP_Ajax {
 
         $webhook_url = $integration_settings['google_sheets_webhook_url'];
         
-        if (function_exists('bsp_debug_log')) {
-            bsp_debug_log('Google Sheets Integration: Using webhook URL: ' . $webhook_url, 'INTEGRATION');
-        }
-
-        // Prepare payload for Google Sheets with all the data in the expected format
-        // Sanitize all data to prevent Google Sheets API errors
+        // ENHANCED PAYLOAD FORMAT: Prepare properly structured payload for Google Sheets
         $payload = [
-            'id' => intval($data_for_sheets['id'] ?? 0),
-            'booking_id' => intval($data_for_sheets['id'] ?? 0),
-            'status' => sanitize_text_field($data_for_sheets['status'] ?? 'pending'),
-            'customer_name' => sanitize_text_field($data_for_sheets['customer_name'] ?? ''),
-            'customer_email' => sanitize_email($data_for_sheets['customer_email'] ?? ''),
-            'customer_phone' => sanitize_text_field($data_for_sheets['customer_phone'] ?? ''),
-            'customer_address' => sanitize_text_field($data_for_sheets['customer_address'] ?? ''),
-            'zip_code' => sanitize_text_field($data_for_sheets['zip_code'] ?? ''),
-            'city' => sanitize_text_field($data_for_sheets['city'] ?? ''),
-            'state' => sanitize_text_field($data_for_sheets['state'] ?? ''),
-            'service_type' => sanitize_text_field($data_for_sheets['service_type'] ?? ''),
-            'service_name' => sanitize_text_field($data_for_sheets['service_name'] ?? ''),
-            'specifications' => sanitize_textarea_field($data_for_sheets['specifications'] ?? ''),
-            'company_name' => sanitize_text_field($data_for_sheets['company_name'] ?? ''),
-            'formatted_date' => sanitize_text_field($data_for_sheets['formatted_date'] ?? ''),
-            'formatted_time' => sanitize_text_field($data_for_sheets['formatted_time'] ?? ''),
-            'booking_date' => sanitize_text_field($data_for_sheets['booking_date'] ?? ''),
-            'booking_time' => sanitize_text_field($data_for_sheets['booking_time'] ?? ''),
-            'formatted_created' => sanitize_text_field($data_for_sheets['formatted_created'] ?? ''),
-            'created_at' => sanitize_text_field($data_for_sheets['created_at'] ?? ''),
-            'notes' => sanitize_textarea_field($data_for_sheets['notes'] ?? ''),
-            // Marketing/tracking data
-            'utm_source' => sanitize_text_field($data_for_sheets['utm_source'] ?? ''),
-            'utm_medium' => sanitize_text_field($data_for_sheets['utm_medium'] ?? ''),
-            'utm_campaign' => sanitize_text_field($data_for_sheets['utm_campaign'] ?? ''),
-            'utm_term' => sanitize_text_field($data_for_sheets['utm_term'] ?? ''),
-            'utm_content' => sanitize_text_field($data_for_sheets['utm_content'] ?? ''),
-            'referrer' => sanitize_url($data_for_sheets['referrer'] ?? ''),
-            'landing_page' => sanitize_url($data_for_sheets['landing_page'] ?? ''),
-            // Service-specific fields
-            'roof_action' => sanitize_text_field($data_for_sheets['roof_action'] ?? ''),
-            'roof_material' => sanitize_text_field($data_for_sheets['roof_material'] ?? ''),
-            'windows_action' => sanitize_text_field($data_for_sheets['windows_action'] ?? ''),
-            'windows_replace_qty' => sanitize_text_field($data_for_sheets['windows_replace_qty'] ?? ''),
-            'windows_repair_needed' => sanitize_text_field($data_for_sheets['windows_repair_needed'] ?? ''),
-            'bathroom_option' => sanitize_text_field($data_for_sheets['bathroom_option'] ?? ''),
-            'siding_option' => sanitize_text_field($data_for_sheets['siding_option'] ?? ''),
-            'siding_material' => sanitize_text_field($data_for_sheets['siding_material'] ?? ''),
-            'kitchen_action' => sanitize_text_field($data_for_sheets['kitchen_action'] ?? ''),
-            'kitchen_component' => sanitize_text_field($data_for_sheets['kitchen_component'] ?? ''),
-            'decks_action' => sanitize_text_field($data_for_sheets['decks_action'] ?? ''),
-            'decks_material' => sanitize_text_field($data_for_sheets['decks_material'] ?? ''),
-            'adu_action' => sanitize_text_field($data_for_sheets['adu_action'] ?? ''),
-            'adu_type' => sanitize_text_field($data_for_sheets['adu_type'] ?? ''),
-            // Handle multiple appointments - send as string to avoid JSON parsing issues
-            'appointments' => isset($data_for_sheets['appointments']) ? (
-                is_string($data_for_sheets['appointments']) ? 
-                    $data_for_sheets['appointments'] : 
-                    wp_json_encode($data_for_sheets['appointments'], JSON_UNESCAPED_UNICODE)
-            ) : ''
+            'booking_id' => $data_for_sheets['id'],
+            'customer_name' => $data_for_sheets['customer_name'],
+            'customer_email' => $data_for_sheets['customer_email'],
+            'customer_phone' => $data_for_sheets['customer_phone'],
+            'customer_address' => $data_for_sheets['customer_address'],
+            'city' => $data_for_sheets['city'],
+            'state' => $data_for_sheets['state'],
+            'zip_code' => $data_for_sheets['zip_code'],
+            'service_type' => $data_for_sheets['service_type'],
+            'company_name' => $data_for_sheets['company_name'],
+            'booking_date' => $data_for_sheets['booking_date'],
+            'booking_time' => $data_for_sheets['booking_time'],
+            'formatted_date' => $data_for_sheets['formatted_date'] ?? date('F j, Y', strtotime($data_for_sheets['booking_date'])),
+            'formatted_time' => $data_for_sheets['formatted_time'] ?? date('g:i A', strtotime($data_for_sheets['booking_time'])),
+            'specifications' => $data_for_sheets['specifications'],
+            'status' => $data_for_sheets['status'],
+            'created_at' => $data_for_sheets['created_at'],
+            'utm_source' => $data_for_sheets['utm_source'] ?? '',
+            'utm_medium' => $data_for_sheets['utm_medium'] ?? '',
+            'utm_campaign' => $data_for_sheets['utm_campaign'] ?? '',
+            'referrer' => $data_for_sheets['referrer'] ?? '',
+            'timestamp' => current_time('mysql')
         ];
 
         if (function_exists('bsp_debug_log')) {
-            bsp_debug_log('Google Sheets Integration: Prepared payload with ' . count($payload) . ' fields', 'INTEGRATION', [
-                'booking_id' => $payload['id'],
+            bsp_debug_log('Google Sheets Integration: Prepared payload', 'INTEGRATION', [
+                'booking_id' => $payload['booking_id'],
                 'customer_email' => $payload['customer_email'],
-                'service_type' => $payload['service_type']
+                'service_type' => $payload['service_type'],
+                'webhook_url' => substr($webhook_url, 0, 50) . '...'
             ]);
         }
 
-        // Prepare the JSON payload
         $json_payload = wp_json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
         
         if (!$json_payload) {
             if (function_exists('bsp_debug_log')) {
-                bsp_debug_log('Google Sheets Integration: Failed to encode JSON payload', 'INTEGRATION_ERROR');
-            }
-            return;
-        }
-        
-        if (function_exists('bsp_debug_log')) {
-            bsp_debug_log('Google Sheets Integration: JSON payload length: ' . strlen($json_payload), 'INTEGRATION');
-        }
-
-        // Send the request to Google Sheets with proper headers
-        $response = wp_remote_post($webhook_url, [
-            'method'      => 'POST',
-            'headers'     => [
-                'Content-Type' => 'application/json; charset=utf-8',
-                'Accept' => 'application/json',
-                'User-Agent' => 'BookingPro/2.1.0'
-            ],
-            'body'        => $json_payload,
-            'data_format' => 'body',
-            'timeout'     => 30,
-            'blocking'    => true,
-            'sslverify'   => true,
-            'httpversion' => '1.1'
-        ]);
-
-        // Log the response for debugging
-        if (is_wp_error($response)) {
-            // Mark as failed for retry
-            update_post_meta($booking_id, '_google_sheets_synced', 'failed');
-            update_post_meta($booking_id, '_google_sheets_sync_attempts', (int)get_post_meta($booking_id, '_google_sheets_sync_attempts', true) + 1);
-            
-            if (function_exists('bsp_debug_log')) {
-                bsp_debug_log('Google Sheets API Error: ' . $response->get_error_message(), 'INTEGRATION_ERROR', [
-                    'error_code' => $response->get_error_code(),
-                    'error_data' => $response->get_error_data(),
-                    'booking_id' => $booking_id
+                bsp_debug_log('Google Sheets Integration: Failed to encode JSON payload', 'INTEGRATION_ERROR', [
+                    'payload_size' => strlen(print_r($payload, true)),
+                    'json_error' => json_last_error_msg()
                 ]);
             }
             return false;
-        } else {
-            $response_code = wp_remote_retrieve_response_code($response);
-            $response_body = wp_remote_retrieve_body($response);
-            $response_headers = wp_remote_retrieve_headers($response);
-            
+        }
+        
+        // ENHANCED REQUEST: Better headers and validation
+        $response = wp_remote_post($webhook_url, [
+            'method' => 'POST',
+            'headers' => [
+                'Content-Type' => 'application/json; charset=utf-8',
+                'Accept' => 'application/json',
+                'User-Agent' => 'BookingSystemPro/1.0'
+            ],
+            'body' => $json_payload,
+            'data_format' => 'body',
+            'timeout' => 45,
+            'sslverify' => true,
+            'blocking' => true
+        ]);
+
+        if (is_wp_error($response)) {
+            $error_message = $response->get_error_message();
             if (function_exists('bsp_debug_log')) {
-                bsp_debug_log("Google Sheets API Response Code: $response_code", 'INTEGRATION');
-                bsp_debug_log("Google Sheets API Response Body: " . substr($response_body, 0, 500), 'INTEGRATION');
-                
-                if (!empty($response_headers['content-type'])) {
-                    bsp_debug_log("Google Sheets API Response Content-Type: " . $response_headers['content-type'], 'INTEGRATION');
-                }
+                bsp_debug_log('Google Sheets Integration: WP_Error on post', 'INTEGRATION_ERROR', [
+                    'booking_id' => $booking_id,
+                    'error' => $error_message
+                ]);
             }
-            
-            if ($response_code === 200 || $response_code === 302) {
-                // Mark as successfully synced to prevent duplicates
-                update_post_meta($booking_id, '_google_sheets_synced', 'success');
-                update_post_meta($booking_id, '_google_sheets_sync_time', current_time('mysql'));
-                
-                if (function_exists('bsp_debug_log')) {
-                    bsp_debug_log('Google Sheets background sync successful for booking ID: ' . $booking_id, 'INTEGRATION');
-                }
-                return true;
-            } else {
-                // Mark as failed (will allow retry)
-                update_post_meta($booking_id, '_google_sheets_synced', 'failed');
-                update_post_meta($booking_id, '_google_sheets_sync_attempts', (int)get_post_meta($booking_id, '_google_sheets_sync_attempts', true) + 1);
-                
-                if (function_exists('bsp_debug_log')) {
-                    bsp_debug_log("Google Sheets background sync failed with code $response_code for booking ID: $booking_id", 'INTEGRATION_ERROR', [
-                        'response_body' => substr($response_body, 0, 200),
-                        'webhook_url' => $webhook_url
-                    ]);
-                }
-                return false;
+            // Do NOT retry here to avoid duplicates. The job can be run manually if needed.
+            update_post_meta($booking_id, '_google_sheets_synced', 'failed_wp_error');
+            return false;
+        }
+
+        $response_code = wp_remote_retrieve_response_code($response);
+        $response_body = wp_remote_retrieve_body($response);
+
+        if ($response_code >= 200 && $response_code < 300) {
+            if (function_exists('bsp_debug_log')) {
+                bsp_debug_log('Google Sheets Integration: SUCCESS', 'INTEGRATION', [
+                    'booking_id' => $booking_id,
+                    'response_code' => $response_code
+                ]);
             }
+            // Mark as success to prevent any future duplicates
+            update_post_meta($booking_id, '_google_sheets_synced', 'success');
+            return true;
+        } else {
+            // This includes 4xx and 5xx errors.
+            if (function_exists('bsp_debug_log')) {
+                bsp_debug_log('Google Sheets Integration: FAILED with non-2xx response', 'INTEGRATION_ERROR', [
+                    'booking_id' => $booking_id,
+                    'response_code' => $response_code,
+                    'response_body' => mb_strimwidth($response_body, 0, 500, "...")
+                ]);
+            }
+            // Mark as failed but do NOT reschedule. This prevents duplicate submissions on 400 Bad Request.
+            // The sync can be retried manually from the admin panel if necessary.
+            update_post_meta($booking_id, '_google_sheets_synced', 'failed_http_' . $response_code);
+            return false;
         }
     }
     
@@ -997,18 +1018,9 @@ class BSP_Ajax {
         // Convert company data to array if it's an object
         $company_data = is_object($company) ? (array) $company : $company;
         
-        // CRITICAL: Ensure company ID is available for slot checking
+        // Ensure company ID is available for slot checking
         if (!isset($company_data['id']) && isset($company->id)) {
             $company_data['id'] = $company->id;
-        }
-        
-        if (function_exists('bsp_debug_log')) {
-            bsp_debug_log("Generating availability for company", 'AVAILABILITY', [
-                'company_id' => $company_data['id'] ?? 'MISSING',
-                'company_name' => $company_data['name'] ?? 'MISSING',
-                'date_range' => $date_from . ' to ' . $date_to,
-                'pre_fetched_slots_count' => count($company_booked_slots)
-            ]);
         }
         
         // Parse start and end times from database format
@@ -1022,15 +1034,6 @@ class BSP_Ajax {
         $current_date = new DateTime($date_from);
         $end_date = new DateTime($date_from);
         $end_date->add(new DateInterval('P3D')); // Exactly 3 days from start date
-        
-        if (function_exists('bsp_debug_log')) {
-            bsp_debug_log("72-Hour Window Enforced", 'AVAILABILITY', [
-                'requested_end' => $date_to,
-                'enforced_start' => $current_date->format('Y-m-d'),
-                'enforced_end' => $end_date->format('Y-m-d'),
-                'company_id' => $company_data['id'] ?? 'unknown'
-            ]);
-        }
         
         // Create a fresh date object for each iteration to prevent reference issues
         while ($current_date <= $end_date) {
@@ -1069,20 +1072,69 @@ class BSP_Ajax {
     /**
      * Generate time slots for a specific day
      * Uses pre-fetched booked slots for optimal performance
+     * IMPROVED: Better slot availability checking and validation
      */
     private function generate_day_time_slots($company_data, $date, $start_time, $end_time, $company_booked_slots = []) {
         $slots = [];
         
-        // Parse start and end times
+        // Validate input parameters
+        if (!$date || !$start_time || !$end_time) {
+            if (function_exists('bsp_debug_log')) {
+                bsp_debug_log("Invalid parameters for generate_day_time_slots", 'AVAILABILITY_DEBUG', [
+                    'date' => $date,
+                    'start_time' => $start_time,
+                    'end_time' => $end_time
+                ]);
+            }
+            return [];
+        }
+        
+        // Parse start and end times with validation
+        if (!preg_match('/^\d{2}:\d{2}$/', $start_time) || !preg_match('/^\d{2}:\d{2}$/', $end_time)) {
+            if (function_exists('bsp_debug_log')) {
+                bsp_debug_log("Invalid time format", 'AVAILABILITY_DEBUG', [
+                    'start_time' => $start_time,
+                    'end_time' => $end_time
+                ]);
+            }
+            return [];
+        }
+        
         list($start_hour, $start_min) = explode(':', $start_time);
         list($end_hour, $end_min) = explode(':', $end_time);
         
         $start_minutes = ($start_hour * 60) + $start_min;
         $end_minutes = ($end_hour * 60) + $end_min;
         
+        // Validate time range
+        if ($start_minutes >= $end_minutes) {
+            if (function_exists('bsp_debug_log')) {
+                bsp_debug_log("Invalid time range - start time not before end time", 'AVAILABILITY_DEBUG', [
+                    'start_minutes' => $start_minutes,
+                    'end_minutes' => $end_minutes
+                ]);
+            }
+            return [];
+        }
+        
         // Get slot duration (default 30 minutes)
         $slot_duration = isset($company_data['time_slot_duration']) ? 
             intval($company_data['time_slot_duration']) : 30;
+        
+        // Ensure slot duration is valid
+        if ($slot_duration <= 0 || $slot_duration > 480) { // Max 8 hours
+            $slot_duration = 30; // Default fallback
+        }
+        
+        if (function_exists('bsp_debug_log')) {
+            bsp_debug_log("Generating time slots", 'AVAILABILITY_DEBUG', [
+                'date' => $date,
+                'start_time' => $start_time,
+                'end_time' => $end_time,
+                'slot_duration' => $slot_duration,
+                'company_booked_slots_count' => count($company_booked_slots)
+            ]);
+        }
         
         // Generate slots
         for ($minutes = $start_minutes; $minutes < $end_minutes; $minutes += $slot_duration) {
@@ -1092,15 +1144,21 @@ class BSP_Ajax {
             $time_24 = sprintf('%02d:%02d', $hour, $min);
             $time_12 = date('g:i A', strtotime($time_24));
             
-            // Check if slot is booked using pre-fetched data (FAST!)
+            // Check if slot is booked using pre-fetched data (FAST and ACCURATE!)
             $slot_key = $date . '_' . $time_24;
-            $is_booked = in_array($slot_key, $company_booked_slots);
+            $is_booked = in_array($slot_key, $company_booked_slots, true); // Strict comparison
             
-            if (function_exists('bsp_debug_log')) {
-                bsp_debug_log("Fast slot check", 'SLOT_CHECK', [
+            // CRITICAL DEBUG: Log slot checking for ALL slots to identify the issue
+            if (function_exists('bsp_debug_log') && $date === '2025-08-29') {
+                bsp_debug_log("SLOT CHECK FOR 2025-08-29", 'SLOT_CHECK_DEBUG', [
+                    'date' => $date,
+                    'time_24' => $time_24,
                     'slot_key' => $slot_key,
                     'is_booked' => $is_booked,
-                    'method' => 'pre_fetched_array_lookup'
+                    'company_booked_slots_count' => count($company_booked_slots),
+                    'first_5_slots' => array_slice($company_booked_slots, 0, 5),
+                    'contains_18_30' => in_array('2025-08-29_18:30', $company_booked_slots, true),
+                    'method' => 'array_lookup'
                 ]);
             }
             
@@ -1113,22 +1171,134 @@ class BSP_Ajax {
             ];
         }
         
+        if (function_exists('bsp_debug_log')) {
+            bsp_debug_log("Generated slots summary", 'AVAILABILITY_DEBUG', [
+                'date' => $date,
+                'total_slots' => count($slots),
+                'available_slots' => count(array_filter($slots, function($slot) { return $slot['available']; })),
+                'booked_slots' => count(array_filter($slots, function($slot) { return !$slot['available']; }))
+            ]);
+        }
+        
         return $slots;
     }
     
     /**
-     * Test webhook endpoint for debugging Google Sheets integration
+     * Debug availability system (admin only) - ENHANCED for better diagnostics
      */
-    public function test_webhook() {
-        // Only allow admin users to test webhook
+    public function debug_availability() {
+        // Only allow admin users
         if (!current_user_can('manage_options')) {
             wp_send_json_error('Unauthorized');
             return;
         }
         
-        $test_data = json_decode(stripslashes($_POST['test_data']), true);
-        if (!$test_data) {
-            wp_send_json_error('Invalid test data');
+        global $wpdb;
+        
+        $debug_info = [];
+        
+        // Check recent bookings with more detail
+        $bookings = $wpdb->get_results("
+            SELECT 
+                p.ID,
+                p.post_title,
+                p.post_status,
+                p.post_date,
+                pm1.meta_value as company_id,
+                pm2.meta_value as booking_date,
+                pm3.meta_value as booking_time,
+                pm4.meta_value as company_name
+            FROM {$wpdb->posts} p
+            LEFT JOIN {$wpdb->postmeta} pm1 ON p.ID = pm1.post_id AND pm1.meta_key = '_company_id'
+            LEFT JOIN {$wpdb->postmeta} pm2 ON p.ID = pm2.post_id AND pm2.meta_key = '_booking_date'
+            LEFT JOIN {$wpdb->postmeta} pm3 ON p.ID = pm3.post_id AND pm3.meta_key = '_booking_time'
+            LEFT JOIN {$wpdb->postmeta} pm4 ON p.ID = pm4.post_id AND pm4.meta_key = '_company_name'
+            WHERE p.post_type = 'bsp_booking'
+            AND p.post_status IN ('publish', 'pending')
+            ORDER BY p.ID DESC
+            LIMIT 10
+        ");
+        
+        $debug_info['recent_bookings'] = $bookings;
+        $debug_info['total_bookings'] = count($bookings);
+        
+        // Test fetch_all_booked_slots for each company individually
+        $company_ids = [1, 2, 3];
+        $date_from = date('Y-m-d');
+        $date_to = date('Y-m-d', strtotime('+7 days'));
+        
+        $debug_info['individual_company_tests'] = [];
+        foreach ($company_ids as $company_id) {
+            $booked_slots = $this->fetch_all_booked_slots([$company_id], $date_from, $date_to);
+            $debug_info['individual_company_tests'][$company_id] = [
+                'company_id' => $company_id,
+                'booked_slots_count' => isset($booked_slots[$company_id]) ? count($booked_slots[$company_id]) : 0,
+                'booked_slots' => $booked_slots
+            ];
+        }
+        
+        // Test all companies together
+        $all_booked_slots = $this->fetch_all_booked_slots($company_ids, $date_from, $date_to);
+        $debug_info['all_companies_test'] = [
+            'company_ids' => $company_ids,
+            'date_range' => $date_from . ' to ' . $date_to,
+            'result' => $all_booked_slots,
+            'companies_with_bookings' => array_keys($all_booked_slots),
+            'total_slots_found' => array_sum(array_map('count', $all_booked_slots))
+        ];
+        
+        // Check database consistency
+        $debug_info['database_check'] = [
+            'wp_posts_bsp_booking_count' => $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->posts} WHERE post_type = 'bsp_booking'"),
+            'wp_postmeta_company_id_count' => $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->postmeta} WHERE meta_key = '_company_id'"),
+            'wp_postmeta_booking_date_count' => $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->postmeta} WHERE meta_key = '_booking_date'"),
+            'wp_postmeta_booking_time_count' => $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->postmeta} WHERE meta_key = '_booking_time'")
+        ];
+        
+        // Test specific date/time slot checking
+        $test_date = date('Y-m-d', strtotime('+1 day'));
+        $test_time = '10:00';
+        $test_slot_key = $test_date . '_' . $test_time;
+        
+        $debug_info['slot_key_test'] = [
+            'test_date' => $test_date,
+            'test_time' => $test_time,
+            'test_slot_key' => $test_slot_key,
+            'is_booked_company_1' => isset($all_booked_slots[1]) ? in_array($test_slot_key, $all_booked_slots[1], true) : false,
+            'is_booked_company_2' => isset($all_booked_slots[2]) ? in_array($test_slot_key, $all_booked_slots[2], true) : false,
+            'is_booked_company_3' => isset($all_booked_slots[3]) ? in_array($test_slot_key, $all_booked_slots[3], true) : false
+        ];
+        
+        // Test individual company availability
+        $db = BSP_Database_Unified::get_instance();
+        foreach ($company_ids as $company_id) {
+            $company = $db->get_company($company_id);
+            if ($company) {
+                $company_booked_slots = isset($booked_slots[$company_id]) ? $booked_slots[$company_id] : [];
+                $debug_info['companies'][$company_id] = [
+                    'name' => $company->name ?? 'Unknown',
+                    'booked_slots_count' => count($company_booked_slots),
+                    'booked_slots' => $company_booked_slots
+                ];
+            }
+        }
+        
+        wp_send_json_success($debug_info);
+    }
+    
+    /**
+     * Test webhook endpoint for debugging Google Sheets integration - ENHANCED
+     */
+    public function test_webhook() {
+        // Verify nonce for security
+        if (!wp_verify_nonce($_POST['nonce'] ?? '', 'bsp_test_webhook')) {
+            wp_send_json_error('Security check failed.');
+            return;
+        }
+        
+        // Only allow admin users to test webhook
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('Unauthorized');
             return;
         }
         
@@ -1137,39 +1307,99 @@ class BSP_Ajax {
         $webhook_url = $integration_settings['google_sheets_webhook_url'] ?? '';
         
         if (empty($webhook_url)) {
-            wp_send_json_error('Webhook URL not configured');
+            wp_send_json_error('Webhook URL not configured in integration settings');
             return;
         }
         
-        // Send test data to webhook
+        // Create comprehensive test data
+        $test_data = [
+            'test_mode' => true,
+            'booking_id' => 'TEST_' . time(),
+            'customer_name' => 'Test Customer',
+            'customer_email' => 'test@example.com',
+            'customer_phone' => '(555) 123-4567',
+            'customer_address' => '123 Test Street',
+            'city' => 'Test City',
+            'state' => 'CA',
+            'zip_code' => '90210',
+            'service_type' => 'roofing',
+            'company_name' => 'Test Company',
+            'booking_date' => date('Y-m-d'),
+            'booking_time' => '10:00',
+            'formatted_date' => date('F j, Y'),
+            'formatted_time' => '10:00 AM',
+            'specifications' => 'Test specifications',
+            'status' => 'pending',
+            'created_at' => current_time('mysql'),
+            'utm_source' => 'test',
+            'utm_medium' => 'webhook_test',
+            'timestamp' => current_time('mysql')
+        ];
+        
+        if (function_exists('bsp_debug_log')) {
+            bsp_debug_log('Testing webhook endpoint', 'WEBHOOK_TEST', [
+                'webhook_url' => $webhook_url,
+                'test_data_keys' => array_keys($test_data)
+            ]);
+        }
+        
+        // Send test data to webhook with enhanced error handling
         $response = wp_remote_post($webhook_url, [
-            'method'      => 'POST',
-            'headers'     => ['Content-Type' => 'application/json; charset=utf-8'],
-            'body'        => json_encode($test_data),
+            'method' => 'POST',
+            'headers' => [
+                'Content-Type' => 'application/json; charset=utf-8',
+                'Accept' => 'application/json',
+                'User-Agent' => 'BookingSystemPro-WebhookTest/1.0'
+            ],
+            'body' => wp_json_encode($test_data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
             'data_format' => 'body',
-            'timeout'     => 15,
-            'blocking'    => true,
+            'timeout' => 30,
+            'blocking' => true,
+            'sslverify' => true
         ]);
         
         if (is_wp_error($response)) {
-            wp_send_json_error('Webhook error: ' . $response->get_error_message());
+            $error_message = $response->get_error_message();
+            if (function_exists('bsp_debug_log')) {
+                bsp_debug_log('Webhook test failed with WP_Error', 'WEBHOOK_TEST', [
+                    'error' => $error_message
+                ]);
+            }
+            wp_send_json_error('Webhook error: ' . $error_message);
             return;
         }
         
         $response_code = wp_remote_retrieve_response_code($response);
         $response_body = wp_remote_retrieve_body($response);
+        $response_headers = wp_remote_retrieve_headers($response);
         
-        if ($response_code === 200) {
+        $test_result = [
+            'webhook_url' => $webhook_url,
+            'request_data' => $test_data,
+            'response_code' => $response_code,
+            'response_body' => $response_body,
+            'response_headers' => $response_headers,
+            'success' => ($response_code >= 200 && $response_code < 300),
+            'timestamp' => current_time('mysql')
+        ];
+        
+        if (function_exists('bsp_debug_log')) {
+            bsp_debug_log('Webhook test completed', 'WEBHOOK_TEST', [
+                'response_code' => $response_code,
+                'success' => $test_result['success'],
+                'response_length' => strlen($response_body)
+            ]);
+        }
+        
+        if ($test_result['success']) {
             wp_send_json_success([
                 'message' => 'Webhook test successful',
-                'response_code' => $response_code,
-                'response_body' => $response_body
+                'result' => $test_result
             ]);
         } else {
             wp_send_json_error([
                 'message' => 'Webhook returned error',
-                'response_code' => $response_code,
-                'response_body' => $response_body
+                'result' => $test_result
             ]);
         }
     }

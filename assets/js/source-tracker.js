@@ -2,7 +2,7 @@
     'use strict';
 
     function log(message, data) {
-        console.log(`BookingPro Source Tracker: ${message}`, data || '');
+        // console.log(`BookingPro Source Tracker: ${message}`, data || '');
     }
 
     log('Executing...');
