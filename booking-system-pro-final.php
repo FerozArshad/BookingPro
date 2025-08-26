@@ -29,13 +29,29 @@ define('BSP_DEBUG_LOG_FILE', BSP_PLUGIN_DIR . 'debug.log');
 function bsp_debug_log($message, $level = 'INFO', $context = []) {
     if (!BSP_DEBUG_MODE) return;
     
+    // Ensure proper character encoding
+    if (!mb_check_encoding($message, 'UTF-8')) {
+        $message = mb_convert_encoding($message, 'UTF-8', 'auto');
+    }
+    
     $timestamp = date('Y-m-d H:i:s');
     $backtrace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2);
     $caller = isset($backtrace[1]) ? $backtrace[1]['function'] : 'unknown';
     $file = isset($backtrace[0]) ? basename($backtrace[0]['file']) : 'unknown';
     $line = isset($backtrace[0]) ? $backtrace[0]['line'] : 'unknown';
     
-    $context_str = !empty($context) ? ' | Context: ' . json_encode($context) : '';
+    // Safely encode context data
+    $context_str = '';
+    if (!empty($context)) {
+        $safe_context = array_map(function($item) {
+            if (is_string($item) && !mb_check_encoding($item, 'UTF-8')) {
+                return mb_convert_encoding($item, 'UTF-8', 'auto');
+            }
+            return $item;
+        }, $context);
+        $context_str = ' | Context: ' . wp_json_encode($safe_context, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    }
+    
     $log_message = sprintf(
         "[%s] [%s] [%s:%s:%s] %s%s%s",
         $timestamp,
@@ -48,11 +64,37 @@ function bsp_debug_log($message, $level = 'INFO', $context = []) {
         PHP_EOL
     );
     
-    file_put_contents(BSP_DEBUG_LOG_FILE, $log_message, FILE_APPEND | LOCK_EX);
+    // Use WordPress file system for safer writing
+    if (function_exists('wp_filesystem')) {
+        global $wp_filesystem;
+        if (!$wp_filesystem) {
+            require_once(ABSPATH . 'wp-admin/includes/file.php');
+            WP_Filesystem();
+        }
+        
+        if ($wp_filesystem) {
+            // Read existing content if file exists
+            $existing_content = '';
+            if ($wp_filesystem->exists(BSP_DEBUG_LOG_FILE)) {
+                $existing_content = $wp_filesystem->get_contents(BSP_DEBUG_LOG_FILE);
+            }
+            
+            // Append new log message
+            $new_content = $existing_content . $log_message;
+            
+            // Write with proper UTF-8 encoding
+            $wp_filesystem->put_contents(BSP_DEBUG_LOG_FILE, $new_content, FS_CHMOD_FILE);
+        }
+    } else {
+        // Fallback to file_put_contents with proper encoding
+        $log_message_utf8 = mb_convert_encoding($log_message, 'UTF-8', 'UTF-8');
+        file_put_contents(BSP_DEBUG_LOG_FILE, $log_message_utf8, FILE_APPEND | LOCK_EX);
+    }
     
     // Also log to WordPress debug.log if available
     if (function_exists('error_log')) {
-        error_log("BSP [{$level}]: {$message}");
+        $safe_message = is_string($message) ? mb_convert_encoding($message, 'UTF-8', 'auto') : $message;
+        error_log("BSP [{$level}]: {$safe_message}");
     }
 }
 
@@ -714,11 +756,46 @@ final class Booking_System_Pro_Final {
      */
     public function clear_debug_log() {
         if (BSP_DEBUG_MODE && file_exists(BSP_DEBUG_LOG_FILE)) {
-            file_put_contents(BSP_DEBUG_LOG_FILE, '');
-            bsp_debug_log("Debug log cleared", 'DEBUG');
+            // Create a clean UTF-8 log file
+            $header = "=== BookingPro Debug Log - Cleared on " . date('Y-m-d H:i:s') . " ===" . PHP_EOL;
+            
+            if (function_exists('wp_filesystem')) {
+                global $wp_filesystem;
+                if (!$wp_filesystem) {
+                    require_once(ABSPATH . 'wp-admin/includes/file.php');
+                    WP_Filesystem();
+                }
+                
+                if ($wp_filesystem) {
+                    $wp_filesystem->put_contents(BSP_DEBUG_LOG_FILE, $header, FS_CHMOD_FILE);
+                }
+            } else {
+                file_put_contents(BSP_DEBUG_LOG_FILE, $header, LOCK_EX);
+            }
+            
+            bsp_debug_log("Debug log cleared and reinitialized", 'DEBUG');
             return true;
         }
         return false;
+    }
+    
+    /**
+     * Fix corrupted debug log
+     */
+    public function fix_debug_log_encoding() {
+        if (!BSP_DEBUG_MODE || !file_exists(BSP_DEBUG_LOG_FILE)) {
+            return false;
+        }
+        
+        // Backup the corrupted file
+        $backup_file = BSP_DEBUG_LOG_FILE . '.corrupted.' . date('Y-m-d-H-i-s');
+        copy(BSP_DEBUG_LOG_FILE, $backup_file);
+        
+        // Clear and reinitialize
+        $this->clear_debug_log();
+        
+        bsp_debug_log("Debug log encoding fixed. Corrupted file backed up to: " . basename($backup_file), 'DEBUG');
+        return true;
     }
     
     /**
@@ -737,12 +814,41 @@ final class Booking_System_Pro_Final {
     }
     
     /**
-     * Handle background Google Sheets sync
+     * Handle background Google Sheets sync with retry logic
      */
     public function handle_google_sheets_sync($booking_id, $booking_data) {
-        if ($this->ajax && method_exists($this->ajax, 'send_to_google_sheets')) {
-            $this->ajax->send_to_google_sheets($booking_id, $booking_data);
+        bsp_debug_log("Google Sheets background sync started for booking ID: $booking_id", 'INTEGRATION');
+        
+        // Check if already successfully synced
+        $sync_status = get_post_meta($booking_id, '_google_sheets_synced', true);
+        if ($sync_status === 'success') {
+            bsp_debug_log("Google Sheets sync skipped - booking ID $booking_id already synced successfully", 'INTEGRATION');
+            return;
         }
+        
+        // Check retry attempts (max 3 attempts)
+        $attempts = (int)get_post_meta($booking_id, '_google_sheets_sync_attempts', true);
+        if ($attempts >= 3) {
+            bsp_debug_log("Google Sheets sync abandoned - booking ID $booking_id exceeded max retry attempts ($attempts)", 'INTEGRATION_ERROR');
+            return;
+        }
+        
+        if (!$this->ajax || !method_exists($this->ajax, 'send_to_google_sheets')) {
+            bsp_debug_log("Google Sheets sync failed: AJAX component not available", 'INTEGRATION_ERROR');
+            
+            // Schedule retry in 2 minutes if component not ready (but only if under max attempts)
+            if ($attempts < 2 && function_exists('wp_schedule_single_event')) {
+                wp_schedule_single_event(time() + 120, 'bsp_sync_google_sheets', [$booking_id, $booking_data]);
+                bsp_debug_log("Google Sheets sync rescheduled for 2 minutes due to component unavailability", 'INTEGRATION');
+            }
+            return;
+        }
+        
+        // Attempt sync
+        $sync_result = $this->ajax->send_to_google_sheets($booking_id, $booking_data);
+        
+        // Note: send_to_google_sheets logs its own success/failure, so we don't need to duplicate that here
+        bsp_debug_log("Google Sheets background sync completed for booking ID: $booking_id, result: " . ($sync_result ? 'success' : 'failed'), 'INTEGRATION');
     }
 }
 

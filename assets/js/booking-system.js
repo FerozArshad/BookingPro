@@ -208,12 +208,30 @@ jQuery(document).ready(function($) {
 
     // ─── FIND FIRST SERVICE-SPECIFIC STEP (SKIP SERVICE SELECTION) ───
     function findFirstServiceSpecificStep(service) {
-        // Find the first step that depends on this service (usually the ZIP code step)
+        console.log('🔧 Finding first service step for:', service);
+        
+        // First, look for the generic zip_code step that appears after any service selection
+        const zipCodeStepIndex = CONFIG.steps.findIndex(step => 
+            step.id === 'zip_code' && 
+            step.depends_on && 
+            step.depends_on[0] === 'service' && 
+            step.depends_on.length === 1
+        );
+        
+        console.log('🔧 Found zip_code step at index:', zipCodeStepIndex);
+        
+        if (zipCodeStepIndex !== -1) {
+            return zipCodeStepIndex;
+        }
+        
+        // If no generic zip_code step found, find the first step that depends on this specific service
         const serviceStepIndex = CONFIG.steps.findIndex(step => 
             step.depends_on && 
             step.depends_on[0] === 'service' && 
             step.depends_on[1] === service
         );
+        
+        console.log('🔧 Found service-specific step at index:', serviceStepIndex);
         
         // For URL-based service selection, we skip the service selection step entirely
         // If no service-specific step found, something is wrong - go to service selection
@@ -265,11 +283,13 @@ jQuery(document).ready(function($) {
         const preselectedService = getServiceFromURL();
         
         if (preselectedService) {
+            console.log('🔧 Service preselected from URL:', preselectedService);
             // Auto-select service and skip service selection step
             formState.service = preselectedService;
             
             // Skip directly to first service-specific step (ZIP code step)
             const newStepIndex = findFirstServiceSpecificStep(preselectedService);
+            console.log('🔧 First service step index:', newStepIndex);
             currentStepIndex = newStepIndex;
         }
         
@@ -510,19 +530,39 @@ jQuery(document).ready(function($) {
             return;
         }
 
+        console.log('🔧 Rendering step:', currentStepIndex, step.id, step);
+
         // Check dependencies
         if (step.depends_on) {
             const [dependsKey, dependsValue] = step.depends_on;
+            console.log('🔧 Checking dependencies:', dependsKey, dependsValue, 'formState:', formState);
             
-            // Handle the new generic zip_code step dependency
-            if (dependsKey === 'service' && !dependsValue) {
+            // Handle the generic zip_code step dependency
+            if (dependsKey === 'service' && step.depends_on.length === 1) {
+                console.log('🔧 Generic zip_code step detected');
+                // This is the generic zip_code step - show it if any service is selected
                 if (!formState.service) {
+                    console.log('🔧 No service selected, skipping zip_code step');
                     // Skip zip_code step if no service is selected
                     currentStepIndex++;
                     renderCurrentStep();
                     return;
                 }
+                console.log('🔧 Service selected, showing zip_code step for:', formState.service);
+                // Service is selected, continue to show the zip_code step
+            } else if (dependsKey === 'service' && dependsValue) {
+                console.log('🔧 Service-specific step detected for:', dependsValue);
+                // This is a service-specific step - check if the service matches
+                if (formState[dependsKey] !== dependsValue) {
+                    console.log('🔧 Service mismatch, skipping step');
+                    // Skip this step if service doesn't match
+                    currentStepIndex++;
+                    renderCurrentStep();
+                    return;
+                }
+                console.log('🔧 Service matches, showing step');
             } else if (formState[dependsKey] !== dependsValue) {
+                console.log('🔧 Other dependency mismatch, skipping step');
                 // Skip this step for other dependencies
                 currentStepIndex++;
                 renderCurrentStep();

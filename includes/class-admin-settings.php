@@ -20,6 +20,8 @@ class BSP_Admin_Settings {
         add_action('admin_init', [$this, 'register_settings']);
         add_action('wp_ajax_bsp_send_test_email', [$this, 'handle_test_email']);
         add_action('wp_ajax_bsp_resend_booking_emails', [$this, 'handle_resend_booking_emails']);
+        add_action('wp_ajax_bsp_fix_debug_log', [$this, 'handle_fix_debug_log']);
+        add_action('wp_ajax_bsp_test_google_sheets', [$this, 'handle_test_google_sheets']);
     }
     
     /**
@@ -469,6 +471,65 @@ class BSP_Admin_Settings {
                 </tr>
             </table>
             
+            <h3><?php _e('Debug System Diagnostics', 'booking-system-pro'); ?></h3>
+            <table class="form-table">
+                <tr>
+                    <th scope="row"><?php _e('Debug Log Status', 'booking-system-pro'); ?></th>
+                    <td>
+                        <?php
+                        $debug_file = BSP_PLUGIN_DIR . 'debug.log';
+                        if (file_exists($debug_file)) {
+                            $file_size = filesize($debug_file);
+                            $file_encoding = mb_detect_encoding(file_get_contents($debug_file, false, null, 0, 1000));
+                            echo sprintf(__('File exists (%s bytes, encoding: %s)', 'booking-system-pro'), 
+                                number_format($file_size), 
+                                $file_encoding ?: 'Unknown'
+                            );
+                        } else {
+                            echo __('File does not exist', 'booking-system-pro');
+                        }
+                        ?>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row"><?php _e('Fix Debug Log', 'booking-system-pro'); ?></th>
+                    <td>
+                        <button type="button" id="fix_debug_log" class="button button-secondary">
+                            <?php _e('Fix Debug Log Encoding', 'booking-system-pro'); ?>
+                        </button>
+                        <p class="description"><?php _e('This will fix character encoding issues in the debug log.', 'booking-system-pro'); ?></p>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row"><?php _e('Google Sheets Integration', 'booking-system-pro'); ?></th>
+                    <td>
+                        <?php
+                        $integration_settings = get_option('bsp_integration_settings', []);
+                        $enabled = !empty($integration_settings['google_sheets_enabled']);
+                        $webhook_url = $integration_settings['google_sheets_webhook_url'] ?? '';
+                        
+                        if ($enabled && !empty($webhook_url)) {
+                            echo '<span style="color: green;">✓ ' . __('Enabled and configured', 'booking-system-pro') . '</span>';
+                        } elseif ($enabled) {
+                            echo '<span style="color: orange;">⚠ ' . __('Enabled but webhook URL missing', 'booking-system-pro') . '</span>';
+                        } else {
+                            echo '<span style="color: red;">✗ ' . __('Disabled', 'booking-system-pro') . '</span>';
+                        }
+                        ?>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row"><?php _e('Test Google Sheets', 'booking-system-pro'); ?></th>
+                    <td>
+                        <button type="button" id="test_google_sheets" class="button button-secondary" 
+                                <?php echo (!$enabled || empty($webhook_url)) ? 'disabled' : ''; ?>>
+                            <?php _e('Send Test Data', 'booking-system-pro'); ?>
+                        </button>
+                        <p class="description"><?php _e('Send a test booking to Google Sheets to verify the integration.', 'booking-system-pro'); ?></p>
+                    </td>
+                </tr>
+            </table>
+            
             <h3><?php _e('Database Management', 'booking-system-pro'); ?></h3>
             <table class="form-table">
                 <tr>
@@ -506,6 +567,43 @@ class BSP_Admin_Settings {
         
         <script>
         jQuery(document).ready(function($) {
+            $('#fix_debug_log').on('click', function() {
+                var $button = $(this);
+                $button.prop('disabled', true).text('<?php _e('Fixing...', 'booking-system-pro'); ?>');
+                
+                $.post(ajaxurl, {
+                    action: 'bsp_fix_debug_log',
+                    nonce: '<?php echo wp_create_nonce('bsp_fix_debug_log'); ?>'
+                }, function(response) {
+                    if (response.success) {
+                        alert('<?php _e('Debug log fixed successfully!', 'booking-system-pro'); ?>');
+                        location.reload();
+                    } else {
+                        alert('<?php _e('Failed to fix debug log: ', 'booking-system-pro'); ?>' + response.data);
+                    }
+                }).always(function() {
+                    $button.prop('disabled', false).text('<?php _e('Fix Debug Log Encoding', 'booking-system-pro'); ?>');
+                });
+            });
+            
+            $('#test_google_sheets').on('click', function() {
+                var $button = $(this);
+                $button.prop('disabled', true).text('<?php _e('Testing...', 'booking-system-pro'); ?>');
+                
+                $.post(ajaxurl, {
+                    action: 'bsp_test_google_sheets',
+                    nonce: '<?php echo wp_create_nonce('bsp_test_google_sheets'); ?>'
+                }, function(response) {
+                    if (response.success) {
+                        alert('<?php _e('Test successful! Check Google Sheets for the test data.', 'booking-system-pro'); ?>');
+                    } else {
+                        alert('<?php _e('Test failed: ', 'booking-system-pro'); ?>' + response.data);
+                    }
+                }).always(function() {
+                    $button.prop('disabled', false).text('<?php _e('Send Test Data', 'booking-system-pro'); ?>');
+                });
+            });
+            
             $('#reset_database').on('click', function() {
                 if (confirm('<?php _e('Are you sure you want to reset all data? This action cannot be undone.', 'booking-system-pro'); ?>')) {
                     if (confirm('<?php _e('This will permanently delete all bookings, companies, and services. Are you absolutely sure?', 'booking-system-pro'); ?>')) {
@@ -793,6 +891,116 @@ class BSP_Admin_Settings {
             ]);
         } else {
             wp_send_json_error('Failed to resend booking emails');
+        }
+    }
+    
+    /**
+     * Handle fix debug log AJAX request
+     */
+    public function handle_fix_debug_log() {
+        if (!wp_verify_nonce($_POST['nonce'], 'bsp_fix_debug_log')) {
+            wp_send_json_error('Security check failed');
+        }
+        
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('Insufficient permissions');
+        }
+        
+        // Get the main plugin instance to call the fix function
+        $plugin = BSP();
+        if (method_exists($plugin, 'fix_debug_log_encoding')) {
+            $result = $plugin->fix_debug_log_encoding();
+            if ($result) {
+                wp_send_json_success('Debug log encoding fixed successfully');
+            } else {
+                wp_send_json_error('Failed to fix debug log encoding');
+            }
+        } else {
+            wp_send_json_error('Fix function not available');
+        }
+    }
+    
+    /**
+     * Handle test Google Sheets AJAX request
+     */
+    public function handle_test_google_sheets() {
+        if (!wp_verify_nonce($_POST['nonce'], 'bsp_test_google_sheets')) {
+            wp_send_json_error('Security check failed');
+        }
+        
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('Insufficient permissions');
+        }
+        
+        // Check if Google Sheets integration is configured
+        $integration_settings = get_option('bsp_integration_settings', []);
+        if (empty($integration_settings['google_sheets_enabled']) || empty($integration_settings['google_sheets_webhook_url'])) {
+            wp_send_json_error('Google Sheets integration not properly configured');
+        }
+        
+        // Create test data
+        $test_data = [
+            'id' => 999999,
+            'booking_id' => 999999,
+            'status' => 'test',
+            'customer_name' => 'Test Customer',
+            'customer_email' => 'test@example.com',
+            'customer_phone' => '555-123-4567',
+            'customer_address' => '123 Test Street',
+            'zip_code' => '12345',
+            'city' => 'Test City',
+            'state' => 'Test State',
+            'service_type' => 'Test Service',
+            'service_name' => 'Test Service',
+            'specifications' => 'Test specifications',
+            'company_name' => 'Test Company',
+            'formatted_date' => date('Y-m-d'),
+            'formatted_time' => date('H:i'),
+            'booking_date' => date('Y-m-d'),
+            'booking_time' => date('H:i'),
+            'formatted_created' => date('Y-m-d H:i:s'),
+            'created_at' => date('Y-m-d H:i:s'),
+            'notes' => 'This is a test booking from the admin panel',
+            'utm_source' => 'admin_test',
+            'utm_medium' => 'manual',
+            'utm_campaign' => 'debug_test',
+            'appointments' => '{"test": "data"}'
+        ];
+        
+        $webhook_url = $integration_settings['google_sheets_webhook_url'];
+        
+        // Send test data
+        $response = wp_remote_post($webhook_url, [
+            'method'      => 'POST',
+            'headers'     => [
+                'Content-Type' => 'application/json; charset=utf-8',
+                'Accept' => 'application/json',
+                'User-Agent' => 'BookingPro/2.1.0-TEST'
+            ],
+            'body'        => wp_json_encode($test_data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+            'timeout'     => 30,
+            'blocking'    => true,
+            'sslverify'   => true
+        ]);
+        
+        if (is_wp_error($response)) {
+            wp_send_json_error('Request failed: ' . $response->get_error_message());
+        }
+        
+        $response_code = wp_remote_retrieve_response_code($response);
+        $response_body = wp_remote_retrieve_body($response);
+        
+        if ($response_code === 200 || $response_code === 302) {
+            wp_send_json_success([
+                'message' => 'Test data sent successfully',
+                'response_code' => $response_code,
+                'response_body' => substr($response_body, 0, 500)
+            ]);
+        } else {
+            wp_send_json_error([
+                'message' => 'Test failed with response code: ' . $response_code,
+                'response_body' => substr($response_body, 0, 500)
+            ]);
         }
     }
 }
