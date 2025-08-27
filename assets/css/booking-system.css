@@ -71,44 +71,49 @@ body .booking-system-form,
 /* Default background for initial step */
 body .booking-system-form,
 .booking-system-form {
-    background-image: url('https://images.unsplash.com/photo-1560518883-ce09059eeffa?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=80');
+    background-image: url('../images/step-1-bg.webp');
 }
 
 /* Fallback background for error cases */
 body .booking-system-form.fallback-bg,
 .booking-system-form.fallback-bg {
-    background-image: url('../images/step-1-bg.jpeg');
+    background-image: url('../images/step-1-bg.webp');
 }
 
 /* Service-specific backgrounds */
 body .booking-system-form.service-roof,
 .booking-system-form.service-roof {
-    background-image: url('https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=80');
+    background-image: url('../images/roof-step-1.webp');
 }
 
 body .booking-system-form.service-windows,
 .booking-system-form.service-windows {
-    background-image: url('https://images.unsplash.com/photo-1513694203232-719a280e022f?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=80');
+    background-image: url('../images/window-step-1.webp');
 }
 
 body .booking-system-form.service-bathroom,
 .booking-system-form.service-bathroom {
-    background-image: url('https://images.unsplash.com/photo-1620626011761-996317b8d101?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=80');
+    background-image: url('../images/bathroom-all-step.webp');
 }
 
 body .booking-system-form.service-siding,
 .booking-system-form.service-siding {
-    background-image: url('https://images.unsplash.com/photo-1570129477492-45c003edd2be?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=80');
+    background-image: url('../images/siding-all-steps.webp');
 }
 
 body .booking-system-form.service-kitchen,
 .booking-system-form.service-kitchen {
-    background-image: url('https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=80');
+    background-image: url('../images/kitchen-all-steps.webp');
 }
 
 body .booking-system-form.service-adu,
 .booking-system-form.service-adu {
-    background-image: url('../images/adu-all.png');
+    background-image: url('../images/adu-all.webp');
+}
+
+body .booking-system-form.service-decks,
+.booking-system-form.service-decks {
+    background-image: url('../images/decks-all-steps.jpg');
 }
 
 /* 
@@ -120,38 +125,38 @@ body .booking-system-form.service-adu,
 /* Roof step-specific backgrounds */
 body .booking-system-form.service-roof.roof-step-0,
 .booking-system-form.service-roof.roof-step-0 {
-    background-image: url('../images/roof-step-1.jpg');
+    background-image: url('../images/roof-step-1.webp');
 }
 
 body .booking-system-form.service-roof.roof-step-1,
 .booking-system-form.service-roof.roof-step-1 {
-    background-image: url('../images/roof-step-2.jpeg');
+    background-image: url('../images/roof-step-2.webp');
 }
 
 body .booking-system-form.service-roof.roof-step-2,
 .booking-system-form.service-roof.roof-step-2 {
-    background-image: url('../images/roof-step-2.jpeg');
+    background-image: url('../images/roof-step-2.webp');
 }
 
 /* Windows step-specific backgrounds */
 body .booking-system-form.service-windows.windows-step-0,
 .booking-system-form.service-windows.windows-step-0 {
-    background-image: url('../images/window-step-1.jpg');
+    background-image: url('../images/window-step-1.webp');
 }
 
 body .booking-system-form.service-windows.windows-step-1,
 .booking-system-form.service-windows.windows-step-1 {
-    background-image: url('../images/window-step-2.jpeg');
+    background-image: url('../images/window-step-2.webp');
 }
 
 body .booking-system-form.service-windows.windows-step-2a,
 .booking-system-form.service-windows.windows-step-2a {
-    background-image: url('../images/window-step-2b.jpg');
+    background-image: url('../images/window-step-2b.webp');
 }
 
 body .booking-system-form.service-windows.windows-step-2b,
 .booking-system-form.service-windows.windows-step-2b {
-    background-image: url('../images/window-step-2.jpeg');
+    background-image: url('../images/window-step-2.webp');
 }
 
 /* Bathroom step-specific backgrounds - use single image for all steps */
@@ -159,7 +164,7 @@ body .booking-system-form.service-bathroom.bathroom-step-0,
 .booking-system-form.service-bathroom.bathroom-step-0,
 body .booking-system-form.service-bathroom.bathroom-step-1,
 .booking-system-form.service-bathroom.bathroom-step-1 {
-    background-image: url('../images/bathroom-all-step.jpeg');
+    background-image: url('../images/bathroom-all-step.webp');
 }
 
 /* Siding step-specific backgrounds - use single image for all steps */
@@ -169,7 +174,7 @@ body .booking-system-form.service-siding.siding-step-1,
 .booking-system-form.service-siding.siding-step-1,
 body .booking-system-form.service-siding.siding-step-2,
 .booking-system-form.service-siding.siding-step-2 {
-    background-image: url('../images/siding-all-steps.png');
+    background-image: url('../images/siding-all-steps.webp');
 }
 
 /* Kitchen step-specific backgrounds - use single image for all steps */
@@ -179,7 +184,7 @@ body .booking-system-form.service-kitchen.kitchen-step-1,
 .booking-system-form.service-kitchen.kitchen-step-1,
 body .booking-system-form.service-kitchen.kitchen-step-2,
 .booking-system-form.service-kitchen.kitchen-step-2 {
-    background-image: url('../images/kitchen-all-steps.jpg');
+    background-image: url('../images/kitchen-all-steps.webp');
 }
 
 /* ADU step-specific backgrounds - use single image for all steps */
@@ -189,7 +194,7 @@ body .booking-system-form.service-adu.adu-step-1,
 .booking-system-form.service-adu.adu-step-1,
 body .booking-system-form.service-adu.adu-step-2,
 .booking-system-form.service-adu.adu-step-2 {
-    background-image: url('../images/adu-all.png');
+    background-image: url('../images/adu-all.webp');
 }
 
 /* Decks step-specific backgrounds - use single image for all steps */
@@ -199,7 +204,7 @@ body .booking-system-form.service-decks.decks-step-1,
 .booking-system-form.service-decks.decks-step-1,
 body .booking-system-form.service-decks.decks-step-2,
 .booking-system-form.service-decks.decks-step-2 {
-    background-image: url('../images/decks-all-steps.jpeg');
+    background-image: url('../images/decks-all-steps.jpg');
 }
 
 /* ─── DARK OVERLAY ──────────────────────────────────── */
@@ -1784,7 +1789,7 @@ body .booking-system-form .rs-step-1,
     position: relative;
     width: 100%;
     min-height: 580px;
-    background-image: url('../images/step-1-bg.jpeg');
+    background-image: url('../images/step-1-bg.webp');
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;

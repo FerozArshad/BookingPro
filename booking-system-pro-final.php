@@ -414,15 +414,6 @@ final class Booking_System_Pro_Final {
             // Use minified CSS in production, regular CSS in debug mode
             $css_file = BSP_DEBUG_MODE ? 'booking-system.css' : 'booking-system.min.css';
             
-            // Enqueue frontend assets in proper order
-            wp_enqueue_style('bsp-frontend', BSP_PLUGIN_URL . 'assets/css/' . $css_file, [], BSP_VERSION);
-            
-            // Enqueue JavaScript files in dependency order
-            wp_enqueue_script('bsp-zipcode-lookup', BSP_PLUGIN_URL . 'assets/js/zipcode-lookup.js', ['jquery'], BSP_VERSION, true);
-            wp_enqueue_script('bsp-video-controller', BSP_PLUGIN_URL . 'assets/js/video-section-controller.js', ['jquery'], BSP_VERSION, true);
-            wp_enqueue_script('bsp-source-tracker', BSP_PLUGIN_URL . 'assets/js/source-tracker.js', ['jquery'], BSP_VERSION, true);
-            wp_enqueue_script('bsp-frontend', BSP_PLUGIN_URL . 'assets/js/booking-system.js', ['jquery', 'bsp-zipcode-lookup', 'bsp-video-controller', 'bsp-source-tracker'], BSP_VERSION, true);
-            
             // Get companies data for the frontend
             $companies = [];
             if ($this->database) {
@@ -440,22 +431,86 @@ final class Booking_System_Pro_Final {
                 }
             }
             
-            // Localize script
-            wp_localize_script('bsp-frontend', 'BSP_Ajax', [
-                'ajaxUrl' => admin_url('admin-ajax.php'),
-                'nonce' => wp_create_nonce('bsp_frontend_nonce'),
-                'companies' => $companies,
-                'debug' => BSP_DEBUG_MODE,
-                'strings' => [
-                    'loading' => __('Loading...', 'booking-system-pro'),
-                    'error' => __('An error occurred. Please try again.', 'booking-system-pro'),
-                    'success' => __('Booking submitted successfully!', 'booking-system-pro'),
-                    'select_service' => __('Please select a service', 'booking-system-pro'),
-                    'select_time' => __('Please select a time slot', 'booking-system-pro'),
-                    'fill_required' => __('Please fill in all required fields', 'booking-system-pro'),
-                    'no_availability' => __('No availability found for selected dates.', 'booking-system-pro')
-                ]
-            ]);
+            // MOBILE-FIRST OPTIMIZATION: Detect mobile and load accordingly
+            $is_mobile = wp_is_mobile();
+            $user_agent = $_SERVER['HTTP_USER_AGENT'] ?? '';
+            $is_slow_connection = strpos($user_agent, '2G') !== false || strpos($user_agent, 'slow') !== false;
+            
+            if ($is_mobile || $is_slow_connection) {
+                // MOBILE/SLOW CONNECTION: Maximum optimization with advanced features
+                wp_enqueue_script('bsp-mobile-optimized', BSP_PLUGIN_URL . 'assets/js/booking-system-mobile-optimized.js', [], BSP_VERSION, false); // Load in head for immediate execution
+                
+                // Defer non-critical CSS
+                wp_enqueue_style('bsp-frontend', BSP_PLUGIN_URL . 'assets/css/' . $css_file, [], BSP_VERSION, 'all');
+                
+                // Enhanced mobile configuration with performance settings
+                wp_add_inline_script('bsp-mobile-optimized', "
+                    window.BSP_MobileConfig = {
+                        pluginUrl: '" . BSP_PLUGIN_URL . "',
+                        ajaxUrl: '" . admin_url('admin-ajax.php') . "',
+                        nonce: '" . wp_create_nonce('bsp_frontend_nonce') . "',
+                        performance: {
+                            targetLoadTime: 50,
+                            enableWorker: true,
+                            enablePredictive: true,
+                            enableMemoryCleanup: true
+                        },
+                        deferredScripts: [
+                            'zipcode-lookup.js',
+                            'video-section-controller.js', 
+                            'source-tracker.js',
+                            'booking-system.js'
+                        ],
+                        debug: " . (BSP_DEBUG_MODE ? 'true' : 'false') . "
+                    };
+                ", 'before');
+                
+                // Enhanced mobile-specific localization
+                wp_localize_script('bsp-mobile-optimized', 'BSP_Ajax', [
+                    'ajaxUrl' => admin_url('admin-ajax.php'),
+                    'nonce' => wp_create_nonce('bsp_frontend_nonce'),
+                    'companies' => $companies,
+                    'debug' => BSP_DEBUG_MODE,
+                    'isMobile' => true,
+                    'strings' => [
+                        'loading' => __('Loading...', 'booking-system-pro'),
+                        'error' => __('An error occurred. Please try again.', 'booking-system-pro'),
+                        'success' => __('Booking submitted successfully!', 'booking-system-pro'),
+                        'select_service' => __('Please select a service', 'booking-system-pro'),
+                        'select_time' => __('Please select a time slot', 'booking-system-pro'),
+                        'fill_required' => __('Please fill in all required fields', 'booking-system-pro'),
+                        'no_availability' => __('No availability found for selected dates.', 'booking-system-pro')
+                    ]
+                ]);
+                
+            } else {
+                // DESKTOP: Normal loading for better performance on fast connections
+                wp_enqueue_style('bsp-frontend', BSP_PLUGIN_URL . 'assets/css/' . $css_file, [], BSP_VERSION);
+                
+                // Enqueue JavaScript files in dependency order
+                wp_enqueue_script('bsp-zipcode-lookup', BSP_PLUGIN_URL . 'assets/js/zipcode-lookup.js', ['jquery'], BSP_VERSION, true);
+                wp_enqueue_script('bsp-video-controller', BSP_PLUGIN_URL . 'assets/js/video-section-controller.js', ['jquery'], BSP_VERSION, true);
+                wp_enqueue_script('bsp-source-tracker', BSP_PLUGIN_URL . 'assets/js/source-tracker.js', ['jquery'], BSP_VERSION, true);
+                wp_enqueue_script('bsp-frontend', BSP_PLUGIN_URL . 'assets/js/booking-system.js', ['jquery', 'bsp-zipcode-lookup', 'bsp-video-controller', 'bsp-source-tracker'], BSP_VERSION, true);
+                
+                // Desktop localization
+                wp_localize_script('bsp-frontend', 'BSP_Ajax', [
+                    'ajaxUrl' => admin_url('admin-ajax.php'),
+                    'nonce' => wp_create_nonce('bsp_frontend_nonce'),
+                    'companies' => $companies,
+                    'debug' => BSP_DEBUG_MODE,
+                    'isMobile' => false,
+                    'strings' => [
+                        'loading' => __('Loading...', 'booking-system-pro'),
+                        'error' => __('An error occurred. Please try again.', 'booking-system-pro'),
+                        'success' => __('Booking submitted successfully!', 'booking-system-pro'),
+                        'select_service' => __('Please select a service', 'booking-system-pro'),
+                        'select_time' => __('Please select a time slot', 'booking-system-pro'),
+                        'fill_required' => __('Please fill in all required fields', 'booking-system-pro'),
+                        'no_availability' => __('No availability found for selected dates.', 'booking-system-pro')
+                    ]
+                ]);
+            }
         }
     }
     
