@@ -454,24 +454,28 @@ class BSP_Ajax {
         
         $primary_booking_id = $created_booking_ids[0];
         
-        // FIXED: Single Google Sheets sync with proper deduplication
+        // FIXED: Single Google Sheets sync with proper deduplication - FASTER TIMING
         if (function_exists('wp_schedule_single_event')) {
             // Check if sync job already scheduled for this booking to prevent duplicates
             $existing_sync = get_post_meta($primary_booking_id, '_google_sheets_sync_scheduled', true);
             if (!$existing_sync) {
-                // Customer email notification (immediate - 5 seconds)
-                wp_schedule_single_event(time() + 5, 'bsp_send_customer_notification', [$primary_booking_id, $booking_data]);
+                // Customer email notification (immediate - 2 seconds)
+                wp_schedule_single_event(time() + 2, 'bsp_send_customer_notification', [$primary_booking_id, $booking_data]);
                 
-                // Admin email notification (immediate - 10 seconds)
-                wp_schedule_single_event(time() + 10, 'bsp_send_admin_notification', [$primary_booking_id, $booking_data]);
+                // Admin email notification (immediate - 4 seconds)
+                wp_schedule_single_event(time() + 4, 'bsp_send_admin_notification', [$primary_booking_id, $booking_data]);
                 
-                // Google Sheets sync (single attempt - 30 seconds) - ONLY ONE HANDLER NOW
-                wp_schedule_single_event(time() + 30, 'bsp_sync_google_sheets', [$primary_booking_id, $booking_data]);
+                // Google Sheets sync (single attempt - 8 seconds) - ONLY ONE HANDLER NOW
+                wp_schedule_single_event(time() + 8, 'bsp_sync_google_sheets', [$primary_booking_id, $booking_data]);
                 update_post_meta($primary_booking_id, '_google_sheets_sync_scheduled', time());
                 
-                // Additional processing (notifications, etc. - 60 seconds)
-                wp_schedule_single_event(time() + 60, 'bsp_process_booking_extras', [$primary_booking_id, $booking_data]);
+                // Additional processing (notifications, etc. - 12 seconds)
+                wp_schedule_single_event(time() + 12, 'bsp_process_booking_extras', [$primary_booking_id, $booking_data]);
+                
+                bsp_debug_log("Background jobs scheduled for booking ID: $primary_booking_id", 'CRON');
             }
+        } else {
+            bsp_debug_log("wp_schedule_single_event function not available!", 'CRON_ERROR');
         }
         
         // Immediate success response - no waiting for any external services
@@ -573,8 +577,8 @@ class BSP_Ajax {
                 $sent = $this->send_customer_confirmation($booking_data);
                 
                 if (!$sent) {
-                    // Retry once after 2 minutes if failed
-                    wp_schedule_single_event(time() + 120, 'bsp_send_customer_notification', [$booking_id, $booking_data]);
+                    // Retry once after 30 seconds if failed (faster retry)
+                    wp_schedule_single_event(time() + 30, 'bsp_send_customer_notification', [$booking_id, $booking_data]);
                 }
             }
         } catch (Exception $e) {
@@ -594,8 +598,8 @@ class BSP_Ajax {
                 $sent = $this->send_admin_notification($booking_id);
                 
                 if (!$sent) {
-                    // Retry once after 3 minutes if failed
-                    wp_schedule_single_event(time() + 180, 'bsp_send_admin_notification', [$booking_id, $booking_data]);
+                    // Retry once after 45 seconds if failed (faster retry)
+                    wp_schedule_single_event(time() + 45, 'bsp_send_admin_notification', [$booking_id, $booking_data]);
                 }
             }
         } catch (Exception $e) {

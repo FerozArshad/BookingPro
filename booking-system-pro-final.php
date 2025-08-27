@@ -160,9 +160,6 @@ final class Booking_System_Pro_Final {
             // Initialize components
             $this->init_components();
             
-            // Register background job handlers for optimized form submission
-            $this->register_background_jobs();
-            
             // Setup hooks
             $this->setup_hooks();
             
@@ -322,6 +319,9 @@ final class Booking_System_Pro_Final {
         add_action('wp_enqueue_scripts', [$this, 'frontend_assets']);
         add_action('admin_enqueue_scripts', [$this, 'admin_assets']);
         
+        // Register background job handlers early (before they might be triggered)
+        $this->register_background_jobs();
+        
         // Debug hooks
         if (BSP_DEBUG_MODE) {
             add_action('wp_footer', [$this, 'debug_info_footer']);
@@ -346,21 +346,59 @@ final class Booking_System_Pro_Final {
      * Register background job handlers for optimized form submission
      */
     private function register_background_jobs() {
-        if (!$this->ajax) {
-            return;
-        }
+        // Always register these action hooks, even if components aren't ready yet
+        // The handlers will check for component availability when executed
         
         // Customer email notification handler
-        add_action('bsp_send_customer_notification', [$this->ajax, 'handle_customer_notification'], 10, 2);
+        add_action('bsp_send_customer_notification', [$this, 'handle_customer_notification_wrapper'], 10, 2);
         
         // Admin email notification handler  
-        add_action('bsp_send_admin_notification', [$this->ajax, 'handle_admin_notification'], 10, 2);
+        add_action('bsp_send_admin_notification', [$this, 'handle_admin_notification_wrapper'], 10, 2);
         
         // Booking extras processing handler
-        add_action('bsp_process_booking_extras', [$this->ajax, 'handle_booking_extras'], 10, 2);
+        add_action('bsp_process_booking_extras', [$this, 'handle_booking_extras_wrapper'], 10, 2);
         
         // Google Sheets sync handler
         add_action('bsp_sync_google_sheets', [$this, 'handle_google_sheets_sync'], 10, 2);
+    }
+    
+    /**
+     * Wrapper methods to ensure AJAX component is available when handlers are called
+     */
+    public function handle_customer_notification_wrapper($booking_id, $booking_data) {
+        if ($this->ajax && method_exists($this->ajax, 'handle_customer_notification')) {
+            $this->ajax->handle_customer_notification($booking_id, $booking_data);
+        } else {
+            bsp_debug_log("Customer notification handler called but AJAX component not available", 'ERROR');
+            // Reschedule if component not ready (faster retry)
+            if (function_exists('wp_schedule_single_event')) {
+                wp_schedule_single_event(time() + 15, 'bsp_send_customer_notification', [$booking_id, $booking_data]);
+            }
+        }
+    }
+    
+    public function handle_admin_notification_wrapper($booking_id, $booking_data) {
+        if ($this->ajax && method_exists($this->ajax, 'handle_admin_notification')) {
+            $this->ajax->handle_admin_notification($booking_id, $booking_data);
+        } else {
+            bsp_debug_log("Admin notification handler called but AJAX component not available", 'ERROR');
+            // Reschedule if component not ready (faster retry)
+            if (function_exists('wp_schedule_single_event')) {
+                wp_schedule_single_event(time() + 15, 'bsp_send_admin_notification', [$booking_id, $booking_data]);
+            }
+        }
+    }
+    
+    public function handle_booking_extras_wrapper($booking_id, $booking_data) {
+        if ($this->ajax && method_exists($this->ajax, 'handle_booking_extras')) {
+            $this->ajax->handle_booking_extras($booking_id, $booking_data);
+        } else {
+            bsp_debug_log("Booking extras handler called but AJAX component not available", 'ERROR');
+            // Reschedule if component not ready (faster retry)
+            if (function_exists('wp_schedule_single_event')) {
+                wp_schedule_single_event(time() + 15, 'bsp_process_booking_extras', [$booking_id, $booking_data]);
+            }
+        }
     }
     
     public function init_hooks() {
@@ -373,9 +411,17 @@ final class Booking_System_Pro_Final {
     
     public function frontend_assets() {
         if ($this->has_booking_shortcode()) {
-            // Enqueue frontend assets
-            wp_enqueue_style('bsp-frontend', BSP_PLUGIN_URL . 'assets/css/booking-system.css', [], BSP_VERSION);
-            wp_enqueue_script('bsp-frontend', BSP_PLUGIN_URL . 'assets/js/booking-system.js', ['jquery'], BSP_VERSION, true);
+            // Use minified CSS in production, regular CSS in debug mode
+            $css_file = BSP_DEBUG_MODE ? 'booking-system.css' : 'booking-system.min.css';
+            
+            // Enqueue frontend assets in proper order
+            wp_enqueue_style('bsp-frontend', BSP_PLUGIN_URL . 'assets/css/' . $css_file, [], BSP_VERSION);
+            
+            // Enqueue JavaScript files in dependency order
+            wp_enqueue_script('bsp-zipcode-lookup', BSP_PLUGIN_URL . 'assets/js/zipcode-lookup.js', ['jquery'], BSP_VERSION, true);
+            wp_enqueue_script('bsp-video-controller', BSP_PLUGIN_URL . 'assets/js/video-section-controller.js', ['jquery'], BSP_VERSION, true);
+            wp_enqueue_script('bsp-source-tracker', BSP_PLUGIN_URL . 'assets/js/source-tracker.js', ['jquery'], BSP_VERSION, true);
+            wp_enqueue_script('bsp-frontend', BSP_PLUGIN_URL . 'assets/js/booking-system.js', ['jquery', 'bsp-zipcode-lookup', 'bsp-video-controller', 'bsp-source-tracker'], BSP_VERSION, true);
             
             // Get companies data for the frontend
             $companies = [];
@@ -736,10 +782,10 @@ final class Booking_System_Pro_Final {
         if (!$this->ajax || !method_exists($this->ajax, 'send_to_google_sheets')) {
             bsp_debug_log("Google Sheets sync failed: AJAX component not available", 'INTEGRATION_ERROR');
             
-            // Schedule retry in 2 minutes if component not ready (but only if under max attempts)
+            // Schedule retry in 30 seconds if component not ready (but only if under max attempts)
             if ($attempts < 2 && function_exists('wp_schedule_single_event')) {
-                wp_schedule_single_event(time() + 120, 'bsp_sync_google_sheets', [$booking_id, $booking_data]);
-                bsp_debug_log("Google Sheets sync rescheduled for 2 minutes due to component unavailability", 'INTEGRATION');
+                wp_schedule_single_event(time() + 30, 'bsp_sync_google_sheets', [$booking_id, $booking_data]);
+                bsp_debug_log("Google Sheets sync rescheduled for 30 seconds due to component unavailability", 'INTEGRATION');
             }
             return;
         }
@@ -749,6 +795,34 @@ final class Booking_System_Pro_Final {
         
         // Note: send_to_google_sheets logs its own success/failure, so we don't need to duplicate that here
         bsp_debug_log("Google Sheets background sync completed for booking ID: $booking_id, result: " . ($sync_result ? 'success' : 'failed'), 'INTEGRATION');
+    }
+    
+    /**
+     * Manual cron trigger for testing (admin only)
+     */
+    public function manual_cron_trigger() {
+        if (!current_user_can('manage_options')) {
+            return;
+        }
+        
+        if (isset($_GET['bsp_trigger_cron'])) {
+            bsp_debug_log("Manual cron trigger activated", 'CRON');
+            
+            // Trigger any pending cron jobs
+            if (function_exists('wp_cron')) {
+                wp_cron();
+                bsp_debug_log("wp_cron() executed manually", 'CRON');
+            }
+            
+            // Also try spawn_cron for immediate execution
+            if (function_exists('spawn_cron')) {
+                spawn_cron();
+                bsp_debug_log("spawn_cron() executed manually", 'CRON');
+            }
+            
+            wp_redirect(admin_url('admin.php?page=booking-system&cron_triggered=1'));
+            exit;
+        }
     }
 }
 

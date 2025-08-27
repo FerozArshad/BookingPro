@@ -15,7 +15,7 @@ jQuery(document).ready(function($) {
                 id: 'zip_code', 
                 type: 'text', 
                 depends_on: ['service'], // Depends on 'service' key being present in formState
-                question_template: '{service}<br>Replacement', 
+                question_template: 'Start your {service} remodel today.<br>Find local pros now.', 
                 label: 'Enter Zip Code to check eligibility for free estimate'
             },
             
@@ -609,40 +609,47 @@ jQuery(document).ready(function($) {
 
     // ─── PRE-FETCHING OPTIMIZATION ─────────────────────
     function preFetchCalendarDataIfNeeded() {
+        // PERFORMANCE: Only pre-fetch if user is likely to reach calendar step
         const currentStep = CONFIG.steps[currentStepIndex];
         
-        // Pre-fetch calendar data when user is 1-2 steps before the datetime step
+        // Check if next step or step after next is datetime (accounting for dependencies)
         const nextStep = CONFIG.steps[currentStepIndex + 1];
         const stepAfterNext = CONFIG.steps[currentStepIndex + 2];
         
-        // Check if next step or step after next is datetime (accounting for dependencies)
         const shouldPreFetch = (nextStep && nextStep.type === 'datetime') || 
                               (stepAfterNext && stepAfterNext.type === 'datetime');
         
         if (shouldPreFetch && !window.calendarDataPreFetched) {
-
-            
-            // Set up company configuration for pre-fetching
-            if (typeof BSP_Ajax !== 'undefined' && BSP_Ajax.companies) {
-                CONFIG.companies = BSP_Ajax.companies;
-                CONFIG.ajaxUrl = BSP_Ajax.ajaxUrl;
-                CONFIG.nonce = BSP_Ajax.nonce;
+            // LAZY LOAD: Use requestIdleCallback for non-blocking pre-fetch
+            if (window.requestIdleCallback) {
+                requestIdleCallback(() => {
+                    setupCompanyConfiguration();
+                    window.calendarDataPreFetched = true;
+                });
             } else {
-                // Ensure we have demo company data
-                if (!CONFIG.companies || CONFIG.companies.length === 0) {
-                    CONFIG.companies = [
-                        { id: 1, name: 'RH Remodeling', phone: '(555) 123-4567', address: '123 Main St, Los Angeles, CA' },
-                        { id: 2, name: 'Eco Green', phone: '(555) 234-5678', address: '456 Oak Ave, Los Angeles, CA' },
-                        { id: 3, name: 'Top Remodeling Pro', phone: '(555) 345-6789', address: '789 Pine St, Los Angeles, CA' }
-                    ];
-                    CONFIG.ajaxUrl = '/wp-admin/admin-ajax.php';
-                    CONFIG.nonce = 'demo-nonce';
-                }
+                // Fallback for browsers without requestIdleCallback
+                setTimeout(() => {
+                    setupCompanyConfiguration();
+                    window.calendarDataPreFetched = true;
+                }, 100);
             }
-            
-            // Mark as pre-fetched to avoid doing it multiple times
-            window.calendarDataPreFetched = true;
-
+        }
+    }
+    
+    // ─── LAZY COMPANY CONFIGURATION ─────────────────────
+    function setupCompanyConfiguration() {
+        if (typeof BSP_Ajax !== 'undefined' && BSP_Ajax.companies) {
+            CONFIG.companies = BSP_Ajax.companies;
+            CONFIG.ajaxUrl = BSP_Ajax.ajaxUrl;
+            CONFIG.nonce = BSP_Ajax.nonce;
+        } else if (!CONFIG.companies || CONFIG.companies.length === 0) {
+            CONFIG.companies = [
+                { id: 1, name: 'RH Remodeling', phone: '(555) 123-4567', address: '123 Main St, Los Angeles, CA' },
+                { id: 2, name: 'Eco Green', phone: '(555) 234-5678', address: '456 Oak Ave, Los Angeles, CA' },
+                { id: 3, name: 'Top Remodeling Pro', phone: '(555) 345-6789', address: '789 Pine St, Los Angeles, CA' }
+            ];
+            CONFIG.ajaxUrl = '/wp-admin/admin-ajax.php';
+            CONFIG.nonce = 'demo-nonce';
         }
     }
 
@@ -753,6 +760,7 @@ jQuery(document).ready(function($) {
         const stepNum = getStepNumberForTextInput(step.id);
         const $stepEl = $(`.booking-step[data-step="${stepNum}"]`);
         
+        // Always show and configure the step
         $stepEl.addClass('active');
         
         // Handle dynamic titles for the unified ZIP code step
@@ -781,6 +789,8 @@ jQuery(document).ready(function($) {
             const $title = $stepEl.find('.step-title');
             $title.text(step.question);
         }
+        
+        // Always handle special cases and binding, even if already configured
         
         // Special handling for city replacement
         if (step.id === 'contact_info') {
@@ -1800,8 +1810,22 @@ jQuery(document).ready(function($) {
         const $nextBtn = $stepEl.find('.btn-next, .btn-submit');
         
         // Show/hide back button
+        const serviceAutoSelected = getServiceFromURL() !== null;
+        const currentStep = CONFIG.steps[currentStepIndex];
+        
+        // Hide back button if:
+        // 1. We're at step 0 (service selection), OR
+        // 2. We're at the first service-specific step and service was auto-selected from URL
         if (currentStepIndex === 0) {
             $backBtn.hide();
+        } else if (serviceAutoSelected && formState.service && currentStep && 
+                   currentStep.depends_on && currentStep.depends_on[0] === 'service') {
+            const firstServiceStepIndex = findFirstServiceSpecificStep(formState.service);
+            if (currentStepIndex === firstServiceStepIndex) {
+                $backBtn.hide(); // Hide back button on first step of URL-based service flow
+            } else {
+                $backBtn.show();
+            }
         } else {
             $backBtn.show();
         }
@@ -1956,60 +1980,62 @@ jQuery(document).ready(function($) {
         }
     }
 
-    // ─── PROGRESS BAR UPDATE ─────────────────────────
+    // ─── OPTIMIZED PROGRESS BAR UPDATE ─────────────────────────
     function updateProgress() {
-        // Build array of visible steps by filtering using the same dependency logic
+        // PERFORMANCE: Cache visible steps calculation
+        if (!window.cachedVisibleSteps || window.lastFormState !== JSON.stringify(formState)) {
+            window.cachedVisibleSteps = calculateVisibleSteps();
+            window.lastFormState = JSON.stringify(formState);
+        }
+        
+        const visibleSteps = window.cachedVisibleSteps;
+        const currentStepId = CONFIG.steps[currentStepIndex]?.id;
+        const currentVisibleIndex = visibleSteps.findIndex(step => step.id === currentStepId);
+        
+        // FAST PROGRESS CALCULATION
+        let progress;
+        if (currentVisibleIndex === -1 || visibleSteps.length <= 1) {
+            progress = 14;
+        } else if (currentStepId === 'schedule') {
+            progress = 100;
+        } else {
+            const serviceAutoSelected = getServiceFromURL() !== null;
+            let adjustedIndex = currentVisibleIndex;
+            if (serviceAutoSelected && currentVisibleIndex >= 0) {
+                adjustedIndex = currentVisibleIndex;
+            }
+            progress = (adjustedIndex / (visibleSteps.length - 1)) * 100;
+        }
+        
+        // BATCH DOM UPDATE
+        requestAnimationFrame(() => {
+            $('.progress-fill').css('width', `${Math.min(progress, 100)}%`);
+        });
+    }
+    
+    // ─── CACHED VISIBLE STEPS CALCULATION ─────────────────────
+    function calculateVisibleSteps() {
         let visibleSteps = [];
         
         CONFIG.steps.forEach(step => {
-            // Check if step should be visible based on dependencies
             if (step.depends_on) {
                 const [dependsKey, dependsValue] = step.depends_on;
                 if (formState[dependsKey] === dependsValue) {
                     visibleSteps.push(step);
                 }
             } else {
-                // Step has no dependencies, always visible
                 visibleSteps.push(step);
             }
         });
         
-        // If service was auto-selected from URL, hide service selection step from progress
+        // Filter out service selection for URL-based entries
         const serviceAutoSelected = getServiceFromURL() !== null;
         if (serviceAutoSelected && formState.service) {
             visibleSteps = visibleSteps.filter(step => step.id !== 'service');
         }
         
-        // Remove confirmation step from progress calculation since scheduling is the real endpoint
-        visibleSteps = visibleSteps.filter(step => step.id !== 'confirmation');
-        
-        // Find the index of the current step within the visible steps array
-        const currentStepId = CONFIG.steps[currentStepIndex]?.id;
-        const currentVisibleIndex = visibleSteps.findIndex(step => step.id === currentStepId);
-        
-        // Calculate progress percentage based on position within visible steps
-        let progress;
-        if (currentVisibleIndex === -1 || visibleSteps.length <= 1) {
-            // Step not found or only one step - default to minimal progress
-            progress = 14;
-        } else if (currentStepId === 'schedule') {
-            // At scheduling step - show 100%
-            progress = 100;
-        } else {
-            // Calculate progress: current position / (total visible steps - 1) * 100
-            // For auto-selected services, start from step 1 instead of step 0
-            let adjustedIndex = currentVisibleIndex;
-            if (serviceAutoSelected && currentVisibleIndex >= 0) {
-                // Show as step 1 when on first service-specific step
-                adjustedIndex = currentVisibleIndex;
-            }
-            progress = (adjustedIndex / (visibleSteps.length - 1)) * 100;
-        }
-        
-        $('.progress-fill').css('width', `${Math.min(progress, 100)}%`);
-        
-
-
+        // Remove confirmation step from progress calculation
+        return visibleSteps.filter(step => step.id !== 'confirmation');
     }
 
     // ─── UTILITY FUNCTIONS ───────────────────────────
@@ -2032,6 +2058,7 @@ jQuery(document).ready(function($) {
 
     function getStepNumberForTextInput(stepId) {
         switch (stepId) {
+            case 'zip_code':             // Generic ZIP code step
             case 'roof_zip':
             case 'windows_zip':
             case 'bathroom_zip':
@@ -2046,6 +2073,7 @@ jQuery(document).ready(function($) {
 
     function getInputSelectorForStep(stepId) {
         switch (stepId) {
+            case 'zip_code':             // Generic ZIP code step
             case 'roof_zip':
             case 'windows_zip':
             case 'bathroom_zip':
