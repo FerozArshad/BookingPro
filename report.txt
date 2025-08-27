@@ -1,0 +1,263 @@
+[BSP Performance] 0ms: Script Start {readyState: 'loading', hasService: true}
+performance-monitor.js:28 [BSP Performance] 1ms: Booking CSS Found {href: 'https://iaremodelings.com/wp-content/plugins/BookingPro/assets/css/booking-system.css?ver=2.1.0', loaded: true}
+performance-monitor.js:28 [BSP Performance] 68ms: Booking Form Found {visible: true, opacity: '1', visibility: 'visible', classes: 'booking-system-form direct-zip-mode'}
+performance-monitor.js:28 [BSP Performance] 218ms: Screen State {bodyBackground: 'rgb(255, 255, 255)', htmlBackground: 'rgba(0, 0, 0, 0)', bodyClass: 'wp-singular page-template-default page page-id-724…lementor-page elementor-page-7242 service-kitchen'}
+performance-monitor.js:28 [BSP Performance] 278ms: DOM Ready undefined
+free-estimates/?service=kitchen:922 🎬 Video section controller initialized
+free-estimates/?service=kitchen:961 🔍 MutationObserver setup complete for 9 steps
+free-estimates/?service=kitchen:1107 🎬 Video section shown for step 1
+performance-monitor.js:28 [BSP Performance] 402ms: Screen State {bodyBackground: 'rgb(255, 255, 255)', htmlBackground: 'rgba(0, 0, 0, 0)', bodyClass: 'wp-singular page-template-default page page-id-724…ice-kitchen e--ua-blink e--ua-chrome e--ua-webkit'}
+performance-monitor.js:28 [BSP Performance] 604ms: Screen State {bodyBackground: 'rgb(255, 255, 255)', htmlBackground: 'rgba(0, 0, 0, 0)', bodyClass: 'wp-singular page-template-default page page-id-724…ice-kitchen e--ua-blink e--ua-chrome e--ua-webkit'}
+performance-monitor.js:28 [BSP Performance] 807ms: Screen State {bodyBackground: 'rgb(255, 255, 255)', htmlBackground: 'rgba(0, 0, 0, 0)', bodyClass: 'wp-singular page-template-default page page-id-724…ice-kitchen e--ua-blink e--ua-chrome e--ua-webkit'}
+performance-monitor.js:28 [BSP Performance] 1010ms: Screen State {bodyBackground: 'rgb(255, 255, 255)', htmlBackground: 'rgba(0, 0, 0, 0)', bodyClass: 'wp-singular page-template-default page page-id-724…ice-kitchen e--ua-blink e--ua-chrome e--ua-webkit'}
+performance-monitor.js:28 [BSP Performance] 1211ms: Screen State {bodyBackground: 'rgb(255, 255, 255)', htmlBackground: 'rgba(0, 0, 0, 0)', bodyClass: 'wp-singular page-template-default page page-id-724…ice-kitchen e--ua-blink e--ua-chrome e--ua-webkit'}
+performance-monitor.js:28 [BSP Performance] 1411ms: Screen State {bodyBackground: 'rgb(255, 255, 255)', htmlBackground: 'rgba(0, 0, 0, 0)', bodyClass: 'wp-singular page-template-default page page-id-724…ice-kitchen e--ua-blink e--ua-chrome e--ua-webkit'}
+performance-monitor.js:28 [BSP Performance] 1446ms: Window Load Complete undefined
+performance-monitor.js:28 [BSP Performance] 1605ms: Screen State {bodyBackground: 'rgb(255, 255, 255)', htmlBackground: 'rgba(0, 0, 0, 0)', bodyClass: 'wp-singular page-template-default page page-id-724…ice-kitchen e--ua-blink e--ua-chrome e--ua-webkit'}
+performance-monitor.js:28 [BSP Performance] 1810ms: Screen State {bodyBackground: 'rgb(255, 255, 255)', htmlBackground: 'rgba(0, 0, 0, 0)', bodyClass: 'wp-singular page-template-default page page-id-724…ice-kitchen e--ua-blink e--ua-chrome e--ua-webkit'}
+performance-monitor.js:28 [BSP Performance] 2002ms: Screen State {bodyBackground: 'rgb(255, 255, 255)', htmlBackground: 'rgba(0, 0, 0, 0)', bodyClass: 'wp-singular page-template-default page page-id-724…ice-kitchen e--ua-blink e--ua-chrome e--ua-webkit'}
+performance-monitor.js:28 [BSP Performance] 2210ms: Screen State {bodyBackground: 'rgb(255, 255, 255)', htmlBackground: 'rgba(0, 0, 0, 0)', bodyClass: 'wp-singular page-template-default page page-id-724…ice-kitchen e--ua-blink e--ua-chrome e--ua-webkit'}
+performance-monitor.js:28 [BSP Performance] 2409ms: Screen State {bodyBackground: 'rgb(255, 255, 255)', htmlBackground: 'rgba(0, 0, 0, 0)', bodyClass: 'wp-singular page-template-default page page-id-724…ice-kitchen e--ua-blink e--ua-chrome e--ua-webkit'}
+performance-monitor.js:28 [BSP Performance] 2611ms: Screen State {bodyBackground: 'rgb(255, 255, 255)', htmlBackground: 'rgba(0, 0, 0, 0)', bodyClass: 'wp-singular page-template-default page page-id-724…ice-kitchen e--ua-blink e--ua-chrome e--ua-webkit'}
+performance-monitor.js:28 [BSP Performance] 2810ms: Screen State {bodyBackground: 'rgb(255, 255, 255)', htmlBackground: 'rgba(0, 0, 0, 0)', bodyClass: 'wp-singular page-template-default page page-id-724…ice-kitchen e--ua-blink e--ua-chrome e--ua-webkit'}
+performance-monitor.js:28 [BSP Performance] 3010ms: Screen State {bodyBackground: 'rgb(255, 255, 255)', htmlBackground: 'rgba(0, 0, 0, 0)', bodyClass: 'wp-singular page-template-default page page-id-724…ice-kitchen e--ua-blink e--ua-chrome e--ua-webkit'}
+performance-monitor.js:28 [BSP Performance] 5011ms: Form Check Timeout undefined
+performance-monitor.js:28 [BSP Performance] 5011ms: Auto Report Generation undefined
+performance-monitor.js:200 === BSP Performance Monitor Report ===
+performance-monitor.js:201 Call BSP_GetPerformanceReport() for detailed analysis
+performance-monitor.js:44 === BSP Performance Report ===
+performance-monitor.js:45 Total Load Time: 5011ms
+performance-monitor.js:46 Events: (22) [{…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}]
+performance-monitor.js:47 Full Report: {
+  "totalTime": 5012,
+  "events": [
+    {
+      "event": "Script Start",
+      "details": {
+        "readyState": "loading",
+        "hasService": true
+      },
+      "timestamp": 600.8000000715256,
+      "timeSinceStart": 0,
+      "url": "https://iaremodelings.com/free-estimates/?service=kitchen#kitchen"
+    },
+    {
+      "event": "Booking CSS Found",
+      "details": {
+        "href": "https://iaremodelings.com/wp-content/plugins/BookingPro/assets/css/booking-system.css?ver=2.1.0",
+        "loaded": true
+      },
+      "timestamp": 601.3000000715256,
+      "timeSinceStart": 1,
+      "url": "https://iaremodelings.com/free-estimates/?service=kitchen#kitchen"
+    },
+    {
+      "event": "Booking Form Found",
+      "details": {
+        "visible": true,
+        "opacity": "1",
+        "visibility": "visible",
+        "classes": "booking-system-form direct-zip-mode"
+      },
+      "timestamp": 668.7000000476837,
+      "timeSinceStart": 68,
+      "url": "https://iaremodelings.com/free-estimates/?service=kitchen#kitchen"
+    },
+    {
+      "event": "Screen State",
+      "details": {
+        "bodyBackground": "rgb(255, 255, 255)",
+        "htmlBackground": "rgba(0, 0, 0, 0)",
+        "bodyClass": "wp-singular page-template-default page page-id-7242 wp-custom-logo wp-embed-responsive wp-theme-hello-elementor hello-elementor-default elementor-default elementor-kit-6 elementor-page elementor-page-7242 service-kitchen"
+      },
+      "timestamp": 818.3000000715256,
+      "timeSinceStart": 218,
+      "url": "https://iaremodelings.com/free-estimates/?service=kitchen#kitchen"
+    },
+    {
+      "event": "DOM Ready",
+      "details": {},
+      "timestamp": 878.7000000476837,
+      "timeSinceStart": 278,
+      "url": "https://iaremodelings.com/free-estimates/?service=kitchen#kitchen"
+    },
+    {
+      "event": "Screen State",
+      "details": {
+        "bodyBackground": "rgb(255, 255, 255)",
+        "htmlBackground": "rgba(0, 0, 0, 0)",
+        "bodyClass": "wp-singular page-template-default page page-id-7242 wp-custom-logo wp-embed-responsive wp-theme-hello-elementor hello-elementor-default elementor-default elementor-kit-6 elementor-page elementor-page-7242 service-kitchen e--ua-blink e--ua-chrome e--ua-webkit"
+      },
+      "timestamp": 1002.8999999761581,
+      "timeSinceStart": 402,
+      "url": "https://iaremodelings.com/free-estimates/?service=kitchen#kitchen"
+    },
+    {
+      "event": "Screen State",
+      "details": {
+        "bodyBackground": "rgb(255, 255, 255)",
+        "htmlBackground": "rgba(0, 0, 0, 0)",
+        "bodyClass": "wp-singular page-template-default page page-id-7242 wp-custom-logo wp-embed-responsive wp-theme-hello-elementor hello-elementor-default elementor-default elementor-kit-6 elementor-page elementor-page-7242 service-kitchen e--ua-blink e--ua-chrome e--ua-webkit"
+      },
+      "timestamp": 1204.8000000715256,
+      "timeSinceStart": 604,
+      "url": "https://iaremodelings.com/free-estimates/?service=kitchen#kitchen"
+    },
+    {
+      "event": "Screen State",
+      "details": {
+        "bodyBackground": "rgb(255, 255, 255)",
+        "htmlBackground": "rgba(0, 0, 0, 0)",
+        "bodyClass": "wp-singular page-template-default page page-id-7242 wp-custom-logo wp-embed-responsive wp-theme-hello-elementor hello-elementor-default elementor-default elementor-kit-6 elementor-page elementor-page-7242 service-kitchen e--ua-blink e--ua-chrome e--ua-webkit"
+      },
+      "timestamp": 1408,
+      "timeSinceStart": 807,
+      "url": "https://iaremodelings.com/free-estimates/?service=kitchen#kitchen"
+    },
+    {
+      "event": "Screen State",
+      "details": {
+        "bodyBackground": "rgb(255, 255, 255)",
+        "htmlBackground": "rgba(0, 0, 0, 0)",
+        "bodyClass": "wp-singular page-template-default page page-id-7242 wp-custom-logo wp-embed-responsive wp-theme-hello-elementor hello-elementor-default elementor-default elementor-kit-6 elementor-page elementor-page-7242 service-kitchen e--ua-blink e--ua-chrome e--ua-webkit"
+      },
+      "timestamp": 1610.7000000476837,
+      "timeSinceStart": 1010,
+      "url": "https://iaremodelings.com/free-estimates/?service=kitchen#kitchen"
+    },
+    {
+      "event": "Screen State",
+      "details": {
+        "bodyBackground": "rgb(255, 255, 255)",
+        "htmlBackground": "rgba(0, 0, 0, 0)",
+        "bodyClass": "wp-singular page-template-default page page-id-7242 wp-custom-logo wp-embed-responsive wp-theme-hello-elementor hello-elementor-default elementor-default elementor-kit-6 elementor-page elementor-page-7242 service-kitchen e--ua-blink e--ua-chrome e--ua-webkit"
+      },
+      "timestamp": 1811.6000000238419,
+      "timeSinceStart": 1211,
+      "url": "https://iaremodelings.com/free-estimates/?service=kitchen#kitchen"
+    },
+    {
+      "event": "Screen State",
+      "details": {
+        "bodyBackground": "rgb(255, 255, 255)",
+        "htmlBackground": "rgba(0, 0, 0, 0)",
+        "bodyClass": "wp-singular page-template-default page page-id-7242 wp-custom-logo wp-embed-responsive wp-theme-hello-elementor hello-elementor-default elementor-default elementor-kit-6 elementor-page elementor-page-7242 service-kitchen e--ua-blink e--ua-chrome e--ua-webkit"
+      },
+      "timestamp": 2011.5,
+      "timeSinceStart": 1411,
+      "url": "https://iaremodelings.com/free-estimates/?service=kitchen#kitchen"
+    },
+    {
+      "event": "Window Load Complete",
+      "details": {},
+      "timestamp": 2046.5,
+      "timeSinceStart": 1446,
+      "url": "https://iaremodelings.com/free-estimates/?service=kitchen#kitchen"
+    },
+    {
+      "event": "Screen State",
+      "details": {
+        "bodyBackground": "rgb(255, 255, 255)",
+        "htmlBackground": "rgba(0, 0, 0, 0)",
+        "bodyClass": "wp-singular page-template-default page page-id-7242 wp-custom-logo wp-embed-responsive wp-theme-hello-elementor hello-elementor-default elementor-default elementor-kit-6 elementor-page elementor-page-7242 service-kitchen e--ua-blink e--ua-chrome e--ua-webkit"
+      },
+      "timestamp": 2205.7000000476837,
+      "timeSinceStart": 1605,
+      "url": "https://iaremodelings.com/free-estimates/?service=kitchen#kitchen"
+    },
+    {
+      "event": "Screen State",
+      "details": {
+        "bodyBackground": "rgb(255, 255, 255)",
+        "htmlBackground": "rgba(0, 0, 0, 0)",
+        "bodyClass": "wp-singular page-template-default page page-id-7242 wp-custom-logo wp-embed-responsive wp-theme-hello-elementor hello-elementor-default elementor-default elementor-kit-6 elementor-page elementor-page-7242 service-kitchen e--ua-blink e--ua-chrome e--ua-webkit"
+      },
+      "timestamp": 2410.3000000715256,
+      "timeSinceStart": 1810,
+      "url": "https://iaremodelings.com/free-estimates/?service=kitchen#kitchen"
+    },
+    {
+      "event": "Screen State",
+      "details": {
+        "bodyBackground": "rgb(255, 255, 255)",
+        "htmlBackground": "rgba(0, 0, 0, 0)",
+        "bodyClass": "wp-singular page-template-default page page-id-7242 wp-custom-logo wp-embed-responsive wp-theme-hello-elementor hello-elementor-default elementor-default elementor-kit-6 elementor-page elementor-page-7242 service-kitchen e--ua-blink e--ua-chrome e--ua-webkit"
+      },
+      "timestamp": 2602.3000000715256,
+      "timeSinceStart": 2002,
+      "url": "https://iaremodelings.com/free-estimates/?service=kitchen#kitchen"
+    },
+    {
+      "event": "Screen State",
+      "details": {
+        "bodyBackground": "rgb(255, 255, 255)",
+        "htmlBackground": "rgba(0, 0, 0, 0)",
+        "bodyClass": "wp-singular page-template-default page page-id-7242 wp-custom-logo wp-embed-responsive wp-theme-hello-elementor hello-elementor-default elementor-default elementor-kit-6 elementor-page elementor-page-7242 service-kitchen e--ua-blink e--ua-chrome e--ua-webkit"
+      },
+      "timestamp": 2811,
+      "timeSinceStart": 2210,
+      "url": "https://iaremodelings.com/free-estimates/?service=kitchen#kitchen"
+    },
+    {
+      "event": "Screen State",
+      "details": {
+        "bodyBackground": "rgb(255, 255, 255)",
+        "htmlBackground": "rgba(0, 0, 0, 0)",
+        "bodyClass": "wp-singular page-template-default page page-id-7242 wp-custom-logo wp-embed-responsive wp-theme-hello-elementor hello-elementor-default elementor-default elementor-kit-6 elementor-page elementor-page-7242 service-kitchen e--ua-blink e--ua-chrome e--ua-webkit"
+      },
+      "timestamp": 3009.7000000476837,
+      "timeSinceStart": 2409,
+      "url": "https://iaremodelings.com/free-estimates/?service=kitchen#kitchen"
+    },
+    {
+      "event": "Screen State",
+      "details": {
+        "bodyBackground": "rgb(255, 255, 255)",
+        "htmlBackground": "rgba(0, 0, 0, 0)",
+        "bodyClass": "wp-singular page-template-default page page-id-7242 wp-custom-logo wp-embed-responsive wp-theme-hello-elementor hello-elementor-default elementor-default elementor-kit-6 elementor-page elementor-page-7242 service-kitchen e--ua-blink e--ua-chrome e--ua-webkit"
+      },
+      "timestamp": 3211.2000000476837,
+      "timeSinceStart": 2611,
+      "url": "https://iaremodelings.com/free-estimates/?service=kitchen#kitchen"
+    },
+    {
+      "event": "Screen State",
+      "details": {
+        "bodyBackground": "rgb(255, 255, 255)",
+        "htmlBackground": "rgba(0, 0, 0, 0)",
+        "bodyClass": "wp-singular page-template-default page page-id-7242 wp-custom-logo wp-embed-responsive wp-theme-hello-elementor hello-elementor-default elementor-default elementor-kit-6 elementor-page elementor-page-7242 service-kitchen e--ua-blink e--ua-chrome e--ua-webkit"
+      },
+      "timestamp": 3410.2000000476837,
+      "timeSinceStart": 2810,
+      "url": "https://iaremodelings.com/free-estimates/?service=kitchen#kitchen"
+    },
+    {
+      "event": "Screen State",
+      "details": {
+        "bodyBackground": "rgb(255, 255, 255)",
+        "htmlBackground": "rgba(0, 0, 0, 0)",
+        "bodyClass": "wp-singular page-template-default page page-id-7242 wp-custom-logo wp-embed-responsive wp-theme-hello-elementor hello-elementor-default elementor-default elementor-kit-6 elementor-page elementor-page-7242 service-kitchen e--ua-blink e--ua-chrome e--ua-webkit"
+      },
+      "timestamp": 3610.899999976158,
+      "timeSinceStart": 3010,
+      "url": "https://iaremodelings.com/free-estimates/?service=kitchen#kitchen"
+    },
+    {
+      "event": "Form Check Timeout",
+      "details": {},
+      "timestamp": 5611.300000071526,
+      "timeSinceStart": 5011,
+      "url": "https://iaremodelings.com/free-estimates/?service=kitchen#kitchen"
+    },
+    {
+      "event": "Auto Report Generation",
+      "details": {},
+      "timestamp": 5611.5,
+      "timeSinceStart": 5011,
+      "url": "https://iaremodelings.com/free-estimates/?service=kitchen#kitchen"
+    }
+  ],
+  "pageUrl": "https://iaremodelings.com/free-estimates/?service=kitchen#kitchen",
+  "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36",
+  "timestamp": "2025-08-27T19:00:32.593Z"
+}

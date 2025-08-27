@@ -188,20 +188,27 @@ class Booking_System_Pro {
         ]);
     }
 
-    /** Enqueue frontend assets */
+    /** Enqueue frontend assets - OPTIMIZED for sub-300ms loading */
     public function enqueue_assets(){
         // Only enqueue on pages with shortcode
         if( $this->has_shortcode() ){
-            // Figtree font
-            wp_enqueue_style( 'bsp-fonts', 'https://fonts.googleapis.com/css2?family=Figtree:wght@400;600;700;800&display=swap' );
+            // PERFORMANCE: Skip external fonts for faster loading, use system fonts
+            // wp_enqueue_style( 'bsp-fonts', 'https://fonts.googleapis.com/css2?family=Figtree:wght@400;600;700;800&display=swap' );
             
-            // CSS
-            wp_enqueue_style( 'bsp-css', BSP_PLUGIN_URL . 'assets/css/booking-system.css', [], '1.0.0' );
+            // CSS - Use minified version for better performance (force cache refresh)
+            wp_enqueue_style( 'bsp-css', BSP_PLUGIN_URL . 'assets/css/booking-system.min.css', [], '2.1.4' );
             
-            // JavaScript
+            // CRITICAL OPTIMIZATION: Load scripts asynchronously to prevent render blocking
             wp_enqueue_script( 'jquery' );
-            wp_enqueue_script( 'bsp-js', BSP_PLUGIN_URL . 'assets/js/booking-system.js', ['jquery'], '1.0.0', true );
+            wp_enqueue_script( 'bsp-js', BSP_PLUGIN_URL . 'assets/js/booking-system.js', ['jquery'], '1.0.1', true );
             
+            // Add async/defer attributes for performance
+            add_filter( 'script_loader_tag', function( $tag, $handle ) {
+                if ( 'bsp-js' === $handle ) {
+                    return str_replace( ' src', ' defer src', $tag );
+                }
+                return $tag;
+            }, 10, 2 );
             
             // Localize script
             wp_localize_script( 'bsp-js', 'BSP_Ajax', [

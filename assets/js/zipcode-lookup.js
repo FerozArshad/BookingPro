@@ -16,11 +16,13 @@ class ZipCodeLookupService {
         this.debounceTimer = null;
         this.debounceDelay = 300; // 300ms debounce
         
-        this.loadZipData();
+        // LAZY LOADING: Don't load ZIP data immediately to prevent blocking page load
+        // Data will be loaded on-demand when user first interacts with ZIP input
         this.initializeEventListeners();
         
-        // ZIP Code Lookup Service initialization
+        // ZIP Code Lookup Service initialization  
         // Handles US ZIP code validation and city/state lookup for form eligibility
+        // Data loads lazily on first ZIP interaction to prevent blocking page load
     }
 
     async loadZipData() {
@@ -207,6 +209,26 @@ class ZipCodeLookupService {
     }
 
     /**
+     * Ensure ZIP data is loaded for validation
+     * @returns {Promise} - Promise that resolves when data is loaded
+     */
+    async ensureDataLoaded() {
+        if (this.isDataLoaded) {
+            return; // Data already loaded
+        }
+        
+        if (!this.isLoading) {
+            // Start loading if not already in progress
+            await this.loadZipData();
+        } else {
+            // Wait for current loading to complete
+            while (this.isLoading) {
+                await new Promise(resolve => setTimeout(resolve, 100));
+            }
+        }
+    }
+
+    /**
      * Validate ZIP code against US database
      * @param {string} zipCode - ZIP code to validate
      * @returns {boolean} - True if valid US ZIP code
@@ -218,9 +240,18 @@ class ZipCodeLookupService {
             return false;
         }
         
-        // If data not loaded yet, only validate format
-        if (!this.isDataLoaded) {
-            // Debug output removed for production
+        // If data not loaded yet, trigger loading and only validate format for now
+        if (!this.isDataLoaded && !this.isLoading) {
+            // Trigger lazy loading in background
+            this.ensureDataLoaded().catch(() => {
+                // Silently fail - format validation still works
+            });
+            // Return format validation for immediate feedback
+            return /^\d{5}(?:-\d{4})?$/.test(zipCode);
+        }
+        
+        // If currently loading, return format validation
+        if (this.isLoading) {
             return /^\d{5}(?:-\d{4})?$/.test(zipCode);
         }
         
@@ -381,12 +412,36 @@ class ZipCodeLookupService {
             }
         });
         
+        // LAZY LOADING: Load ZIP data when user focuses on ZIP input
+        document.addEventListener('focus', (e) => {
+            if (e.target.id === 'zip-input' || 
+                e.target.id === 'step2-zip-input' || 
+                e.target.id === 'step4-zip-input' ||
+                e.target.matches('input[type="text"][id*="zip"]')) {
+                // Trigger data loading on first focus
+                this.ensureDataLoaded().catch(() => {
+                    // Silently fail - input still works with format validation
+                });
+            }
+        }, true);
+        
         // Handle form submission attempts
         document.addEventListener('click', (e) => {
             if (e.target.matches('.btn-next') || e.target.matches('button[type="submit"]')) {
                 this.handleFormNavigation(e);
             }
         }, true); // Use capture phase
+        
+        // DIRECT ZIP MODE: Initialize button state for existing ZIP inputs
+        // This handles the case when page loads directly to ZIP step
+        setTimeout(() => {
+            const zipInputs = document.querySelectorAll('#zip-input, #step2-zip-input, #step4-zip-input, input[id*="zip"]');
+            zipInputs.forEach(input => {
+                if (input.offsetParent !== null) { // Only visible inputs
+                    this.updateButtonState(input);
+                }
+            });
+        }, 100); // Small delay to ensure DOM is ready
     }
 
     /**
@@ -401,6 +456,9 @@ class ZipCodeLookupService {
         if (this.debounceTimer) {
             clearTimeout(this.debounceTimer);
         }
+        
+        // IMMEDIATE button state update for better UX
+        this.updateButtonState(inputElement);
         
         // Debounce the validation
         this.debounceTimer = setTimeout(() => {
@@ -443,7 +501,7 @@ class ZipCodeLookupService {
     /**
      * Update button state based on ZIP validation
      * @param {HTMLElement} inputElement - ZIP code input element
-     * @param {boolean} isValid - Whether ZIP code is valid
+     * @param {boolean} isValid - Whether ZIP code is valid (optional)
      */
     updateButtonState(inputElement, isValid) {
         // Find the next button in the current step
@@ -452,6 +510,12 @@ class ZipCodeLookupService {
         
         const nextButton = currentStep.querySelector('.btn-next');
         if (nextButton) {
+            // If isValid is not provided, determine it from current input
+            if (typeof isValid === 'undefined') {
+                const value = inputElement.value.trim();
+                isValid = value.length === 5 && /^\d{5}$/.test(value) && this.isValidZipCode(value);
+            }
+            
             nextButton.disabled = !isValid;
             nextButton.dataset.zipValid = isValid.toString();
             
@@ -477,11 +541,11 @@ class ZipCodeLookupService {
         
         // Check if current step has ZIP input
         const zipInput = currentStep.querySelector('#zip-input, #step2-zip-input, #step4-zip-input, input[id*="zip"]');
-        if (!zipInput) return;
+        if (!zipInput) return; // No ZIP input in this step, allow normal navigation
         
         const zipValue = zipInput.value.trim();
         
-        // Validate ZIP before allowing navigation
+        // Only prevent navigation if ZIP is invalid
         if (!zipValue || zipValue.length !== 5) {
             e.preventDefault();
             e.stopImmediatePropagation();
@@ -498,6 +562,9 @@ class ZipCodeLookupService {
             return false;
         }
         
+        // ZIP is valid - clear any errors and allow navigation to proceed
+        this.clearZipError(zipInput);
+        // Do NOT prevent default - let the form handle navigation normally
         // Debug output removed for production
         return true;
     }

@@ -1,3 +1,40 @@
-/* Critical CSS - Minified for <300ms loading */
-.booking-step{display:none}.booking-step.active{display:block!important}.booking-system-form{opacity:1;transition:none}.progress-fill{transition:width .3s ease}.btn-next,.btn-back{transition:background-color .2s ease}.option-btn{transition:all .2s ease}.loading-spinner{width:20px;height:20px;border:2px solid #f3f3f3;border-top:2px solid #79B62F;border-radius:50%;animation:spin 1s linear infinite}@keyframes spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
-/* Defer non-critical styles */
+/* Critical CSS - Optimized for fast loading */
+@font-face{font-family:'SF Pro Display';src:url('../sf-pro-display/SFPRODISPLAYREGULAR.OTF');font-weight:normal;font-display:swap}
+@font-face{font-family:'SF Pro Display';src:url('../sf-pro-display/SFPRODISPLAYBOLD.OTF');font-weight:bold;font-display:swap}
+*{font-family:'SF Pro Display',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+body,html{margin:0;padding:0;overflow-x:hidden}
+#booking-form{min-height:100vh;background-size:cover;background-position:center;position:relative;opacity:1!important;visibility:visible!important}
+.booking-step{display:none;position:relative;min-height:100vh;background-size:cover;background-position:center}
+.booking-step.active{display:block!important;opacity:1!important;visibility:visible!important}
+.booking-system-form{opacity:1;transition:none}
+.step-card{background:rgba(255,255,255,.95);border-radius:12px;padding:40px;margin:40px auto;max-width:600px;position:relative;z-index:10}
+.step-title{font-size:28px;font-weight:bold;color:#333;text-align:center;margin-bottom:30px;line-height:1.3}
+.form-group{margin-bottom:25px}
+.form-input{width:100%;padding:15px 20px;border:2px solid #e1e5e9;border-radius:8px;font-size:16px;background:white;box-sizing:border-box}
+.form-input:focus{outline:none;border-color:#007cba;box-shadow:0 0 0 3px rgba(0,124,186,.1)}
+.form-navigation{display:flex;justify-content:space-between;align-items:center;margin-top:30px;gap:15px}
+.btn{padding:15px 30px;border:none;border-radius:8px;font-size:16px;font-weight:600;cursor:pointer;transition:all .2s ease}
+.btn-primary{background:#007cba;color:white}
+.btn-primary:hover:not(:disabled){background:#005a87}
+.btn-primary:disabled{background:#ccc;cursor:not-allowed}
+.btn-secondary{background:#f8f9fa;color:#6c757d;border:2px solid #e1e5e9}
+.btn-secondary:hover{background:#e9ecef}
+.progress-fill{transition:width .3s ease}
+.option-btn{transition:all .2s ease}
+.loading-spinner{width:20px;height:20px;border:2px solid #f3f3f3;border-top:2px solid #79B62F;border-radius:50%;animation:spin 1s linear infinite}
+@keyframes spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
+/* Service-specific backgrounds - Critical only */
+.service-kitchen #booking-form{background-image:url('../images/kitchen-all-steps.webp')}
+.service-bathroom #booking-form{background-image:url('../images/bathroom-all-step.webp')}
+.service-siding #booking-form{background-image:url('../images/siding-all-steps.webp')}
+.service-roof #booking-form{background-image:url('../images/roof-step-1.webp')}
+.service-windows #booking-form{background-image:url('../images/window-step-1.webp')}
+.service-decks #booking-form{background-image:url('../images/decks-all-steps.jpg')}
+.service-adu #booking-form{background-image:url('../images/adu-all.webp')}
+/* Mobile responsive */
+@media(max-width:768px){
+.step-card{margin:20px;padding:30px 20px}
+.step-title{font-size:24px}
+.form-navigation{flex-direction:column;gap:10px}
+.btn{width:100%}
+}

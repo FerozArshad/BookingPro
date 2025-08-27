@@ -1,7 +1,288 @@
 <?php
 // Complete booking form template with all steps - UNIFIED VERSION
+
+// Server-side service detection for 0ms load optimization
+$service_param = isset($_GET['service']) ? sanitize_text_field($_GET['service']) : '';
+$hash_service = '';
+
+// Check for hash-based service from referrer
+if (empty($service_param) && isset($_SERVER['HTTP_REFERER'])) {
+    $referrer = $_SERVER['HTTP_REFERER'];
+    if (preg_match('/#(roof|windows|bathroom|siding|kitchen|decks|adu)/', $referrer, $matches)) {
+        $hash_service = $matches[1];
+    }
+}
+
+$valid_services = ['roof', 'windows', 'bathroom', 'siding', 'kitchen', 'decks', 'adu'];
+$detected_service = '';
+
+if (!empty($service_param) && in_array(strtolower($service_param), $valid_services)) {
+    $detected_service = ucfirst(strtolower($service_param));
+} elseif (!empty($hash_service) && in_array(strtolower($hash_service), $valid_services)) {
+    $detected_service = ucfirst(strtolower($hash_service));
+}
+
+$has_preselected_service = !empty($detected_service);
 ?>
-<form id="booking-form" class="booking-system-form" method="post" autocomplete="off">
+
+<?php if ($has_preselected_service): ?>
+
+<!-- PERFORMANCE OPTIMIZATIONS: Preload critical resources for sub-300ms loading -->
+<link rel="preload" href="<?php echo plugins_url('BookingPro/assets/js/performance-monitor.js'); ?>" as="script">
+<link rel="preload" href="<?php echo plugins_url('BookingPro/assets/css/booking-system.min.css'); ?>" as="style">
+
+<!-- PERFORMANCE MONITOR: Optimized diagnostic script -->
+<script src="<?php echo plugins_url('BookingPro/assets/js/performance-monitor.js'); ?>" defer></script>
+
+<!-- CRITICAL CSS: 0ms service-specific form load -->
+<style>
+/* IMMEDIATE HIDE: Prevent any step 1 flash when service is preselected */
+.booking-step[data-step="1"] { 
+    display: none !important; 
+    visibility: hidden !important;
+    opacity: 0 !important;
+}
+
+/* IMMEDIATE SHOW: Display step 2 instantly for ZIP input - ONLY when step 2 is active */
+.booking-system-form[data-service-preselected="true"] .booking-step[data-step="2"].active { 
+    display: block !important; 
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+/* Configure step 2 for ZIP input mode initially - ONLY when step 2 is active */
+.booking-system-form[data-service-preselected="true"] .booking-step[data-step="2"].active #step2-text-input {
+    display: block !important;
+}
+
+.booking-system-form[data-service-preselected="true"] .booking-step[data-step="2"].active #step2-options {
+    display: none !important;
+}
+
+/* PERFORMANCE: Show form immediately, prevent any loading flicker */
+#booking-form {
+    opacity: 1 !important;
+    visibility: visible !important;
+    background-size: cover !important;
+    background-position: center !important;
+    /* CRITICAL: Prevent layout shifts */
+    min-height: 100vh !important;
+    contain: layout style paint !important;
+    /* CRITICAL: Force hardware acceleration */
+    will-change: transform !important;
+    transform: translateZ(0) !important;
+    /* CRITICAL: Load background immediately without flicker */
+    background-image: url('<?php 
+        $service_lower = strtolower($detected_service);
+        switch($service_lower) {
+            case 'bathroom':
+                echo plugins_url('BookingPro/assets/images/bathroom-all-step.webp');
+                break;
+            case 'kitchen':
+                echo plugins_url('BookingPro/assets/images/kitchen-all-steps.webp');
+                break;
+            case 'siding':
+                echo plugins_url('BookingPro/assets/images/siding-all-steps.webp');
+                break;
+            case 'decks':
+                echo plugins_url('BookingPro/assets/images/decks-all-steps.jpg');
+                break;
+            case 'roof':
+                echo plugins_url('BookingPro/assets/images/roof-step-1.webp');
+                break;
+            case 'windows':
+                echo plugins_url('BookingPro/assets/images/window-step-1.webp');
+                break;
+            case 'adu':
+                echo plugins_url('BookingPro/assets/images/adu-all.webp');
+                break;
+            default:
+                echo plugins_url('BookingPro/assets/images/step-1-bg.webp');
+        }
+    ?>') !important;
+}
+
+/* CRITICAL: Hide all background images for step 1 when URL params present */
+body.service-<?php echo strtolower($detected_service); ?> .booking-step[data-step="1"] {
+    background: none !important;
+    background-image: none !important;
+}
+
+/* CRITICAL: Override any default step-1-bg.webp that might flash */
+.booking-step[data-step="1"] {
+    background: none !important;
+    background-image: none !important;
+}
+
+/* CRITICAL: Ensure form background shows service-specific image immediately */
+body.service-<?php echo strtolower($detected_service); ?> #booking-form {
+    background-image: url('<?php 
+        $service_lower = strtolower($detected_service);
+        $image_url = '';
+        
+        // Handle specific service image mappings
+        switch($service_lower) {
+            case 'bathroom':
+                $image_url = plugins_url('BookingPro/assets/images/bathroom-all-step.webp');
+                break;
+            case 'kitchen':
+                $image_url = plugins_url('BookingPro/assets/images/kitchen-all-steps.webp');
+                break;
+            case 'siding':
+                $image_url = plugins_url('BookingPro/assets/images/siding-all-steps.webp');
+                break;
+            case 'decks':
+                $image_url = plugins_url('BookingPro/assets/images/decks-all-steps.jpg');
+                break;
+            case 'roof':
+                $image_url = plugins_url('BookingPro/assets/images/roof-step-1.webp');
+                break;
+            case 'windows':
+                $image_url = plugins_url('BookingPro/assets/images/window-step-1.webp');
+                break;
+            case 'adu':
+                $image_url = plugins_url('BookingPro/assets/images/adu-all.webp');
+                break;
+            default:
+                $image_url = plugins_url('BookingPro/assets/images/step-1-bg.webp');
+        }
+        echo $image_url;
+    ?>') !important;
+    background-size: cover !important;
+    background-position: center !important;
+}
+
+/* Ensure other steps are hidden initially during direct ZIP mode - removable by JavaScript */
+.booking-system-form.direct-zip-mode .booking-step[data-step="3"],
+.booking-system-form.direct-zip-mode .booking-step[data-step="4"],
+.booking-system-form.direct-zip-mode .booking-step[data-step="5"],
+.booking-system-form.direct-zip-mode .booking-step[data-step="6"],
+.booking-system-form.direct-zip-mode .booking-step[data-step="7"],
+.booking-system-form.direct-zip-mode .booking-step[data-step="8"],
+.booking-system-form.direct-zip-mode .booking-step[data-step="9"] {
+    display: none !important;
+}
+
+/* CRITICAL PERFORMANCE: Optimize all visible elements for sub-300ms loading */
+.booking-step[data-step="2"] {
+    contain: layout style paint !important;
+    will-change: transform !important;
+    transform: translateZ(0) !important;
+}
+
+.booking-step[data-step="2"] input,
+.booking-step[data-step="2"] button,
+.booking-step[data-step="2"] label {
+    contain: layout style !important;
+}
+
+/* CRITICAL: Preload fonts to prevent text flash */
+@font-face {
+    font-family: 'SF Pro Display';
+    font-display: swap;
+    src: url('<?php echo plugins_url('BookingPro/assets/sf-pro-display/SFPRODISPLAYREGULAR.OTF'); ?>') format('opentype');
+}
+</style>
+
+<?php endif; ?>
+
+<?php if ($has_preselected_service): ?>
+<!-- Set global variables and critical performance optimizations -->
+<script>
+window.BOOKING_PRESELECTED_SERVICE = '<?php echo esc_js($detected_service); ?>';
+window.BOOKING_SKIP_STEP_1 = true;
+window.BOOKING_DIRECT_ZIP_MODE = true;
+
+// CRITICAL PERFORMANCE: Immediate execution for sub-300ms loading
+(function() {
+    'use strict';
+    
+    // Use requestAnimationFrame for optimal performance
+    function optimizedExecution() {
+        // Add service class to body immediately for proper background
+        document.body.classList.add('service-<?php echo strtolower($detected_service); ?>');
+        
+        // Hide step 1 immediately if it exists
+        const step1Elements = document.querySelectorAll('.booking-step[data-step="1"]');
+        step1Elements.forEach(function(el) {
+            el.style.display = 'none';
+            el.style.visibility = 'hidden';
+            el.style.opacity = '0';
+            el.style.background = 'none';
+            el.style.backgroundImage = 'none';
+        });
+        
+        // Show step 2 immediately if it exists
+        const step2Elements = document.querySelectorAll('.booking-step[data-step="2"]');
+        step2Elements.forEach(function(el) {
+            el.style.display = 'block';
+            el.style.visibility = 'visible';
+            el.style.opacity = '1';
+            el.classList.add('active');
+        });
+        
+        // Configure step 2 for ZIP mode immediately
+        const step2TextInput = document.querySelector('.booking-step[data-step="2"] #step2-text-input');
+        const step2Options = document.querySelector('.booking-step[data-step="2"] #step2-options');
+        
+        if (step2TextInput) {
+            step2TextInput.style.display = 'block';
+        }
+        if (step2Options) {
+            step2Options.style.display = 'none';
+        }
+    }
+    
+    // Execute immediately if DOM is already loaded, otherwise wait for it
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', optimizedExecution);
+    } else {
+        requestAnimationFrame(optimizedExecution);
+    }
+})();
+</script>
+<?php endif; ?>
+
+<!-- PERFORMANCE MONITOR: Optimized loading for all booking pages -->
+<?php if (!$has_preselected_service): ?>
+<link rel="preload" href="<?php echo plugins_url('BookingPro/assets/js/performance-monitor.js'); ?>" as="script">
+<script src="<?php echo plugins_url('BookingPro/assets/js/performance-monitor.js'); ?>" defer></script>
+<?php endif; ?>
+
+<!-- CRITICAL PERFORMANCE: Preload service-specific background images for instant rendering -->
+<?php if ($has_preselected_service): ?>
+<link rel="preload" href="<?php 
+    $service_lower = strtolower($detected_service);
+    switch($service_lower) {
+        case 'bathroom':
+            echo plugins_url('BookingPro/assets/images/bathroom-all-step.webp');
+            break;
+        case 'kitchen':
+            echo plugins_url('BookingPro/assets/images/kitchen-all-steps.webp');
+            break;
+        case 'siding':
+            echo plugins_url('BookingPro/assets/images/siding-all-steps.webp');
+            break;
+        case 'decks':
+            echo plugins_url('BookingPro/assets/images/decks-all-steps.jpg');
+            break;
+        case 'roof':
+            echo plugins_url('BookingPro/assets/images/roof-step-1.webp');
+            break;
+        case 'windows':
+            echo plugins_url('BookingPro/assets/images/window-step-1.webp');
+            break;
+        case 'adu':
+            echo plugins_url('BookingPro/assets/images/adu-all.webp');
+            break;
+        default:
+            echo plugins_url('BookingPro/assets/images/step-1-bg.webp');
+    }
+?>" as="image">
+<link rel="preload" href="<?php echo plugins_url('BookingPro/assets/sf-pro-display/SFPRODISPLAYREGULAR.OTF'); ?>" as="font" type="font/otf" crossorigin>
+<?php endif; ?>
+
+<form id="booking-form" class="booking-system-form<?php if ($has_preselected_service) echo ' direct-zip-mode'; ?>" method="post" autocomplete="off" <?php if ($has_preselected_service) echo 'data-service-preselected="true"'; ?>>
     <!-- UTM & Source Tracking Fields (Required by JavaScript) -->
     <input type="hidden" name="service" id="service-field" value="">
     <input type="hidden" name="company" id="company-field" value="">
@@ -104,14 +385,26 @@
     <!-- Step 2: Service Specific Questions (Dynamic) OR ZIP Code -->
     <div class="booking-step" data-step="2">
         <div class="step-card">
-            <h2 class="step-title" id="step2-title">Service Details</h2>
+            <h2 class="step-title" id="step2-title"><?php 
+                if ($has_preselected_service) {
+                    echo 'Start Your ' . $detected_service . ' Remodel Today.<br>Find Local Pros Now.';
+                } else {
+                    echo 'Service Details';
+                }
+            ?></h2>
             <!-- Choice options (for service questions) -->
             <div class="option-grid" id="step2-options">
                 <!-- Options populated by JavaScript -->
             </div>
             <!-- Text input (for ZIP codes) -->
             <div class="form-group" id="step2-text-input" style="display: none;">
-                <label class="form-label" id="step2-label">Enter your ZIP code</label>
+                <label class="form-label" id="step2-label"><?php 
+                    if ($has_preselected_service) {
+                        echo 'Enter Zip Code to check eligibility for free estimate';
+                    } else {
+                        echo 'Enter your ZIP code';
+                    }
+                ?></label>
                 <input type="text" class="form-input" id="step2-zip-input" name="zip_code" placeholder="Enter ZIP code (e.g., 12345)" maxlength="10" required>
             </div>
             <div class="form-navigation">

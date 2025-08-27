@@ -151,6 +151,11 @@ jQuery(document).ready(function($) {
 
     // ─── URL SERVICE DETECTION (HYBRID APPROACH) ─────
     function getServiceFromURL() {
+        // If server-side already detected a service, use that (highest priority)
+        if (window.BOOKING_PRESELECTED_SERVICE) {
+            return window.BOOKING_PRESELECTED_SERVICE;
+        }
+        
         try {
             const validServices = ['roof', 'windows', 'bathroom', 'siding', 'kitchen', 'decks', 'adu'];
             
@@ -277,20 +282,47 @@ jQuery(document).ready(function($) {
             };
         }
         
-        // Check for URL-based service preselection (hash or query params)
-        const preselectedService = getServiceFromURL();
+        // Check for server-side preselected service (NEW - priority over client-side)
+        let preselectedService = window.BOOKING_PRESELECTED_SERVICE || getServiceFromURL();
         
-        if (preselectedService) {
+        if (preselectedService || window.BOOKING_SKIP_STEP_1) {
             // Auto-select service and skip service selection step
             formState.service = preselectedService;
             
             // Skip directly to first service-specific step (ZIP code step)
             const newStepIndex = findFirstServiceSpecificStep(preselectedService);
             currentStepIndex = newStepIndex;
+            
+            // PERFORMANCE: No DOM manipulation here - server-side CSS already handles visibility
+            // Just ensure internal state is correct without touching DOM
+            
+            // Configure step 2 for ZIP input mode if in direct ZIP mode
+            if (window.BOOKING_DIRECT_ZIP_MODE) {
+                // Use setTimeout 0 to ensure DOM is ready before manipulating
+                setTimeout(() => {
+                    $('#step2-options').hide();
+                    $('#step2-text-input').show();
+                    
+                    // Set the ZIP step title immediately
+                    const zipStep = CONFIG.steps.find(step => step.id === 'zip_code');
+                    if (zipStep && zipStep.question_template) {
+                        const title = zipStep.question_template.replace('{service}', preselectedService);
+                        $('#step2-title').html(title);
+                    }
+                    
+                    // Set ZIP input label
+                    $('#step2-label').text('Enter Zip Code to check eligibility for free estimate');
+                }, 0);
+            }
         }
         
-        // Set default background
-        updateBackground();
+        // Set default background with service context for direct ZIP mode
+        if (preselectedService && window.BOOKING_DIRECT_ZIP_MODE) {
+            // For direct ZIP mode, ensure proper service background is set
+            updateBackground(preselectedService, 'zip_code');
+        } else {
+            updateBackground();
+        }
         
         // Initialize first step (or preselected step)
         renderCurrentStep();
@@ -300,6 +332,28 @@ jQuery(document).ready(function($) {
         
         // Initialize hash navigation support (non-breaking)
         initHashNavigation();
+        
+        // PERFORMANCE OPTIMIZATION: Pre-load ZIP data after form is visible
+        // This ensures immediate form rendering while background loading ZIP data
+        if (window.requestIdleCallback) {
+            // Use idle time to load ZIP data
+            requestIdleCallback(() => {
+                if (window.zipLookupService && !window.zipLookupService.isDataLoaded) {
+                    window.zipLookupService.ensureDataLoaded().catch(() => {
+                        // Silently fail - ZIP validation will work with format-only
+                    });
+                }
+            });
+        } else {
+            // Fallback: load after short delay
+            setTimeout(() => {
+                if (window.zipLookupService && !window.zipLookupService.isDataLoaded) {
+                    window.zipLookupService.ensureDataLoaded().catch(() => {
+                        // Silently fail - ZIP validation will work with format-only
+                    });
+                }
+            }, 1000); // 1 second delay to ensure form is fully rendered
+        }
         
 
     }
@@ -430,10 +484,13 @@ jQuery(document).ready(function($) {
             } else {
                 // For service-specific steps, use step-specific backgrounds
                 
-                // NEW: Handle dynamic zip code step background
+                // Handle ZIP code step background when accessed directly
                 if (stepId === 'zip_code') {
-                    $form.addClass(`service-${service.toLowerCase()}`);
-                    $form.addClass(`${service.toLowerCase()}-step-0`);
+                    // Use the service's general background for the ZIP code step
+                    // Based on actual image files: bathroom-all-step.webp, kitchen-all-steps.webp, etc.
+                    const serviceClass = `${service.toLowerCase()}-step-0`;
+                    $form.addClass(serviceClass);
+                    return; // Exit early to avoid other step logic
                 }
 
                 // Add step-specific background for roof service
@@ -516,7 +573,10 @@ jQuery(document).ready(function($) {
     function renderCurrentStep() {
         const step = CONFIG.steps[currentStepIndex];
         
-        if (!step) return;
+        if (!step) {
+            console.error('No step found for index:', currentStepIndex);
+            return;
+        }
 
         if (step.depends_on) {
             const [dependsKey, dependsValue] = step.depends_on;
@@ -532,8 +592,13 @@ jQuery(document).ready(function($) {
                 }
                 // Service is selected, continue to show the zip_code step
             } else if (dependsKey === 'service' && dependsValue) {
-                // This is a service-specific step - check if the service matches
-                if (formState[dependsKey] !== dependsValue) {
+                // This is a service-specific step - check if the service matches (case-insensitive)
+                const currentService = formState[dependsKey];
+                const expectedService = dependsValue;
+                const servicesMatch = currentService && expectedService && 
+                    currentService.toLowerCase() === expectedService.toLowerCase();
+                
+                if (!servicesMatch) {
                     // Skip this step if service doesn't match
                     currentStepIndex++;
                     renderCurrentStep();
@@ -548,12 +613,31 @@ jQuery(document).ready(function($) {
             }
         }
 
+        // PERFORMANCE OPTIMIZATION: Skip DOM manipulation if server-side already handled visibility
+        // But only for the initial ZIP step render, not for subsequent steps
+        if (window.BOOKING_DIRECT_ZIP_MODE && step.id === 'zip_code' && currentStepIndex === 1) {
+            // Server-side CSS already made step 2 visible and step 1 hidden
+            // Just update the internal state and proceed with minimal DOM operations
+            updateBackground(formState.service, step.id);
+            updateProgress();
+            updateStepURL(step);
+            showTextStep(step);
+            return;
+        }
 
-
-        // Hide all steps
-        $('.booking-step').removeClass('active');
+        // Hide all steps and explicitly clear step 2 dual mode
+        $('.booking-step').removeClass('active').hide();
         
-        // Reset step 2 state (since it can be either text or choice mode)
+        // SAFETY: Remove direct-zip-mode class if we're showing any step other than ZIP code step
+        // This ensures CSS doesn't permanently hide other steps
+        if (step.id !== 'zip_code') {
+            $('#booking-form').removeClass('direct-zip-mode');
+        }
+        
+        // FIX: Remove required attributes from hidden form fields to prevent validation errors
+        $('.booking-step:not(.active) input[required], .booking-step:not(.active) select[required], .booking-step:not(.active) textarea[required]').removeAttr('required');
+        
+        // Reset step 2 state to prevent ZIP/choice conflicts (preserves ZIP values when on ZIP step)
         resetStep2State();
         
         // Update background based on current service and step
@@ -639,7 +723,7 @@ jQuery(document).ready(function($) {
     }
 
     function showServiceStep() {
-        $('.booking-step[data-step="1"]').addClass('active');
+        $('.booking-step[data-step="1"]').addClass('active').show();
         
         // Clear hash when returning to service selection (unless we have a preselected service)
         if (!formState.service) {
@@ -678,7 +762,9 @@ jQuery(document).ready(function($) {
         const stepNum = getStepNumberForChoice(step.id);
         const $stepEl = $(`.booking-step[data-step="${stepNum}"]`);
         
-        $stepEl.addClass('active');
+        // Explicitly show and activate the step
+        $stepEl.addClass('active').show();
+        
         $stepEl.find(`#step${stepNum}-title`).text(step.question);
         
         // For step 2, we need to show choice mode and hide text input
@@ -746,7 +832,7 @@ jQuery(document).ready(function($) {
         const $stepEl = $(`.booking-step[data-step="${stepNum}"]`);
         
         // Always show and configure the step
-        $stepEl.addClass('active');
+        $stepEl.addClass('active').show();
         
         // Handle dynamic titles for the unified ZIP code step
         if (step.id === 'zip_code') {
@@ -813,7 +899,7 @@ jQuery(document).ready(function($) {
 
     function showFormStep(step) {
         const $stepEl = $('.booking-step[data-step="7"]');
-        $stepEl.addClass('active');
+        $stepEl.addClass('active').show();
         
         // NEW: City display is now handled entirely by ZIP code lookup system
         // Remove old address-based city logic
@@ -958,7 +1044,7 @@ jQuery(document).ready(function($) {
 
         
         const $stepEl = $('.booking-step[data-step="8"]');
-        $stepEl.addClass('active');
+        $stepEl.addClass('active').show();
         
         // Update URL hash for scheduling
         updateURLHash('scheduling');
@@ -1170,7 +1256,7 @@ jQuery(document).ready(function($) {
 
     function showSummaryStep() {
         const $stepEl = $('.booking-step[data-step="9"]');
-        $stepEl.addClass('active');
+        $stepEl.addClass('active').show();
         
         // Validate that we have appointments before showing summary
         if (!selectedAppointments || selectedAppointments.length === 0) {
@@ -1747,14 +1833,17 @@ jQuery(document).ready(function($) {
         const $nextBtn = $stepEl.find('.btn-next, .btn-submit');
         
         // Show/hide back button
-        const serviceAutoSelected = getServiceFromURL() !== null;
+        const serviceAutoSelected = getServiceFromURL() !== null || window.BOOKING_PRESELECTED_SERVICE;
         const currentStep = CONFIG.steps[currentStepIndex];
         
         // Hide back button if:
         // 1. We're at step 0 (service selection), OR
-        // 2. We're at the first service-specific step and service was auto-selected from URL
+        // 2. We're at the first service-specific step and service was auto-selected from URL, OR
+        // 3. We're in direct ZIP mode (server-side detection)
         if (currentStepIndex === 0) {
             $backBtn.hide();
+        } else if (window.BOOKING_DIRECT_ZIP_MODE && currentStep && currentStep.id === 'zip_code') {
+            $backBtn.hide(); // Hide back button when in direct ZIP mode
         } else if (serviceAutoSelected && formState.service && currentStep && 
                    currentStep.depends_on && currentStep.depends_on[0] === 'service') {
             const firstServiceStepIndex = findFirstServiceSpecificStep(formState.service);
@@ -1793,6 +1882,19 @@ jQuery(document).ready(function($) {
 
     function nextStep() {
         currentStepIndex++;
+        
+        // Clear direct ZIP mode flag after moving away from ZIP step
+        // This ensures subsequent step transitions use normal rendering logic
+        if (window.BOOKING_DIRECT_ZIP_MODE) {
+            const previousStep = CONFIG.steps[currentStepIndex - 1];
+            if (previousStep && previousStep.id === 'zip_code') {
+                window.BOOKING_DIRECT_ZIP_MODE = false;
+                
+                // Remove the direct-zip-mode CSS class to allow normal step navigation
+                $('#booking-form').removeClass('direct-zip-mode');
+            }
+        }
+        
         renderCurrentStep();
     }
 
@@ -1873,19 +1975,22 @@ jQuery(document).ready(function($) {
         // NEW ZIP CODE VALIDATION - Override old logic
         const step = CONFIG.steps[currentStepIndex];
         
-        // Special validation for ZIP code steps
-        if (step && step.id.endsWith('_zip')) {
+        // Special validation for ZIP code steps (fix: check for 'zip_code' step)
+        if (step && (step.id === 'zip_code' || step.id.endsWith('_zip'))) {
             const $currentStep = $('.booking-step.active');
             const zipValue = $currentStep.find('#zip-input, #step2-zip-input, #step4-zip-input').val().trim();
             
             // Check if ZIP code is valid
-            if (!zipValue || zipValue.length !== 5) {
+            if (!zipValue || zipValue.length !== 5 || !/^\d{5}$/.test(zipValue)) {
                 showErrorMessage('Please enter a 5-digit ZIP code');
                 return;
             }
             
-            // Check against ZIP lookup service
-            if (window.zipLookupService && !window.zipLookupService.isValidZipCode(zipValue)) {
+            // Check against ZIP lookup service if available and loaded
+            if (window.zipLookupService && 
+                window.zipLookupService.isDataLoaded && 
+                window.zipLookupService.isValidZipCode && 
+                !window.zipLookupService.isValidZipCode(zipValue)) {
                 showErrorMessage('Please enter a valid US ZIP code');
                 return;
             }
@@ -1905,7 +2010,25 @@ jQuery(document).ready(function($) {
         switch (step?.type) {
             case 'text':
                 const inputSelector = getInputSelectorForStep(step.id);
-                formState[step.id] = $currentStep.find(inputSelector).val().trim();
+                const inputValue = $currentStep.find(inputSelector).val().trim();
+                formState[step.id] = inputValue;
+                
+                // Special handling for ZIP codes - ensure proper data storage
+                if (step.id === 'zip_code' || step.id.endsWith('_zip')) {
+                    formState.zip_code = inputValue; // Always store as zip_code
+                    
+                    // Also store in service-specific field
+                    if (formState.service) {
+                        const serviceKey = formState.service.toLowerCase() + '_zip';
+                        formState[serviceKey] = inputValue;
+                    }
+                    
+                    // Store city/state if available from ZIP lookup
+                    if (window.zipLookupService) {
+                        formState.city = window.zipLookupService.currentCity || '';
+                        formState.state = window.zipLookupService.currentState || '';
+                    }
+                }
                 break;
             case 'form':
                 formState.phone = $('#phone-input').val().trim();
@@ -1957,7 +2080,24 @@ jQuery(document).ready(function($) {
         CONFIG.steps.forEach(step => {
             if (step.depends_on) {
                 const [dependsKey, dependsValue] = step.depends_on;
-                if (formState[dependsKey] === dependsValue) {
+                
+                // Handle service dependencies with case-insensitive matching
+                if (dependsKey === 'service' && dependsValue) {
+                    const currentService = formState[dependsKey];
+                    const expectedService = dependsValue;
+                    const servicesMatch = currentService && expectedService && 
+                        currentService.toLowerCase() === expectedService.toLowerCase();
+                    
+                    if (servicesMatch) {
+                        visibleSteps.push(step);
+                    }
+                } else if (dependsKey === 'service' && step.depends_on.length === 1) {
+                    // Generic zip_code step - show if any service is selected
+                    if (formState.service) {
+                        visibleSteps.push(step);
+                    }
+                } else if (formState[dependsKey] === dependsValue) {
+                    // Other dependencies (exact match)
                     visibleSteps.push(step);
                 }
             } else {
@@ -2043,11 +2183,12 @@ jQuery(document).ready(function($) {
         ];
         
         if (serviceQuestions.includes(stepId)) {
-            return 3; // Use step 3 for service-specific questions
+            return 3; // Always use step 3 for service-specific questions
         }
         
-        // For other choice questions, use available step
-        return $('.booking-step[data-step="2"]').hasClass('active') ? 3 : 2;
+        // For other choice questions, use step 2 only if it's not a ZIP step conflict
+        // Since ZIP always uses step 2, other questions should use step 3 when ZIP might be active
+        return 3; // Always use step 3 to avoid conflicts with ZIP code step
     }
 
     // ─── GLOBAL EVENT BINDING ────────────────────────
