@@ -1,11 +1,11 @@
+// @ts-nocheck
+/**
+ * BookingPro Booking System
+ * Multi-step booking form with appointment scheduling
+ */
 jQuery(document).ready(function($) {
     'use strict';
     
-    // ═══════════════════════════════════════════════════════════════════════════════════
-    // BOOKING SYSTEM CONFIGURATION
-    // Multi-step form configuration with service-specific dependencies and question flow
-    // ═══════════════════════════════════════════════════════════════════════════════════
-
     const CONFIG = {
         steps: [
             { id: 'service', type: 'single-choice', question: 'Which service are you interested in?', options: ['Roof', 'Windows', 'Bathroom', 'Siding', 'Kitchen', 'Decks', 'ADU'] },
@@ -15,7 +15,7 @@ jQuery(document).ready(function($) {
                 id: 'zip_code', 
                 type: 'text', 
                 depends_on: ['service'], // Depends on 'service' key being present in formState
-                question_template: 'Start your {service} remodel today.<br>Find local pros now.', 
+                question_template: 'Start Your {service} Remodel Today.<br>Find Local Pros Now.', 
                 label: 'Enter Zip Code to check eligibility for free estimate'
             },
             
@@ -503,36 +503,21 @@ jQuery(document).ready(function($) {
             // No service selected or error case - use fallback
             $form.addClass('fallback-bg');
         }
-        
-
     }
 
-    // ═══════════════════════════════════════════════════════════════════════════════════
-    // STEP STATE MANAGEMENT
-    // Handles resetting and managing state between form steps
-    // ═══════════════════════════════════════════════════════════════════════════════════
     function resetStep2State() {
-        // Reset step 2 to its default state (hide both text and choice elements initially)
         $('#step2-text-input').hide();
-        $('#step2-options').show(); // Default to choice mode
-        $('#step2-options').empty(); // Clear any previous options
-        $('#step2-zip-input, #zip-input').val(''); // Clear ZIP input
-        $('.booking-step[data-step="2"] .btn-next').prop('disabled', true); // Disable next button
+        $('#step2-options').show();
+        $('#step2-options').empty();
+        $('#step2-zip-input, #zip-input').val('');
+        $('.booking-step[data-step="2"] .btn-next').prop('disabled', true);
     }
 
-    // ═══════════════════════════════════════════════════════════════════════════════════
-    // STEP NAVIGATION SYSTEM
-    // Core functions for moving between form steps and rendering step content
-    // ═══════════════════════════════════════════════════════════════════════════════════
     function renderCurrentStep() {
         const step = CONFIG.steps[currentStepIndex];
         
-        if (!step) {
-            console.error('Step not found:', currentStepIndex);
-            return;
-        }
+        if (!step) return;
 
-        // Check dependencies before rendering step
         if (step.depends_on) {
             const [dependsKey, dependsValue] = step.depends_on;
             
@@ -1038,13 +1023,8 @@ jQuery(document).ready(function($) {
                     // Fallback: find company by name and get ID
                     const companyData = CONFIG.companies.find(c => c.name === companyName);
                     if (companyData) {
-                        console.warn('Company card missing data-company-id attribute, using fallback lookup for:', companyName);
                         initializeCompanyCalendar(companyData.id);
-                    } else {
-                        console.error('Company card missing data-company-id attribute and could not find company by name:', companyName, $card);
                     }
-                } else {
-                    console.error('Company card missing both data-company-id and company name:', $card);
                 }
             });
         }, 100);
@@ -1243,29 +1223,10 @@ jQuery(document).ready(function($) {
         const $calendar = $(`.calendar-grid[data-company-id="${companyId}"]`);
         const $timeSlots = $(`.time-slots[data-company-id="${companyId}"]`);
         
-        if ($calendar.length === 0) {
-            console.error('ERROR: Calendar element not found for company ID:', companyId);
-            console.error('Available company IDs:', $('.calendar-grid').map(function() {
-                return $(this).data('company-id'); 
-            }).get());
-            return;
-        }
+        if ($calendar.length === 0 || $timeSlots.length === 0) return;
         
-        if ($timeSlots.length === 0) {
-            console.error('ERROR: Time slots element not found for company ID:', companyId);
-            console.error('Available time slot company IDs:', $('.time-slots').map(function() {
-                return $(this).data('company-id'); 
-            }).get());
-            return;
-        }
-        
-        // Find company data using ID
         const companyData = CONFIG.companies ? CONFIG.companies.find(c => c.id == companyId) : null;
-        if (!companyData) {
-            console.error('ERROR: Company data not found for ID:', companyId);
-            console.error('Available companies:', CONFIG.companies ? CONFIG.companies.map(c => ({id: c.id, name: c.name})) : 'No companies configured');
-            return;
-        }
+        if (!companyData) return;
         
         // Generate calendar days if not already done
         const currentChildren = $calendar.children().length;
@@ -1353,19 +1314,12 @@ jQuery(document).ready(function($) {
         if (!companyData) {
             const errorMsg = '<div class="error-message">Company not found for ID: ' + companyId + '</div>';
             $calendar.html(errorMsg);
-            console.error('Company not found for ID:', companyId, 'Available companies:', CONFIG.companies);
             return;
         }
         
-        // Check if we're in demo mode (no real WordPress backend)
-
-
-        
-        // Check if we have real AJAX configuration
         if (!CONFIG.ajaxUrl || !CONFIG.nonce) {
             const errorMsg = '<div class="error-message">Booking system configuration error. Please refresh the page and try again.</div>';
             $calendar.html(errorMsg);
-            console.error('Missing AJAX configuration:', { ajaxUrl: CONFIG.ajaxUrl, nonce: CONFIG.nonce });
             return;
         }
         
@@ -1388,14 +1342,6 @@ jQuery(document).ready(function($) {
                 }
             },
             error: function(xhr, status, error) {
-                console.error('AJAX error details:', {
-                    status: status,
-                    error: error,
-                    responseText: xhr.responseText,
-                    statusCode: xhr.status
-                });
-                
-                // Display clean, user-friendly error message instead of demo fallback
                 let errorMsg = '<div class="error-message">Could not load availability. Please refresh and try again.</div>';
                 
                 if (xhr.status === 0) {
@@ -1414,10 +1360,8 @@ jQuery(document).ready(function($) {
     }
 
     function renderCalendarDays($calendar, availabilityData, company) {
-        // Find company data by name
         const companyData = CONFIG.companies ? CONFIG.companies.find(c => c.name === company) : null;
         if (!companyData) {
-            console.error('Company data not found for:', company);
             $calendar.html('<div class="error-message">Company not found</div>');
             return;
         }
@@ -1631,13 +1575,6 @@ jQuery(document).ready(function($) {
                     }
                 },
                 error: function(xhr, status, error) {
-                    console.error('Time slots AJAX error:', {
-                        status: status,
-                        error: error,
-                        responseText: xhr.responseText,
-                        statusCode: xhr.status
-                    });
-                    
                     let errorMessage = 'Failed to load time slots';
                     if (xhr.status === 0) {
                         errorMessage = 'Network error - check your internet connection';
@@ -2219,13 +2156,6 @@ jQuery(document).ready(function($) {
         // Show loading state immediately for user feedback
         $('.btn-submit').prop('disabled', true).html('Processing...');
         
-        // ═══════════════════════════════════════════════════════════════════════════════════
-        // OPTIMIZED FORM SUBMISSION
-        // Fast response achieved through background processing - emails, Google Sheets sync,
-        // and notifications are deferred to background jobs for millisecond response times
-        // ═══════════════════════════════════════════════════════════════════════════════════
-        
-        // Check if WordPress AJAX is available
         if (typeof BSP_Ajax !== 'undefined' && BSP_Ajax.ajaxUrl) {
             // Submit to WordPress with optimized settings for immediate response
             $.ajax({
@@ -2439,10 +2369,8 @@ jQuery(document).ready(function($) {
         window.bookingFormData = window.bookingFormData || {};
         window.bookingFormData.selectedAppointments = selectedAppointments;
         
-
-        
         // Move to the next step (summary) using the existing navigation system
         nextStep();
     });
 
-});
+}); // End of jQuery document ready

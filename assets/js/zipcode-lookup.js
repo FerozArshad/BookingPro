@@ -56,7 +56,6 @@ class ZipCodeLookupService {
             // Debug output removed for production
             
         } catch (error) {
-            console.error('❌ Failed to load ZIP data:', error);
             this.zipDataMap = new Map();
         } finally {
             this.isLoading = false;
@@ -85,7 +84,6 @@ class ZipCodeLookupService {
             const cachedData = localStorage.getItem(this.cacheKey);
             return cachedData ? JSON.parse(cachedData) : null;
         } catch (error) {
-            console.warn('⚠️ Cache read error:', error);
             return null;
         }
     }
@@ -118,8 +116,6 @@ class ZipCodeLookupService {
             const availableSpace = this.getAvailableLocalStorageSpace();
             
             if (dataSize > availableSpace) {
-                console.warn('⚠️ Insufficient localStorage space. ZIP data will not be cached.');
-                console.warn(`Data size: ${(dataSize / 1024 / 1024).toFixed(2)}MB, Available: ${(availableSpace / 1024 / 1024).toFixed(2)}MB`);
                 return;
             }
             
@@ -133,15 +129,9 @@ class ZipCodeLookupService {
             
         } catch (error) {
             if (error.name === 'QuotaExceededError') {
-                console.warn('⚠️ localStorage quota exceeded. Clearing cache and operating without caching.');
-                // Clear cache and continue without caching
                 this.clearCache();
-                // Try to clear some space by removing other localStorage items if needed
                 this.tryToFreeUpSpace();
-            } else {
-                console.warn('⚠️ Cache write error:', error.name || error.message || error);
             }
-            // Clear any partial data that might have been written
             this.clearCache();
         }
     }
