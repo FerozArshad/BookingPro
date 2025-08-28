@@ -64,8 +64,32 @@ jQuery(document).ready(function($) {
     let formState = {};
     let selectedAppointments = []; // Array to store multiple company/date/time selections
 
+    let bookingFormEntryType = 'unknown';
+    (function detectEntryMethod() {
+        // If URL already has service parameters or hash when page loads, it's direct access
+        if (window.location.search.includes('service=') || window.location.hash.length > 1) {
+            bookingFormEntryType = 'direct_url';
+        } 
+        // If we have a same-origin referrer (service selection page), even if referrer is empty in some cases
+        else if (document.referrer && document.referrer.includes(window.location.origin)) {
+            bookingFormEntryType = 'from_service_selection';
+        }
+           else if (!document.referrer || document.referrer === '') {
+            // Empty referrer could mean direct access, typing URL, or bookmark
+            bookingFormEntryType = 'direct_url';
+        }
+        // External referrer - definitely direct access
+        else {
+            bookingFormEntryType = 'direct_url';
+        }
+        
+        // Store globally for access by other functions
+        window.bookingFormEntryType = bookingFormEntryType;
+    })();
+
     // ─── URL HASH MANAGEMENT (NON-BREAKING) ──────────
     function updateURLHash(hashType) {
+        
         try {
             let newHash = '';
             let queryParam = '';
@@ -139,13 +163,40 @@ jQuery(document).ready(function($) {
                 } else {
                     currentURL.hash = '';
                 }
-                    // ...existing code...
+            
+                const useReplaceState = window.bookingFormEntryType === 'from_service_selection';
                 
-                // Push new state without reloading
-                window.history.pushState('', document.title, currentURL.toString());
+                // SPECIAL CASE: For direct form access with no service, create initial history entry
+                if (window.bookingFormEntryType === 'direct_url' && !formState.service && hashType === 'clear') {
+                    // This is the initial service selection step for direct access - create history entry
+                    window.history.pushState({ 
+                        step: 'service-selection', 
+                        stepIndex: 0, 
+                        service: null,
+                        timestamp: Date.now()
+                    }, 'Service Selection', currentURL.toString());
+                    return; // Exit early
+                }
+                
+                if (useReplaceState) {
+                    // Replace current history entry instead of adding new one
+                    window.history.replaceState({ 
+                        step: hashType, 
+                        stepIndex: currentStepIndex, 
+                        service: formState.service,
+                        timestamp: Date.now()
+                    }, document.title, currentURL.toString());
+                } else {
+                    // Push new state without reloading (normal behavior for direct URL access)
+                    window.history.pushState({ 
+                        step: hashType, 
+                        stepIndex: currentStepIndex, 
+                        service: formState.service,
+                        timestamp: Date.now()
+                    }, document.title, currentURL.toString());
+                }
             }
         } catch (error) {
-            // Silently fail to avoid breaking functionality
         }
     }
 
@@ -236,8 +287,6 @@ jQuery(document).ready(function($) {
             step.depends_on[1] === service
         );
         
-        // For URL-based service selection, we skip the service selection step entirely
-        // If no service-specific step found, something is wrong - go to service selection
         return serviceStepIndex !== -1 ? serviceStepIndex : 0;
     }
 
@@ -285,6 +334,9 @@ jQuery(document).ready(function($) {
         // Check for server-side preselected service (NEW - priority over client-side)
         let preselectedService = window.BOOKING_PRESELECTED_SERVICE || getServiceFromURL();
         
+        // Store globally for access by other functions
+        window.currentPreselectedService = preselectedService;
+        
         if (preselectedService || window.BOOKING_SKIP_STEP_1) {
             // Auto-select service and skip service selection step
             formState.service = preselectedService;
@@ -327,13 +379,38 @@ jQuery(document).ready(function($) {
         // Initialize first step (or preselected step)
         renderCurrentStep();
         
+        // BROWSER BACK FIX: For direct URL access, ensure proper navigation history
+        if (window.bookingFormEntryType === 'direct_url' && preselectedService) {
+            // Add a flag to track that we need to create proper history
+            window.needsHistorySetup = true;
+        }
+        // This ensures browser back button has a service selection step to return to
+        if (window.bookingFormEntryType === 'direct_url' && preselectedService && window.history) {
+            setTimeout(() => {
+                // Create a service selection history entry that preserves the service
+                const serviceSelectionUrl = window.location.pathname + '?service=' + preselectedService.toLowerCase() + '#service-selection';
+                window.history.pushState(
+                    { step: 'service-selection', stepIndex: 0, service: preselectedService }, 
+                    'Service Selection - ' + preselectedService, 
+                    serviceSelectionUrl
+                );
+                
+                // Now restore the current URL
+                const currentUrl = window.location.pathname + '?service=' + preselectedService.toLowerCase() + '#' + preselectedService.toLowerCase();
+                window.history.pushState(
+                    { step: preselectedService.toLowerCase(), stepIndex: currentStepIndex, service: preselectedService }, 
+                    preselectedService + ' Form', 
+                    currentUrl
+                );
+            }, 100);
+        }
+        
         // Bind global events
         bindGlobalEvents();
         
         // Initialize hash navigation support (non-breaking)
         initHashNavigation();
         
-        // PERFORMANCE OPTIMIZATION: Pre-load ZIP data after form is visible
         // This ensures immediate form rendering while background loading ZIP data
         if (window.requestIdleCallback) {
             // Use idle time to load ZIP data
@@ -361,77 +438,59 @@ jQuery(document).ready(function($) {
     // ─── HASH NAVIGATION SUPPORT (NON-BREAKING) ──────
     function initHashNavigation() {
         try {
-            // Listen for browser back/forward navigation
-            window.addEventListener('popstate', function(event) {
+            function handleBrowserBack(event) {
                 // Only handle if we're on a booking form page
-                if (!$('#booking-form').length) return;
+                if (!$('#booking-form').length) {
+                    return;
+                }
                 
-                const hash = window.location.hash.replace('#', '');
+                try {
+                    previousStep();
+                    
+                } catch (error) {
+                    // Silently handle navigation error
+                }
+            }
+            
+            // Listen for browser back/forward navigation
+            window.addEventListener('popstate', handleBrowserBack);
+            
+            // Setup history for direct URL access
+            if (window.needsHistorySetup && window.currentPreselectedService) {
+                setTimeout(() => {
+                    const serviceUrl = `${window.location.pathname}?service=${window.currentPreselectedService.toLowerCase()}#service-selection`;
+                    window.history.replaceState(
+                        { step: 'service-selection', stepIndex: 0, service: window.currentPreselectedService }, 
+                        'Service Selection', 
+                        serviceUrl
+                    );
+                    
+                    // Push current step
+                    const currentUrl = window.location.href;
+                    const stepHash = window.currentPreselectedService.toLowerCase();
+                    window.history.pushState(
+                        { step: stepHash, stepIndex: currentStepIndex, service: window.currentPreselectedService }, 
+                        `${window.currentPreselectedService} - Step ${currentStepIndex + 1}`, 
+                        currentUrl
+                    );
+                    
+                    window.needsHistorySetup = false;
+                }, 150);
+            }
+            
+            // Legacy hash navigation support (simplified)
+            function handleLegacyNavigation(hash) {
+                if (!hash) return;
                 
-                // Handle specific hash navigation
-                if (!hash) {
-                    // No hash - return to service selection if not already there
-                    if (currentStepIndex !== 0) {
-                        currentStepIndex = 0;
-                        renderCurrentStep();
-                    }
-                } else if (hash === 'service-selection' || ['roof', 'windows', 'bathroom', 'siding', 'kitchen', 'decks', 'adu'].includes(hash)) {
-                    // Service selection or specific service - ensure we're in the right flow
+                if (hash === 'service-selection' || ['roof', 'windows', 'bathroom', 'siding', 'kitchen', 'decks', 'adu'].includes(hash)) {
                     if (hash !== 'service-selection' && currentStepIndex === 0) {
-                        // User came back to a service-specific hash, maintain the selection
                         formState.service = hash.charAt(0).toUpperCase() + hash.slice(1);
                     }
-                } else if (hash.endsWith('-scheduling')) {
-                    // Service-specific scheduling hash (e.g., "roof-scheduling", "decks-scheduling")
-                    const service = hash.replace('-scheduling', '');
-                    if (['roof', 'windows', 'bathroom', 'siding', 'kitchen', 'decks', 'adu'].includes(service)) {
-                        // Set the service if not already set
-                        if (!formState.service) {
-                            formState.service = service.charAt(0).toUpperCase() + service.slice(1);
-                        }
-                        // Navigate to scheduling step if not already there
-                        const schedulingStepIndex = CONFIG.steps.findIndex(step => step.id === 'schedule');
-                        if (schedulingStepIndex !== -1 && currentStepIndex !== schedulingStepIndex) {
-                            currentStepIndex = schedulingStepIndex;
-                            renderCurrentStep();
-                        }
-                    }
-                } else if (hash.endsWith('-booking-confirmed')) {
-                    // Service-specific booking confirmation hash (e.g., "roof-booking-confirmed", "decks-booking-confirmed")
-                    const service = hash.replace('-booking-confirmed', '');
-                    if (['roof', 'windows', 'bathroom', 'siding', 'kitchen', 'decks', 'adu'].includes(service)) {
-                        // Set the service if not already set
-                        if (!formState.service) {
-                            formState.service = service.charAt(0).toUpperCase() + service.slice(1);
-                        }
-                        // Navigate to confirmation step if not already there
-                        const confirmationStepIndex = CONFIG.steps.findIndex(step => step.id === 'confirmation');
-                        if (confirmationStepIndex !== -1 && currentStepIndex !== confirmationStepIndex) {
-                            currentStepIndex = confirmationStepIndex;
-                            renderCurrentStep();
-                        }
-                    }
-                } else if (hash.endsWith('-waiting-booking-confirmation')) {
-                    // Service-specific waiting confirmation hash (e.g., "roof-waiting-booking-confirmation")
-                    const service = hash.replace('-waiting-booking-confirmation', '');
-                    if (['roof', 'windows', 'bathroom', 'siding', 'kitchen', 'decks', 'adu'].includes(service)) {
-                        // Set the service if not already set
-                        if (!formState.service) {
-                            formState.service = service.charAt(0).toUpperCase() + service.slice(1);
-                        }
-                        // Navigate to confirmation step and show waiting state
-                        const confirmationStepIndex = CONFIG.steps.findIndex(step => step.id === 'confirmation');
-                        if (confirmationStepIndex !== -1 && currentStepIndex !== confirmationStepIndex) {
-                            currentStepIndex = confirmationStepIndex;
-                            renderCurrentStep();
-                        }
-                    }
                 }
-                // For other states, we don't need special handling
-                // as these states are maintained by the form itself
-            });
+            }
+            
         } catch (error) {
-            // Silently fail to avoid breaking functionality
+            // Silently handle error
         }
     }
 
@@ -574,7 +633,6 @@ jQuery(document).ready(function($) {
         const step = CONFIG.steps[currentStepIndex];
         
         if (!step) {
-            console.error('No step found for index:', currentStepIndex);
             return;
         }
 
@@ -734,6 +792,21 @@ jQuery(document).ready(function($) {
         if (formState.service) {
             $(`.service-option[data-service="${formState.service}"]`).addClass('selected');
             updateURLHash('service-selection');
+        }
+        
+        // BROWSER BACK FIX: For direct form access, ensure we create an initial history entry
+        // so browser back button has somewhere to go
+        if (window.bookingFormEntryType === 'direct_url' && !window.initialHistoryCreated) {
+            // Create an initial service selection history entry 
+            setTimeout(() => {
+                const currentUrl = window.location.href;
+                window.history.replaceState(
+                    { step: 'service-selection', stepIndex: 0, service: null, isInitial: true }, 
+                    'Service Selection', 
+                    currentUrl
+                );
+                window.initialHistoryCreated = true;
+            }, 50);
         }
         
         // Bind service selection events
@@ -1347,7 +1420,6 @@ jQuery(document).ready(function($) {
             // Find company data using ID
             const companyData = CONFIG.companies ? CONFIG.companies.find(c => c.id == companyId) : null;
             if (!companyData) {
-                console.error('Company not found for ID:', companyId);
                 return false;
             }
             const companyName = companyData.name;
@@ -1461,18 +1533,19 @@ jQuery(document).ready(function($) {
         sortedDates.forEach(dateStr => {
             const dayData = availabilityData[dateStr];
             
-            // Calculate availability metrics
+            // Calculate availability metrics with 30-minute buffer
             const totalSlots = dayData.slots.length;
-            const availableSlots = dayData.slots.filter(slot => slot.available).length;
-            const unavailableSlots = totalSlots - availableSlots;
+            const originalAvailableSlots = dayData.slots.filter(slot => slot.available).length;
+            const bufferFilteredAvailableSlots = calculateAvailableSlotsWithBuffer(dayData, dateStr);
+            const unavailableSlots = totalSlots - originalAvailableSlots;
             
-            // Enhanced availability logic:
-            // - Disable if NO available slots (fully booked)
-            // - Disable if 5 or more slots are unavailable AND less than 2 available (heavily booked)
-            // - Otherwise allow selection (user can pick from remaining slots)
-            const isFullyBooked = availableSlots === 0;
-            const isHeavilyBooked = unavailableSlots >= 5 && availableSlots < 2;
-            const shouldDisableDay = isFullyBooked || isHeavilyBooked;
+            // Enhanced availability logic with buffer consideration:
+            // - Disable if NO buffer-filtered available slots (fully booked or all slots too soon)
+            // - Disable if 5 or more slots are unavailable AND less than 2 buffer-filtered available (heavily booked)
+            // - Otherwise allow selection (user can pick from remaining buffer-filtered slots)
+            const isFullyBookedOrTooSoon = bufferFilteredAvailableSlots === 0;
+            const isHeavilyBooked = unavailableSlots >= 5 && bufferFilteredAvailableSlots < 2;
+            const shouldDisableDay = isFullyBookedOrTooSoon || isHeavilyBooked;
             
             // Check if this company already has an appointment on this date
             const hasExistingAppointment = selectedAppointments.some(apt => 
@@ -1483,17 +1556,19 @@ jQuery(document).ready(function($) {
             let cssClass, dayTitle;
             if (shouldDisableDay) {
                 cssClass = 'unavailable disabled';
-                if (isFullyBooked) {
+                if (isFullyBookedOrTooSoon && originalAvailableSlots === 0) {
                     dayTitle = 'Fully booked - no available time slots';
+                } else if (isFullyBookedOrTooSoon && originalAvailableSlots > 0) {
+                    dayTitle = 'No available time slots (booking window closed)';
                 } else {
-                    dayTitle = `Very limited availability - only ${availableSlots} slots remaining`;
+                    dayTitle = `Very limited availability - only ${bufferFilteredAvailableSlots} slots remaining`;
                 }
             } else {
                 cssClass = 'available';
-                if (availableSlots <= 2) {
-                    dayTitle = `Limited availability - ${availableSlots} slots remaining`;
+                if (bufferFilteredAvailableSlots <= 2) {
+                    dayTitle = `Limited availability - ${bufferFilteredAvailableSlots} slots remaining`;
                 } else {
-                    dayTitle = `${availableSlots} time slots available - click to select`;
+                    dayTitle = `${bufferFilteredAvailableSlots} time slots available - click to select`;
                 }
             }
             
@@ -1502,13 +1577,13 @@ jQuery(document).ready(function($) {
                      data-date="${dateStr}" 
                      data-company="${companyData.name}"
                      data-company-id="${companyData.id}"
-                     data-available-slots="${availableSlots}"
+                     data-available-slots="${bufferFilteredAvailableSlots}"
                      data-total-slots="${totalSlots}"
                      ${shouldDisableDay ? 'data-disabled="true"' : ''}
                      title="${dayTitle}">
                     <div class="day-number">${dayData.day_number}</div>
                     <div class="day-name">${dayData.day_name}</div>
-                    ${(availableSlots > 0 && availableSlots <= 3) ? `<div class="slots-indicator">${availableSlots} left</div>` : ''}
+                    ${(bufferFilteredAvailableSlots > 0 && bufferFilteredAvailableSlots <= 3) ? `<div class="slots-indicator">${bufferFilteredAvailableSlots} left</div>` : ''}
                 </div>
             `);
             
@@ -1569,29 +1644,60 @@ jQuery(document).ready(function($) {
         if (availabilityData && availabilityData[date]) {
             const dayData = availabilityData[date];
 
-
             $timeSlots.empty();
             
             let slotsAdded = 0;
+            let slotsHiddenByBuffer = 0;
+            let slotsBookedByBackend = 0;
+            
+            
             dayData.slots.forEach(slot => {
-                const isAvailable = slot.available;
-                const slotClass = isAvailable ? 'time-slot' : 'time-slot disabled';
-                const slotTitle = isAvailable ? 'Click to select this time' : 'This time slot is already booked';
+                // Check if slot is available from backend
+                const isBackendAvailable = slot.available;
+                
+                // Check if slot passes 30-minute buffer filter
+                const isBufferBookable = isSlotBookableWithBuffer(slot.time, date);
+                
+                // Slot is fully available only if both conditions are met
+                const isFullyAvailable = isBackendAvailable && isBufferBookable;
+                
+                // Track filtering reasons
+                if (!isBackendAvailable) {
+                    slotsBookedByBackend++;
+                } else if (!isBufferBookable) {
+                    slotsHiddenByBuffer++;
+                    return; // Skip this slot entirely
+                }
+                
+                // Determine slot class and title
+                let slotClass, slotTitle;
+                if (!isBackendAvailable) {
+                    // Backend says slot is booked
+                    slotClass = 'time-slot disabled';
+                    slotTitle = 'This time slot is already booked';
+                } else if (!isBufferBookable) {
+                    // Backend available but filtered by 30-min buffer - don't show this slot at all
+                    return; // Skip this slot entirely
+                } else {
+                    // Fully available
+                    slotClass = 'time-slot';
+                    slotTitle = 'Click to select this time';
+                }
                 
                 const $slot = $(`
                     <div class="${slotClass}" 
                          data-time="${slot.time}" 
                          data-company="${company}" 
                          data-date="${date}"
-                         ${!isAvailable ? 'data-disabled="true"' : ''}
+                         ${!isFullyAvailable ? 'data-disabled="true"' : ''}
                          title="${slotTitle}">
                         ${slot.formatted}
-                        ${!isAvailable ? '<span class="booked-indicator">Booked</span>' : ''}
+                        ${!isBackendAvailable ? '<span class="booked-indicator">Booked</span>' : ''}
                     </div>
                 `);
                 
                 $timeSlots.append($slot);
-                if (isAvailable) slotsAdded++;
+                if (isFullyAvailable) slotsAdded++;
             });
             
             // Add warning messages based on availability
@@ -1626,10 +1732,41 @@ jQuery(document).ready(function($) {
                         $timeSlots.empty();
                         
                         let slotsAdded = 0;
+                        let slotsHiddenByBuffer = 0;
+                        let slotsBookedByBackend = 0;
+                        
                         dayData.slots.forEach(slot => {
-                            const isAvailable = slot.available;
-                            const slotClass = isAvailable ? 'time-slot' : 'time-slot disabled';
-                            const slotTitle = isAvailable ? 'Click to select this time' : 'This time slot is already booked';
+                            // Check if slot is available from backend
+                            const isBackendAvailable = slot.available;
+                            
+                            // Check if slot passes 30-minute buffer filter
+                            const isBufferBookable = isSlotBookableWithBuffer(slot.time, date);
+                            
+                            // Slot is fully available only if both conditions are met
+                            const isFullyAvailable = isBackendAvailable && isBufferBookable;
+                            
+                            // Track filtering reasons
+                            if (!isBackendAvailable) {
+                                slotsBookedByBackend++;
+                            } else if (!isBufferBookable) {
+                                slotsHiddenByBuffer++;
+                                return; // Skip this slot entirely
+                            }
+                            
+                            // Determine slot class and title
+                            let slotClass, slotTitle;
+                            if (!isBackendAvailable) {
+                                // Backend says slot is booked
+                                slotClass = 'time-slot disabled';
+                                slotTitle = 'This time slot is already booked';
+                            } else if (!isBufferBookable) {
+                                // Backend available but filtered by 30-min buffer - don't show this slot at all
+                                return; // Skip this slot entirely
+                            } else {
+                                // Fully available
+                                slotClass = 'time-slot';
+                                slotTitle = 'Click to select this time';
+                            }
                             
                             const $slot = $(`
                                 <div class="${slotClass}" 
@@ -1637,15 +1774,15 @@ jQuery(document).ready(function($) {
                                      data-company="${company}" 
                                      data-company-id="${companyData.id}" 
                                      data-date="${date}"
-                                     ${!isAvailable ? 'data-disabled="true"' : ''}
+                                     ${!isFullyAvailable ? 'data-disabled="true"' : ''}
                                      title="${slotTitle}">
                                     ${slot.formatted}
-                                    ${!isAvailable ? '<span class="booked-indicator">Booked</span>' : ''}
+                                    ${!isBackendAvailable ? '<span class="booked-indicator">Booked</span>' : ''}
                                 </div>
                             `);
                             
                             $timeSlots.append($slot);
-                            if (isAvailable) slotsAdded++;
+                            if (isFullyAvailable) slotsAdded++;
                         });
                         
                         // Add warning messages based on availability
@@ -1753,6 +1890,35 @@ jQuery(document).ready(function($) {
         });
     }
 
+    // ─── 30-MINUTE BOOKING BUFFER SYSTEM ────────────────
+    function isSlotBookableWithBuffer(slotTime, selectedDate) {
+        // Get current browser time
+        const now = new Date();
+        const slotDateTime = new Date(selectedDate + 'T' + slotTime);
+        const bufferTime = new Date(now.getTime() + 30 * 60 * 1000); // +30 minutes
+        const today = new Date().toISOString().split('T')[0];
+        const isToday = selectedDate === today;
+        if (!isToday) {
+            return true;
+        }
+        const isBookable = slotDateTime >= bufferTime;     
+        return isBookable;
+    }
+    
+    function calculateAvailableSlotsWithBuffer(dayData, dateStr) {
+        const originalAvailableSlots = dayData.slots.filter(slot => slot.available).length;
+        const today = new Date().toISOString().split('T')[0];
+        const isToday = dateStr === today;
+        if (!isToday) {
+            return originalAvailableSlots;
+        }
+        const bufferFilteredSlots = dayData.slots.filter(slot => {
+            return slot.available && isSlotBookableWithBuffer(slot.time, dateStr);
+        }).length;
+        
+        return bufferFilteredSlots;
+    }
+
     function formatTime(timeStr) {
         const [hours, minutes] = timeStr.split(':');
         const date = new Date();
@@ -1835,11 +2001,7 @@ jQuery(document).ready(function($) {
         // Show/hide back button
         const serviceAutoSelected = getServiceFromURL() !== null || window.BOOKING_PRESELECTED_SERVICE;
         const currentStep = CONFIG.steps[currentStepIndex];
-        
-        // Hide back button if:
-        // 1. We're at step 0 (service selection), OR
-        // 2. We're at the first service-specific step and service was auto-selected from URL, OR
-        // 3. We're in direct ZIP mode (server-side detection)
+
         if (currentStepIndex === 0) {
             $backBtn.hide();
         } else if (window.BOOKING_DIRECT_ZIP_MODE && currentStep && currentStep.id === 'zip_code') {
@@ -1882,14 +2044,11 @@ jQuery(document).ready(function($) {
 
     function nextStep() {
         currentStepIndex++;
-        
-        // Clear direct ZIP mode flag after moving away from ZIP step
-        // This ensures subsequent step transitions use normal rendering logic
+
         if (window.BOOKING_DIRECT_ZIP_MODE) {
             const previousStep = CONFIG.steps[currentStepIndex - 1];
             if (previousStep && previousStep.id === 'zip_code') {
                 window.BOOKING_DIRECT_ZIP_MODE = false;
-                
                 // Remove the direct-zip-mode CSS class to allow normal step navigation
                 $('#booking-form').removeClass('direct-zip-mode');
             }
@@ -1903,9 +2062,7 @@ jQuery(document).ready(function($) {
             // Check if service was auto-selected from URL
             const serviceAutoSelected = getServiceFromURL() !== null;
             const currentStep = CONFIG.steps[currentStepIndex];
-            
-            // If we're on the first service-specific step and service was auto-selected,
-            // go back to landing page instead of service selection
+ 
             if (serviceAutoSelected && formState.service && currentStep && 
                 currentStep.depends_on && currentStep.depends_on[0] === 'service') {
                 
@@ -1919,10 +2076,6 @@ jQuery(document).ready(function($) {
             }
             
             // Normal backward navigation
-            // Hide current step
-            $('.booking-step').removeClass('active');
-            
-            // Decrement step index
             currentStepIndex--;
             
             // Check if we need to skip steps due to dependencies when going backward
@@ -1934,8 +2087,31 @@ jQuery(document).ready(function($) {
                 // If step has dependencies, check if they are still valid
                 if (step && step.depends_on) {
                     const [dependsKey, dependsValue] = step.depends_on;
-                    if (formState[dependsKey] !== dependsValue) {
-                        // Skip this step when going back
+                    
+                    // FIXED: Handle generic zip_code step correctly
+                    if (dependsKey === 'service' && step.depends_on.length === 1) {
+                        // This is the generic zip_code step - always valid if service is selected
+                        if (formState.service) {
+                            break; // Step is valid, stop skipping
+                        } else {
+                            currentStepIndex--;
+                            continue;
+                        }
+                    }
+                    // Handle service-specific dependencies
+                    else if (dependsKey === 'service' && dependsValue) {
+                        const currentService = formState[dependsKey];
+                        const expectedService = dependsValue;
+                        const servicesMatch = currentService && expectedService && 
+                            currentService.toLowerCase() === expectedService.toLowerCase();
+                        
+                        if (!servicesMatch) {
+                            currentStepIndex--;
+                            continue;
+                        }
+                    }
+                    // Handle other dependencies
+                    else if (formState[dependsKey] !== dependsValue) {
                         currentStepIndex--;
                         continue;
                     }
@@ -1943,9 +2119,8 @@ jQuery(document).ready(function($) {
                 break;
             }
             
-
-            
-            // Render the correct previous step
+            renderCurrentStep();
+        } else {
             renderCurrentStep();
         }
     }
@@ -1995,9 +2170,7 @@ jQuery(document).ready(function($) {
                 return;
             }
         }
-        
-        // Collect form data from current step
-        collectCurrentStepData();
+            collectCurrentStepData();
         
         // Move to next step
         nextStep();
@@ -2128,8 +2301,6 @@ jQuery(document).ready(function($) {
     }
 
     function getNextAvailableStepNumber() {
-        // For service-specific choice questions, prioritize step 3
-        // For other choice questions, use step 2 if available, otherwise step 3
         return $('.booking-step[data-step="3"]').hasClass('active') ? 2 : 3;
     }
 
@@ -2185,20 +2356,12 @@ jQuery(document).ready(function($) {
         if (serviceQuestions.includes(stepId)) {
             return 3; // Always use step 3 for service-specific questions
         }
-        
-        // For other choice questions, use step 2 only if it's not a ZIP step conflict
-        // Since ZIP always uses step 2, other questions should use step 3 when ZIP might be active
+  
         return 3; // Always use step 3 to avoid conflicts with ZIP code step
     }
 
     // ─── GLOBAL EVENT BINDING ────────────────────────
     function bindGlobalEvents() {
-        // Handle browser back/forward
-        $(window).on('popstate', function() {
-            // Prevent default browser navigation
-            return false;
-        });
-        
         // Form submission
         $(document).on('submit', 'form', function(e) {
             e.preventDefault();
@@ -2222,10 +2385,6 @@ jQuery(document).ready(function($) {
             handleNextStep();
         });
         
-        // Company card click handlers removed - no expand/collapse needed
-        // All companies show appointment options by default
-        
-        // Prevent clicks on appointment details from bubbling up
         $(document).on('click', '.date-selection-section, .time-selection-section, .booking-disclaimer, .estimate-button-container', function(e) {
             e.stopPropagation();
         });
@@ -2233,8 +2392,6 @@ jQuery(document).ready(function($) {
 
     // ─── BOOKING SUBMISSION ──────────────────────────
     function submitBooking() {
-        // URL is already showing waiting-booking-confirmation from the confirmation step
-        // No need to update URL here anymore
         
         // Validate that we have at least one appointment
         if (!selectedAppointments || selectedAppointments.length === 0) {
@@ -2309,7 +2466,6 @@ jQuery(document).ready(function($) {
                     if (response.success) {
                         showSuccessMessage(response.data);
                     } else {
-                        // Keep URL on waiting state since user is still on confirmation page
                         // Don't revert URL - just show error message
                         showErrorMessage(response.data || 'Booking failed. Please try again.');
                     }
@@ -2490,9 +2646,7 @@ jQuery(document).ready(function($) {
             alert('Please select at least one date and time before requesting an estimate.');
             return;
         }
-        
-        // Check if user has selected date and time for this specific company
-        // Try to match by company ID first (more reliable), then fall back to company name
+   
         let companyAppointment = null;
         if (companyId) {
             companyAppointment = selectedAppointments.find(apt => apt.companyId == companyId);
@@ -2505,13 +2659,14 @@ jQuery(document).ready(function($) {
             alert('Please select a date and time for ' + company + ' before requesting an estimate.');
             return;
         }
-        
-        // Store the appointments data globally for the summary step
         window.bookingFormData = window.bookingFormData || {};
         window.bookingFormData.selectedAppointments = selectedAppointments;
         
-        // Move to the next step (summary) using the existing navigation system
         nextStep();
     });
+
+    (function() {
+    
+    })();
 
 }); // End of jQuery document ready
