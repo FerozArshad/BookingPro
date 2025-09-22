@@ -364,6 +364,12 @@ jQuery(document).ready(function($) {
                     
                     // Set ZIP input label
                     $('#step2-label').text('Enter Zip Code to check eligibility for free estimate');
+                    
+                    // Add verification section for direct ZIP mode
+                    const $step2El = $('.booking-step[data-step="2"]');
+                    if ($step2El.length > 0) {
+                        addVerificationSection($step2El, preselectedService);
+                    }
                 }, 0);
             }
         }
@@ -627,6 +633,8 @@ jQuery(document).ready(function($) {
         $('#step2-options').empty();
         $('#step2-zip-input, #zip-input').val('');
         $('.booking-step[data-step="2"] .btn-next').prop('disabled', true);
+        // Remove any verification sections when resetting
+        $('.booking-step .verification-section').remove();
     }
 
     function renderCurrentStep() {
@@ -966,8 +974,44 @@ jQuery(document).ready(function($) {
             }
         });
         
+        // Add verification section for ZIP code steps
+        if (step.id === 'zip_code') {
+            addVerificationSection($stepEl, formState.service);
+        }
+        
         // Update navigation
         updateNavigation($stepEl);
+    }
+
+    // ─── VERIFICATION SECTION FOR ZIP CODE STEP ──────
+    function addVerificationSection($stepEl, serviceName) {
+        // Remove any existing verification section first
+        $stepEl.find('.verification-section').remove();
+        
+        // Get the service name for the text (fallback to 'Service' if not available)
+        const service = serviceName || 'Service';
+        
+        // Create verification section HTML
+        const verificationHTML = `
+            <div class="verification-section" style="max-width: 550px; width: 100%; margin-left: auto; margin-right: auto; text-align: center; justify-content:center; align-items: center; gap:22px; margin-top: 20px; display:flex; flex-direction:row; padding: 15px;">
+                <img src="${window.location.origin}/wp-content/plugins/BookingPro/assets/images/Verified-icon.webp" 
+                     style="width: 30px; max-width: 30px;" 
+                     alt="Verified" 
+                     onerror="this.style.display='none'">
+                <p class="verification-text" style="font-size: 14px; margin:0px; color: #fff; line-height: 1.4; word-wrap: break-word;">
+                    IA Remodeling has verified +232 licensed ${service} contractors in your area
+                </p>
+            </div>
+        `;
+        
+        // Find the form navigation and add verification section after it
+        const $navigation = $stepEl.find('.form-navigation');
+        if ($navigation.length > 0) {
+            $navigation.after(verificationHTML);
+        } else {
+            // Fallback: add at the end of the step if navigation not found
+            $stepEl.append(verificationHTML);
+        }
     }
 
     function showFormStep(step) {
