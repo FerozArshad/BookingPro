@@ -20,47 +20,82 @@ define('BSP_PLUGIN_FILE', __FILE__);
 define('BSP_DB_VERSION', '2.1');
 
 // Debug constants
-define('BSP_DEBUG_MODE', false);
+define('BSP_DEBUG_MODE', true); // Enable for Phase 2 development
 define('BSP_DEBUG_LOG_FILE', BSP_PLUGIN_DIR . 'debug.log');
 
 /**
- * Debug logging function - production optimized
+ * Enhanced debug logging function for Lead Capture System
+ * Logs only to plugin directory, not WordPress core logs
  */
 function bsp_debug_log($message, $type = 'INFO', $context = []) {
-    if (!BSP_DEBUG_MODE) return;
-    
-    // Only log critical events in production
-    $critical_types = ['ERROR', 'FATAL', 'BOOKING', 'EMAIL', 'INTEGRATION'];
-    if (!in_array($type, $critical_types)) return;
-    
-    $debug_file = plugin_dir_path(__FILE__) . 'debug.log';
+    // Always log during development - we'll filter later
+    $log_file = BSP_PLUGIN_DIR . 'bsp-debug.log';
     $timestamp = date('Y-m-d H:i:s');
-    $context_str = !empty($context) ? ' | ' . wp_json_encode($context, JSON_UNESCAPED_UNICODE) : '';
+    $memory_usage = round(memory_get_usage() / 1024 / 1024, 2) . 'MB';
     
-    $log_message = "[$timestamp] [$type] $message$context_str" . PHP_EOL;
-    error_log($log_message, 3, $debug_file);
+    // Format context data
+    $context_str = '';
+    if (!empty($context)) {
+        if (is_array($context) || is_object($context)) {
+            $context_str = ' | DATA: ' . wp_json_encode($context, JSON_UNESCAPED_UNICODE | JSON_PARTIAL_OUTPUT_ON_ERROR);
+        } else {
+            $context_str = ' | DATA: ' . $context;
+        }
+    }
+    
+    // Add request context for better debugging
+    $request_id = isset($_SERVER['REQUEST_URI']) ? md5($_SERVER['REQUEST_URI'] . microtime()) : 'CLI';
+    $request_id = substr($request_id, 0, 8);
+    
+    $log_message = sprintf(
+        "[%s] [%s] [%s] [%s] %s%s%s",
+        $timestamp,
+        $type,
+        $memory_usage,
+        $request_id,
+        $message,
+        $context_str,
+        PHP_EOL
+    );
+    
+    // Write to plugin log file
+    error_log($log_message, 3, $log_file);
+    
+    // Also log critical errors to PHP error log for immediate attention
+    if (in_array($type, ['ERROR', 'FATAL', 'CRITICAL'])) {
+        error_log("BSP Plugin [$type]: $message");
+    }
 }
 
 /**
- * Rotate log file when it gets too large
+ * Lead Capture specific logging function
+ */
+function bsp_lead_log($message, $lead_data = [], $type = 'LEAD_CAPTURE') {
+    $formatted_message = "Lead Capture: $message";
+    bsp_debug_log($formatted_message, $type, $lead_data);
+}
+
+/**
+ * Rotate and clean log file when it gets too large
  */
 function bsp_rotate_log_file() {
-    if (!file_exists(BSP_DEBUG_LOG_FILE)) return;
+    $log_file = BSP_PLUGIN_DIR . 'bsp-debug.log';
     
-    // Keep last 50 lines of important logs
-    $lines = file(BSP_DEBUG_LOG_FILE, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-    if (!$lines) return;
+    if (!file_exists($log_file)) return;
     
-    // Filter to keep only important logs and last 50 entries
-    $important_lines = array_filter($lines, function($line) {
-        return preg_match('/\[(ERROR|WARNING|BOOKING|EMAIL|INTEGRATION|AJAX|DATABASE)\]/', $line);
-    });
-    
-    $keep_lines = array_slice($important_lines, -50);
-    $rotated_content = "=== LOG ROTATED " . date('Y-m-d H:i:s') . " ===" . PHP_EOL;
-    $rotated_content .= implode(PHP_EOL, $keep_lines) . PHP_EOL;
-    
-    file_put_contents(BSP_DEBUG_LOG_FILE, $rotated_content, LOCK_EX);
+    // Check file size (rotate if > 5MB)
+    if (filesize($log_file) > 5 * 1024 * 1024) {
+        $lines = file($log_file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+        if (!$lines) return;
+        
+        // Keep last 1000 lines for history
+        $keep_lines = array_slice($lines, -1000);
+        $rotated_content = "=== LOG ROTATED " . date('Y-m-d H:i:s') . " ===" . PHP_EOL;
+        $rotated_content .= implode(PHP_EOL, $keep_lines) . PHP_EOL;
+        
+        file_put_contents($log_file, $rotated_content);
+        bsp_debug_log("Log file rotated, kept last 1000 entries", 'SYSTEM');
+    }
 }
 
 /**
@@ -123,6 +158,15 @@ final class Booking_System_Pro_Final {
     private $email = null;
     private $post_types = null;
     private $taxonomies = null;
+    
+    // Lead Capture System components
+    private $safe_integration = null;
+    private $utm_manager = null;
+    private $lead_collector = null;
+    private $data_processor = null;
+    private $conversion_tracker = null;
+    private $sheets_integration = null;
+    
     private $components_loaded = [];
     
     public static function get_instance() {
@@ -158,7 +202,7 @@ final class Booking_System_Pro_Final {
             $this->include_files();
             
             // Initialize components
-            $this->init_components();
+            $this->init_core_components();
             
             // Setup hooks
             $this->setup_hooks();
@@ -194,6 +238,10 @@ final class Booking_System_Pro_Final {
         $includes = [
             'includes/class-utilities.php',
             'includes/class-database-unified.php',
+            // Lead Capture System - Phase 1 components (order matters)
+            'includes/class-safe-variable-integration.php',
+            'includes/class-lead-data-collector.php', // Must be loaded before data processor
+            'includes/class-data-processor-unified.php', // Centralized data processing
             'includes/class-post-types.php',
             'includes/class-taxonomies.php',
             'includes/class-frontend.php',
@@ -204,7 +252,11 @@ final class Booking_System_Pro_Final {
             'includes/class-admin-settings.php',
             'includes/class-ajax.php',
             'includes/class-email.php',
-            'includes/class-data-manager.php'
+            'includes/class-data-manager.php',
+            // Phase 2 components
+            'includes/class-utm-consistency-manager.php',
+            'includes/class-lead-conversion-tracker.php',
+            'includes/class-google-sheets-integration.php'
         ];
         
         foreach ($includes as $file) {
@@ -223,31 +275,85 @@ final class Booking_System_Pro_Final {
         }
     }
     
-    private function init_components() {
+    private function init_core_components() {
         try {
-            // Initialize database first
+            // Initialize database first - everything else depends on it
             if (class_exists('BSP_Database_Unified')) {
                 $this->database = BSP_Database_Unified::get_instance();
+                $this->database->init_tables();
+                $this->components_loaded[] = 'database';
             } else {
                 bsp_debug_log("BSP_Database_Unified class not found", 'ERROR');
             }
             
+            // Initialize Lead Capture System components (order is critical)
+            
+            // 1. Safe Variable Integration (must be first)
+            if (class_exists('BSP_Safe_Variable_Integration')) {
+                $this->safe_integration = BSP_Safe_Variable_Integration::get_instance();
+                $this->components_loaded[] = 'safe_integration';
+                bsp_debug_log("Safe Variable Integration initialized", 'INIT');
+            } else {
+                bsp_debug_log("BSP_Safe_Variable_Integration class not found", 'ERROR');
+            }
+            
+            // 2. UTM Consistency Manager (depends on safe integration)  
+            if (class_exists('BSP_UTM_Consistency_Manager')) {
+                $this->utm_manager = BSP_UTM_Consistency_Manager::get_instance();
+                $this->components_loaded[] = 'utm_manager';
+                bsp_debug_log("UTM Consistency Manager initialized", 'INIT');
+            } else {
+                bsp_debug_log("BSP_UTM_Consistency_Manager class not found", 'ERROR');
+            }
+            
+            // 3. Lead Data Collector (depends on both safe integration and UTM manager)
+            if (class_exists('BSP_Lead_Data_Collector')) {
+                $this->lead_collector = BSP_Lead_Data_Collector::get_instance();
+                $this->components_loaded[] = 'lead_collector';
+                bsp_debug_log("Lead Data Collector initialized", 'INIT');
+            } else {
+                bsp_debug_log("BSP_Lead_Data_Collector class not found", 'ERROR');
+            }
+            
+            // 4. Data Processor (depends on lead collector)
+            if (class_exists('BSP_Data_Processor_Unified')) {
+                $this->data_processor = BSP_Data_Processor_Unified::get_instance();
+                $this->components_loaded[] = 'data_processor';
+                bsp_debug_log("Unified Data Processor initialized", 'INIT');
+            } else {
+                bsp_debug_log("BSP_Data_Processor_Unified class not found", 'ERROR');
+            }
+            
+            // 5. Lead Conversion Tracker
+            if (class_exists('BSP_Lead_Conversion_Tracker')) {
+                $this->conversion_tracker = BSP_Lead_Conversion_Tracker::get_instance();
+                $this->components_loaded[] = 'conversion_tracker';
+                bsp_debug_log("Lead Conversion Tracker initialized", 'INIT');
+            } else {
+                bsp_debug_log("BSP_Lead_Conversion_Tracker class not found", 'ERROR');
+            }
+            
+            // 6. Google Sheets Integration
+            if (class_exists('BSP_Google_Sheets_Integration')) {
+                $this->sheets_integration = BSP_Google_Sheets_Integration::get_instance();
+                $this->components_loaded[] = 'sheets_integration';
+                bsp_debug_log("Google Sheets Integration initialized", 'INIT');
+            } else {
+                bsp_debug_log("BSP_Google_Sheets_Integration class not found", 'ERROR');
+            }
+
             // Initialize post types and taxonomies
             if (class_exists('BSP_Post_Types')) {
                 $this->post_types = BSP_Post_Types::get_instance();
+                $this->components_loaded[] = 'post_types';
             } else {
                 bsp_debug_log("BSP_Post_Types class not found", 'ERROR');
             }
             
-            if (class_exists('BSP_Taxonomies')) {
-                $this->taxonomies = new BSP_Taxonomies();
-            } else {
-                bsp_debug_log("BSP_Taxonomies class not found", 'ERROR');
-            }
-            
-            // Initialize frontend (always needed for shortcodes)
+            // Initialize frontend (only if not in admin)
             if (class_exists('BSP_Frontend')) {
                 $this->frontend = BSP_Frontend::get_instance();
+                $this->components_loaded[] = 'frontend';
             } else {
                 bsp_debug_log("BSP_Frontend class not found", 'ERROR');
             }
@@ -360,6 +466,9 @@ final class Booking_System_Pro_Final {
         
         // Google Sheets sync handler
         add_action('bsp_sync_google_sheets', [$this, 'handle_google_sheets_sync'], 10, 2);
+        
+        // Incomplete lead background processing handler
+        add_action('bsp_process_incomplete_lead_background', [$this, 'handle_incomplete_lead_processing'], 10, 2);
     }
     
     /**
@@ -834,8 +943,9 @@ final class Booking_System_Pro_Final {
             return;
         }
         
-        if (!$this->ajax || !method_exists($this->ajax, 'send_to_google_sheets')) {
-            bsp_debug_log("Google Sheets sync failed: AJAX component not available", 'INTEGRATION_ERROR');
+        // Attempt sync using the proper Google Sheets integration
+        if (!$this->sheets_integration || !method_exists($this->sheets_integration, 'sync_converted_lead')) {
+            bsp_debug_log("Google Sheets sync failed: Google Sheets component not available", 'INTEGRATION_ERROR');
             
             // Schedule retry in 30 seconds if component not ready (but only if under max attempts)
             if ($attempts < 2 && function_exists('wp_schedule_single_event')) {
@@ -845,13 +955,39 @@ final class Booking_System_Pro_Final {
             return;
         }
         
-        // Attempt sync
-        $sync_result = $this->ajax->send_to_google_sheets($booking_id, $booking_data);
+        // Attempt sync using the proper method that handles session continuity
+        $sync_result = $this->sheets_integration->sync_converted_lead($booking_id, $booking_data);
         
         // Note: send_to_google_sheets logs its own success/failure, so we don't need to duplicate that here
         bsp_debug_log("Google Sheets background sync completed for booking ID: $booking_id, result: " . ($sync_result ? 'success' : 'failed'), 'INTEGRATION');
     }
     
+    /**
+     * Handle background processing of incomplete leads
+     */
+    public function handle_incomplete_lead_processing($lead_id, $lead_data) {
+        bsp_debug_log("Background processing started for incomplete lead ID: $lead_id", 'LEAD_PROCESSING');
+        
+        // Get the Lead Data Collector instance
+        $lead_collector = BSP_Lead_Data_Collector::get_instance();
+        
+        if (!$lead_collector || !method_exists($lead_collector, 'complete_lead_processing')) {
+            bsp_debug_log("Lead processing failed: Lead Data Collector not available", 'LEAD_PROCESSING_ERROR');
+            
+            // Schedule retry in 15 seconds if component not ready
+            if (function_exists('wp_schedule_single_event')) {
+                wp_schedule_single_event(time() + 15, 'bsp_process_incomplete_lead_background', [$lead_id, $lead_data]);
+                bsp_debug_log("Lead processing rescheduled for 15 seconds due to component unavailability", 'LEAD_PROCESSING');
+            }
+            return;
+        }
+        
+        // Process the lead data completely
+        $lead_collector->complete_lead_processing($lead_id, $lead_data);
+        
+        bsp_debug_log("Background processing completed for incomplete lead ID: $lead_id", 'LEAD_PROCESSING');
+    }
+
     /**
      * Manual cron trigger for testing (admin only)
      */

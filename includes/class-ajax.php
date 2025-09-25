@@ -24,10 +24,13 @@ class BSP_Ajax {
         add_action('wp_ajax_bsp_submit_booking', [$this, 'submit_booking']);
         add_action('wp_ajax_nopriv_bsp_submit_booking', [$this, 'submit_booking']);
         
-        add_action('wp_ajax_bsp_get_slots', [$this, 'get_time_slots']);
-        add_action('wp_ajax_nopriv_bsp_get_slots', [$this, 'get_time_slots']);
+        // Note: bsp_get_slots is handled by BSP_Booking_System_Pro class to avoid conflicts
         
         add_action('wp_ajax_bsp_test_webhook', [$this, 'test_webhook']);
+        
+        // Lead Capture AJAX endpoints - Phase 1
+        add_action('wp_ajax_bsp_capture_incomplete_lead', [$this, 'capture_incomplete_lead']);
+        add_action('wp_ajax_nopriv_bsp_capture_incomplete_lead', [$this, 'capture_incomplete_lead']);
         
         // Admin AJAX endpoints are handled in BSP_Admin class
     }
@@ -146,9 +149,8 @@ class BSP_Ajax {
     }
     
     /**
-     * PERFORMANCE OPTIMIZATION: Fetch ALL booked slots in ONE database query
+     * SIMPLIFIED: Fetch booked slots with much simpler query to avoid timeout issues
      * Returns array like: [company_id => ['2025-08-21_09:00', '2025-08-22_14:30']]
-     * FIXED: Properly handles comma-separated company IDs in database
      */
     private function fetch_all_booked_slots($company_ids, $date_from, $date_to) {
         global $wpdb;
@@ -157,8 +159,10 @@ class BSP_Ajax {
             return [];
         }
         
-        // FIXED: Build proper SQL query that handles comma-separated company IDs AND comma-separated dates
-        $query = "
+        // SIMPLIFIED: Use basic query to avoid complex LIKE operations that cause timeouts
+        $company_ids_str = implode(',', array_map('intval', $company_ids));
+        
+        $query = $wpdb->prepare("
             SELECT 
                 pm1.meta_value as booking_date,
                 pm2.meta_value as booking_time,
@@ -170,71 +174,27 @@ class BSP_Ajax {
             INNER JOIN {$wpdb->postmeta} pm3 ON p.ID = pm3.post_id AND pm3.meta_key = '_company_id'
             WHERE p.post_type = 'bsp_booking'
             AND p.post_status IN ('publish', 'pending')
-        ";
-        
-        // FIXED: Handle comma-separated dates in booking_date field
-        // Instead of >= and <= which don't work with comma-separated values,
-        // we need to check if the date appears anywhere in the comma-separated string
-        $date_conditions = [];
-        
-        // Create date range for the requested period
-        $start_date = new DateTime($date_from);
-        $end_date = new DateTime($date_to);
-        
-        // Generate all dates in the range
-        $current = clone $start_date;
-        while ($current <= $end_date) {
-            $date_str = $current->format('Y-m-d');
-            $date_conditions[] = $wpdb->prepare("pm1.meta_value LIKE %s", '%' . $date_str . '%');
-            $current->add(new DateInterval('P1D'));
-        }
-        
-        if (!empty($date_conditions)) {
-            $query .= " AND (" . implode(' OR ', $date_conditions) . ")";
-        }
-        
-        // Build WHERE clause for company IDs (handles both single and comma-separated values)
-        $company_conditions = [];
-        foreach ($company_ids as $company_id) {
-            $company_conditions[] = $wpdb->prepare("(pm3.meta_value = %s OR pm3.meta_value LIKE %s OR pm3.meta_value LIKE %s OR pm3.meta_value LIKE %s)", 
-                $company_id, 
-                $company_id . ',%', 
-                '%,' . $company_id . ',%', 
-                '%,' . $company_id
-            );
-        }
-        
-        if (!empty($company_conditions)) {
-            $query .= " AND (" . implode(' OR ', $company_conditions) . ")";
-        }
+            AND pm1.meta_value >= %s
+            AND pm1.meta_value <= %s
+            AND pm3.meta_value IN ({$company_ids_str})
+            ORDER BY pm1.meta_value, pm2.meta_value
+        ", $date_from, $date_to);
         
         $results = $wpdb->get_results($query);
         
         // Organize results by company ID for fast lookup
         $booked_slots = [];
         foreach ($results as $row) {
-            // Handle comma-separated company IDs in database
-            $stored_company_ids = array_map('trim', explode(',', $row->company_id));
-            $dates = array_map('trim', explode(',', $row->booking_date));
-            $times = array_map('trim', explode(',', $row->booking_time));
+            $company_id = intval($row->company_id);
             
-            // Map each stored company ID to the slots
-            foreach ($stored_company_ids as $stored_company_id) {
-                $company_id = intval($stored_company_id);
+            // Only include if this company was requested
+            if (in_array($company_id, $company_ids)) {
+                $slot_key = trim($row->booking_date) . '_' . trim($row->booking_time);
                 
-                // Only include if this company was requested
-                if (in_array($company_id, $company_ids)) {
-                    // Create slots for each date/time combination
-                    foreach ($dates as $date_index => $date) {
-                        $time = isset($times[$date_index]) ? $times[$date_index] : $times[0];
-                        $slot_key = trim($date) . '_' . trim($time);
-                        
-                        if (!isset($booked_slots[$company_id])) {
-                            $booked_slots[$company_id] = [];
-                        }
-                        $booked_slots[$company_id][] = $slot_key;
-                    }
+                if (!isset($booked_slots[$company_id])) {
+                    $booked_slots[$company_id] = [];
                 }
+                $booked_slots[$company_id][] = $slot_key;
             }
         }
         
@@ -245,20 +205,56 @@ class BSP_Ajax {
      * Submit booking from frontend
      */
     public function submit_booking() {
+        // Add comprehensive debugging at the start
+        bsp_debug_log("=== BOOKING SUBMISSION STARTED ===", 'BOOKING', [
+            'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? 'unknown',
+            'ip_address' => $_SERVER['REMOTE_ADDR'] ?? 'unknown',
+            'referrer' => $_SERVER['HTTP_REFERER'] ?? 'direct'
+        ]);
+        
+        // Log raw POST data for debugging
+        bsp_debug_log("Raw POST data received", 'BOOKING', $_POST);
+        
         // Verify nonce
         if (!wp_verify_nonce($_POST['nonce'], 'bsp_frontend_nonce')) {
+            bsp_debug_log("SECURITY: Nonce verification failed", 'ERROR');
             wp_send_json_error('Security check failed.');
         }
+        
+        bsp_debug_log("Security check passed", 'BOOKING');
         
         // Validate required fields
         $required_fields = ['service', 'full_name', 'email', 'phone', 'address', 'company', 'selected_date', 'selected_time'];
         foreach ($required_fields as $field) {
             if (empty($_POST[$field])) {
+                bsp_debug_log("VALIDATION: Missing required field: {$field}", 'ERROR');
                 wp_send_json_error("Missing required field: {$field}");
             }
         }
         
+        bsp_debug_log("Required field validation passed", 'BOOKING');
+        
         // Sanitize data
+        bsp_debug_log("Starting data sanitization", 'BOOKING');
+        
+        // Capture session ID for lead continuity
+        $session_id = isset($_POST['session_id']) ? sanitize_text_field($_POST['session_id']) : '';
+        bsp_debug_log("Session ID captured for lead continuity", 'BOOKING', [
+            'session_id' => $session_id,
+            'session_id_length' => strlen($session_id),
+            'session_id_empty' => empty($session_id)
+        ]);
+        
+        // Log city/state data capture
+        $city_received = isset($_POST['city']) ? sanitize_text_field($_POST['city']) : '';
+        $state_received = isset($_POST['state']) ? sanitize_text_field($_POST['state']) : '';
+        bsp_debug_log("City/State data capture", 'BOOKING', [
+            'city_received' => $city_received,
+            'state_received' => $state_received,
+            'city_empty' => empty($city_received),
+            'state_empty' => empty($state_received)
+        ]);
+        
         $booking_data = [
             'service' => sanitize_text_field($_POST['service']),
             'full_name' => sanitize_text_field($_POST['full_name']),
@@ -275,6 +271,8 @@ class BSP_Ajax {
             'service_details' => sanitize_textarea_field($_POST['service_details'] ?? '')
         ];
         
+        bsp_debug_log("Core data sanitized", 'BOOKING', $booking_data);
+        
         // Add service-specific fields from frontend
         $service_fields = [
             'roof_zip', 'windows_zip', 'bathroom_zip', 'siding_zip', 'kitchen_zip', 'decks_zip', 'adu_zip',
@@ -287,11 +285,15 @@ class BSP_Ajax {
             'adu_action', 'adu_type'
         ];
         
+        $service_specific_data = [];
         foreach ($service_fields as $field) {
             if (isset($_POST[$field])) {
+                $service_specific_data[$field] = sanitize_text_field($_POST[$field]);
                 $booking_data[$field] = sanitize_text_field($_POST[$field]);
             }
         }
+        
+        bsp_debug_log("Service-specific fields added", 'BOOKING', $service_specific_data);
 
         // Capture and sanitize marketing source data
         $utm_params = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'gclid', 'referrer'];
@@ -303,6 +305,8 @@ class BSP_Ajax {
         }
         // Debug log for received UTM/source fields
         $booking_data['source_data'] = $source_data;
+        
+        bsp_debug_log("Marketing source data captured", 'BOOKING', $source_data);
         
         
         // Validate email
@@ -363,6 +367,7 @@ class BSP_Ajax {
                     '_specifications' => $this->_generate_specifications_string($_POST),
                     '_status' => 'pending',
                     '_created_at' => current_time('mysql'),
+                    '_session_id' => $session_id, // For lead continuity tracking
                     // Service-specific fields
                     '_roof_action' => isset($booking_data['roof_action']) ? $booking_data['roof_action'] : '',
                     '_roof_material' => isset($booking_data['roof_material']) ? $booking_data['roof_material'] : '',
@@ -383,14 +388,37 @@ class BSP_Ajax {
                 ]
             ];
             
+            bsp_debug_log("=== CREATING MULTIPLE BOOKING POST ===", 'DATABASE', [
+                'post_data' => $post_data,
+                'company_count' => count($appointments),
+                'combined_companies' => $combined_company_name
+            ]);
+            
             $booking_id = wp_insert_post($post_data);
             
             if ($booking_id && !is_wp_error($booking_id)) {
                 $created_booking_ids[] = $booking_id;
                 
+                bsp_debug_log("MULTIPLE booking post created successfully", 'DATABASE', [
+                    'booking_id' => $booking_id,
+                    'post_title' => $post_data['post_title']
+                ]);
+                
                 // Set taxonomies
                 wp_set_object_terms($booking_id, 'pending', 'bsp_booking_status');
                 wp_set_object_terms($booking_id, $booking_data['service'], 'bsp_service_type');
+                
+                bsp_debug_log("Taxonomies set for multiple booking", 'DATABASE', [
+                    'booking_id' => $booking_id,
+                    'status' => 'pending',
+                    'service' => $booking_data['service']
+                ]);
+            } else {
+                $error_msg = is_wp_error($booking_id) ? $booking_id->get_error_message() : 'Unknown error';
+                bsp_debug_log("FAILED to create multiple booking post", 'ERROR', [
+                    'error' => $error_msg,
+                    'post_data' => $post_data
+                ]);
             }
         } else {
             // Single appointment - use the original logic
@@ -432,58 +460,120 @@ class BSP_Ajax {
                     '_kitchen_component' => isset($booking_data['kitchen_component']) ? $booking_data['kitchen_component'] : '',
                     '_decks_action' => isset($booking_data['decks_action']) ? $booking_data['decks_action'] : '',
                     '_decks_material' => isset($booking_data['decks_material']) ? $booking_data['decks_material'] : '',
+                    '_adu_action' => isset($booking_data['adu_action']) ? $booking_data['adu_action'] : '',
+                    '_adu_type' => isset($booking_data['adu_type']) ? $booking_data['adu_type'] : '',
+                    '_session_id' => $session_id, // For lead continuity tracking
                     // Marketing attribution data
                     '_marketing_source' => $booking_data['source_data']
                 ]
             ];
+            
+            bsp_debug_log("=== CREATING SINGLE BOOKING POST ===", 'DATABASE', [
+                'post_data' => $post_data,
+                'company_id' => $company_id
+            ]);
             
             $booking_id = wp_insert_post($post_data);
             
             if ($booking_id && !is_wp_error($booking_id)) {
                 $created_booking_ids[] = $booking_id;
                 
+                bsp_debug_log("SINGLE booking post created successfully", 'DATABASE', [
+                    'booking_id' => $booking_id,
+                    'post_title' => $post_data['post_title']
+                ]);
+                
                 // Set taxonomies
                 wp_set_object_terms($booking_id, 'pending', 'bsp_booking_status');
                 wp_set_object_terms($booking_id, $booking_data['service'], 'bsp_service_type');
+                
+                bsp_debug_log("Taxonomies set for single booking", 'DATABASE', [
+                    'booking_id' => $booking_id,
+                    'status' => 'pending', 
+                    'service' => $booking_data['service']
+                ]);
+            } else {
+                $error_msg = is_wp_error($booking_id) ? $booking_id->get_error_message() : 'Unknown error';
+                bsp_debug_log("FAILED to create single booking post", 'ERROR', [
+                    'error' => $error_msg,
+                    'post_data' => $post_data
+                ]);
             }
         }
         
         if (empty($created_booking_ids)) {
+            bsp_debug_log("CRITICAL: No booking IDs created", 'ERROR');
             wp_send_json_error('Failed to create any bookings.');
         }
         
         $primary_booking_id = $created_booking_ids[0];
         
-        // FIXED: Single Google Sheets sync with proper deduplication - FASTER TIMING
-        if (function_exists('wp_schedule_single_event')) {
-            // Check if sync job already scheduled for this booking to prevent duplicates
-            $existing_sync = get_post_meta($primary_booking_id, '_google_sheets_sync_scheduled', true);
-            if (!$existing_sync) {
-                // Customer email notification (immediate - 2 seconds)
-                wp_schedule_single_event(time() + 2, 'bsp_send_customer_notification', [$primary_booking_id, $booking_data]);
-                
-                // Admin email notification (immediate - 4 seconds)
-                wp_schedule_single_event(time() + 4, 'bsp_send_admin_notification', [$primary_booking_id, $booking_data]);
-                
-                // Google Sheets sync (single attempt - 8 seconds) - ONLY ONE HANDLER NOW
-                wp_schedule_single_event(time() + 8, 'bsp_sync_google_sheets', [$primary_booking_id, $booking_data]);
-                update_post_meta($primary_booking_id, '_google_sheets_sync_scheduled', time());
-                
-                // Additional processing (notifications, etc. - 12 seconds)
-                wp_schedule_single_event(time() + 12, 'bsp_process_booking_extras', [$primary_booking_id, $booking_data]);
-                
-                bsp_debug_log("Background jobs scheduled for booking ID: $primary_booking_id", 'CRON');
+        // CRITICAL: Schedule all background jobs AFTER the response is sent using shutdown hook
+        add_action('shutdown', function() use ($primary_booking_id, $booking_data, $session_id) {
+            bsp_debug_log("=== SCHEDULING BACKGROUND JOBS AFTER RESPONSE ===", 'INTEGRATION', [
+                'primary_booking_id' => $primary_booking_id,
+                'session_id' => $session_id
+            ]);
+            
+            // FIXED: Single Google Sheets sync with proper deduplication - FASTER TIMING
+            if (function_exists('wp_schedule_single_event')) {
+                // Check if sync job already scheduled for this booking to prevent duplicates
+                $existing_sync = get_post_meta($primary_booking_id, '_google_sheets_sync_scheduled', true);
+                if (!$existing_sync) {
+                    // Customer email notification (immediate - 2 seconds)
+                    wp_schedule_single_event(time() + 2, 'bsp_send_customer_notification', [$primary_booking_id, $booking_data]);
+                    bsp_debug_log("Scheduled customer email notification", 'INTEGRATION', [
+                        'booking_id' => $primary_booking_id,
+                        'schedule_time' => time() + 2
+                    ]);
+                    
+                    // Admin email notification (immediate - 4 seconds)
+                    wp_schedule_single_event(time() + 4, 'bsp_send_admin_notification', [$primary_booking_id, $booking_data]);
+                    bsp_debug_log("Scheduled admin email notification", 'INTEGRATION', [
+                        'booking_id' => $primary_booking_id,
+                        'schedule_time' => time() + 4
+                    ]);
+                    
+                    // Google Sheets sync (single attempt - 8 seconds) - ONLY ONE HANDLER NOW
+                    $sheets_sync_data = $booking_data;
+                    $sheets_sync_data['session_id'] = $session_id; // Include session_id for lead continuity
+                    wp_schedule_single_event(time() + 8, 'bsp_sync_google_sheets', [$primary_booking_id, $sheets_sync_data]);
+                    update_post_meta($primary_booking_id, '_google_sheets_sync_scheduled', time());
+                    
+                    bsp_debug_log("Scheduled Google Sheets sync with session ID", 'INTEGRATION', [
+                        'booking_id' => $primary_booking_id,
+                        'session_id' => $session_id,
+                        'schedule_time' => time() + 8,
+                        'sync_scheduled_timestamp' => time()
+                    ]);
+                } else {
+                    bsp_debug_log("Google Sheets sync already scheduled, skipping duplicate", 'INTEGRATION', [
+                        'booking_id' => $primary_booking_id,
+                        'existing_sync_timestamp' => $existing_sync
+                    ]);
+                }
+            } else {
+                bsp_debug_log("wp_schedule_single_event function not available!", 'CRON_ERROR');
             }
-        } else {
-            bsp_debug_log("wp_schedule_single_event function not available!", 'CRON_ERROR');
-        }
+        });
         
-        // Immediate success response - no waiting for any external services
+        // CRITICAL: Ensure success response is sent immediately before any Google Sheets processing
+        bsp_debug_log("=== SENDING SUCCESS RESPONSE ===", 'AJAX_RESPONSE', [
+            'primary_booking_id' => $primary_booking_id,
+            'created_booking_ids' => $created_booking_ids,
+            'timestamp' => current_time('mysql')
+        ]);
+        
+        // Immediate success response - GUARANTEED to reach frontend before background jobs
         wp_send_json_success([
             'message' => 'Booking submitted successfully!',
             'booking_ids' => $created_booking_ids,
-            'primary_booking_id' => $primary_booking_id
+            'primary_booking_id' => $primary_booking_id,
+            'booking_id' => $primary_booking_id  // For backward compatibility
         ]);
+        
+        // This line should NEVER be reached due to wp_send_json_success() calling wp_die()
+        bsp_debug_log("ERROR: Code continued after wp_send_json_success!", 'CRITICAL_ERROR');
     }
     
     /**
@@ -770,27 +860,76 @@ class BSP_Ajax {
      * Includes duplicate prevention for background sync reliability
      */
     public function send_to_google_sheets($booking_id, $booking_data) {
+        // Enhanced debugging for Google Sheets sync process
+        if (function_exists('bsp_debug_log')) {
+            bsp_debug_log('Google Sheets Sync: INITIATED', 'SHEETS_SYNC', [
+                'booking_id' => $booking_id,
+                'data_keys' => array_keys($booking_data ?? []),
+                'current_time' => current_time('mysql'),
+                'user_ip' => $_SERVER['REMOTE_ADDR'] ?? 'unknown',
+                'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? 'unknown'
+            ]);
+        }
+        
         // Double-check sync status to prevent race conditions
         $sync_status = get_post_meta($booking_id, '_google_sheets_synced', true);
         if ($sync_status === 'success') {
+            if (function_exists('bsp_debug_log')) {
+                bsp_debug_log('Google Sheets Sync: SKIPPED - Already Synced', 'SHEETS_SYNC', [
+                    'booking_id' => $booking_id,
+                    'sync_status' => $sync_status
+                ]);
+            }
             return true;
         }
         
         $integration_settings = get_option('bsp_integration_settings', []);
 
         if (empty($integration_settings['google_sheets_enabled']) || empty($integration_settings['google_sheets_webhook_url'])) {
+            if (function_exists('bsp_debug_log')) {
+                bsp_debug_log('Google Sheets Sync: DISABLED or MISSING CONFIG', 'SHEETS_SYNC', [
+                    'booking_id' => $booking_id,
+                    'enabled' => !empty($integration_settings['google_sheets_enabled']),
+                    'webhook_configured' => !empty($integration_settings['google_sheets_webhook_url'])
+                ]);
+            }
             return false;
         }
 
         // Use centralized data manager to get all formatted booking data
         if (!class_exists('BSP_Data_Manager')) {
+            if (function_exists('bsp_debug_log')) {
+                bsp_debug_log('Google Sheets Sync: DATA MANAGER NOT FOUND', 'SHEETS_SYNC_ERROR', [
+                    'booking_id' => $booking_id
+                ]);
+            }
             return false;
+        }
+        
+        if (function_exists('bsp_debug_log')) {
+            bsp_debug_log('Google Sheets Sync: RETRIEVING DATA', 'SHEETS_SYNC', [
+                'booking_id' => $booking_id
+            ]);
         }
         
         $data_for_sheets = BSP_Data_Manager::get_formatted_booking_data($booking_id);
         
         if (!$data_for_sheets) {
+            if (function_exists('bsp_debug_log')) {
+                bsp_debug_log('Google Sheets Sync: NO DATA RETRIEVED', 'SHEETS_SYNC_ERROR', [
+                    'booking_id' => $booking_id
+                ]);
+            }
             return false;
+        }
+
+        if (function_exists('bsp_debug_log')) {
+            bsp_debug_log('Google Sheets Sync: DATA RETRIEVED', 'SHEETS_SYNC', [
+                'booking_id' => $booking_id,
+                'customer_name' => $data_for_sheets['customer_name'] ?? 'N/A',
+                'service_type' => $data_for_sheets['service_type'] ?? 'N/A',
+                'data_keys' => array_keys($data_for_sheets)
+            ]);
         }
 
         $webhook_url = $integration_settings['google_sheets_webhook_url'];
@@ -821,28 +960,22 @@ class BSP_Ajax {
             'timestamp' => current_time('mysql')
         ];
 
-        $json_payload = wp_json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-        
-        if (!$json_payload) {
-            if (function_exists('bsp_debug_log')) {
-                bsp_debug_log('Google Sheets Integration: Failed to encode JSON payload', 'INTEGRATION_ERROR', [
-                    'payload_size' => strlen(print_r($payload, true)),
-                    'json_error' => json_last_error_msg()
-                ]);
-            }
-            return false;
+        if (function_exists('bsp_debug_log')) {
+            bsp_debug_log('Google Sheets Sync: SENDING TO WEBHOOK', 'SHEETS_SYNC', [
+                'booking_id' => $booking_id,
+                'webhook_url' => substr($webhook_url, 0, 50) . '...',
+                'payload_keys' => array_keys($payload),
+                'customer_email' => $payload['customer_email'] ?? 'N/A'
+            ]);
         }
         
-        // ENHANCED REQUEST: Better headers and validation
+        // ENHANCED REQUEST: Use form data format (same as working incomplete leads)
         $response = wp_remote_post($webhook_url, [
             'method' => 'POST',
             'headers' => [
-                'Content-Type' => 'application/json; charset=utf-8',
-                'Accept' => 'application/json',
                 'User-Agent' => 'BookingSystemPro/1.0'
             ],
-            'body' => $json_payload,
-            'data_format' => 'body',
+            'body' => $payload, // Send as form data instead of JSON
             'timeout' => 45,
             'sslverify' => true,
             'blocking' => true
@@ -851,9 +984,10 @@ class BSP_Ajax {
         if (is_wp_error($response)) {
             $error_message = $response->get_error_message();
             if (function_exists('bsp_debug_log')) {
-                bsp_debug_log('Google Sheets Integration: WP_Error on post', 'INTEGRATION_ERROR', [
+                bsp_debug_log('Google Sheets Sync: WP_ERROR', 'SHEETS_SYNC_ERROR', [
                     'booking_id' => $booking_id,
-                    'error' => $error_message
+                    'error' => $error_message,
+                    'customer_email' => $payload['customer_email'] ?? 'N/A'
                 ]);
             }
             // Do NOT retry here to avoid duplicates. The job can be run manually if needed.
@@ -864,11 +998,22 @@ class BSP_Ajax {
         $response_code = wp_remote_retrieve_response_code($response);
         $response_body = wp_remote_retrieve_body($response);
 
+        if (function_exists('bsp_debug_log')) {
+            bsp_debug_log('Google Sheets Sync: RESPONSE RECEIVED', 'SHEETS_SYNC', [
+                'booking_id' => $booking_id,
+                'response_code' => $response_code,
+                'response_size' => strlen($response_body),
+                'response_preview' => mb_strimwidth($response_body, 0, 200, "...")
+            ]);
+        }
+
         if ($response_code >= 200 && $response_code < 300) {
             if (function_exists('bsp_debug_log')) {
-                bsp_debug_log('Google Sheets Integration: SUCCESS', 'INTEGRATION', [
+                bsp_debug_log('Google Sheets Sync: SUCCESS', 'SHEETS_SYNC', [
                     'booking_id' => $booking_id,
-                    'response_code' => $response_code
+                    'response_code' => $response_code,
+                    'customer_email' => $payload['customer_email'] ?? 'N/A',
+                    'sync_time' => current_time('mysql')
                 ]);
             }
             // Mark as success to prevent any future duplicates
@@ -877,10 +1022,11 @@ class BSP_Ajax {
         } else {
             // This includes 4xx and 5xx errors.
             if (function_exists('bsp_debug_log')) {
-                bsp_debug_log('Google Sheets Integration: FAILED with non-2xx response', 'INTEGRATION_ERROR', [
+                bsp_debug_log('Google Sheets Sync: FAILED', 'SHEETS_SYNC_ERROR', [
                     'booking_id' => $booking_id,
                     'response_code' => $response_code,
-                    'response_body' => mb_strimwidth($response_body, 0, 500, "...")
+                    'response_body' => mb_strimwidth($response_body, 0, 500, "..."),
+                    'customer_email' => $payload['customer_email'] ?? 'N/A'
                 ]);
             }
             // Mark as failed but do NOT reschedule. This prevents duplicate submissions on 400 Bad Request.
@@ -1285,6 +1431,22 @@ class BSP_Ajax {
                 'result' => $test_result
             ]);
         }
+    }
+    
+    /**
+     * Handle incomplete lead capture - Phase 1 Implementation
+     * Delegates to the Lead Data Collector class
+     */
+    public function capture_incomplete_lead() {
+        // Ensure Lead Data Collector class is available
+        if (!class_exists('BSP_Lead_Data_Collector')) {
+            wp_send_json_error('Lead capture system not available.');
+            return;
+        }
+        
+        // Get Lead Data Collector instance and handle the request
+        $collector = BSP_Lead_Data_Collector::get_instance();
+        $collector->capture_incomplete_lead();
     }
 }
 ?>

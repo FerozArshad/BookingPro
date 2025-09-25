@@ -24,7 +24,8 @@ class BSP_Database_Unified {
         'customers' => 'bsp_customers',
         'availability' => 'bsp_availability',
         'email_logs' => 'bsp_email_logs',
-        'settings' => 'bsp_settings'
+        'settings' => 'bsp_settings',
+        'incomplete_leads' => 'bsp_incomplete_leads'
     ];
     
     public static function get_instance() {
@@ -65,7 +66,8 @@ class BSP_Database_Unified {
                 'customers' => 'bsp_customers',
                 'availability' => 'bsp_availability',
                 'email_logs' => 'bsp_email_logs',
-                'settings' => 'bsp_settings'
+                'settings' => 'bsp_settings',
+                'incomplete_leads' => 'bsp_incomplete_leads'
             ];
             
             foreach ($tables as $key => $table) {
@@ -280,6 +282,51 @@ class BSP_Database_Unified {
             KEY is_autoload (is_autoload)
         ) $charset_collate;";
         
+        // Incomplete leads table - simplified lead capture and conversion tracking
+        $incomplete_leads_sql = "CREATE TABLE " . self::$tables['incomplete_leads'] . " (
+            id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+            session_id varchar(255) NOT NULL,
+            service varchar(50),
+            zip_code varchar(10),
+            customer_name varchar(255),
+            customer_email varchar(255),
+            customer_phone varchar(20),
+            completion_percentage int(3) DEFAULT 0,
+            lead_type varchar(50),
+            
+            utm_source varchar(255),
+            utm_medium varchar(255), 
+            utm_campaign varchar(255),
+            utm_term varchar(255),
+            utm_content varchar(255),
+            gclid varchar(255),
+            referrer text,
+            
+            form_data longtext,
+            final_form_data longtext,
+            
+            is_complete tinyint(1) DEFAULT 0,
+            converted_to_booking tinyint(1) DEFAULT 0,
+            booking_post_id bigint(20),
+            conversion_timestamp datetime,
+            conversion_session_id varchar(255),
+            
+            created_at datetime NOT NULL,
+            last_updated datetime NOT NULL,
+            send_trigger varchar(50),
+            data_send_count int(3) DEFAULT 0,
+            sheets_sync_timestamp datetime DEFAULT NULL,
+            traffic_source varchar(255) DEFAULT '',
+            
+            PRIMARY KEY (id),
+            UNIQUE KEY unique_session_id (session_id),
+            KEY customer_email (customer_email),
+            KEY booking_post_id (booking_post_id),
+            KEY completion_percentage (completion_percentage),
+            KEY is_complete (is_complete),
+            KEY converted_to_booking (converted_to_booking)
+        ) $charset_collate;";
+        
         // Execute table creation
         if (!function_exists('dbDelta')) {
             if (defined('ABSPATH') && file_exists(ABSPATH . 'wp-admin/includes/upgrade.php')) {
@@ -294,6 +341,7 @@ class BSP_Database_Unified {
                 $wpdb->query($availability_sql);
                 $wpdb->query($email_logs_sql);
                 $wpdb->query($settings_sql);
+                $wpdb->query($incomplete_leads_sql);
                 return;
             }
         }
@@ -305,9 +353,96 @@ class BSP_Database_Unified {
         dbDelta($availability_sql);
         dbDelta($email_logs_sql);
         dbDelta($settings_sql);
+        dbDelta($incomplete_leads_sql);
         
         // Update database version
         update_option('bsp_unified_db_version', BSP_DB_VERSION);
+        
+        return true;
+    }
+    
+    /**
+     * Fix database table issues (like duplicate key errors)
+     */
+    public function fix_table_issues() {
+        global $wpdb;
+        
+        // Fix the incomplete_leads table duplicate key issue
+        $table_name = self::$tables['incomplete_leads'];
+        
+        // Check if table exists
+        $table_exists = $wpdb->get_var($wpdb->prepare(
+            "SHOW TABLES LIKE %s",
+            $table_name
+        ));
+        
+        if ($table_exists) {
+            // Drop the problematic table
+            $wpdb->query("DROP TABLE IF EXISTS " . $table_name);
+            bsp_debug_log("Dropped problematic incomplete_leads table", 'DATABASE');
+        }
+        
+        // Recreate the table with fixed structure
+        $charset_collate = method_exists($wpdb, 'get_charset_collate') ? $wpdb->get_charset_collate() : 'DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci';
+        
+        $incomplete_leads_sql = "CREATE TABLE " . $table_name . " (
+            id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+            session_id varchar(255) NOT NULL,
+            service varchar(50),
+            zip_code varchar(10),
+            customer_name varchar(255),
+            customer_email varchar(255),
+            customer_phone varchar(20),
+            completion_percentage int(3) DEFAULT 0,
+            lead_type varchar(50),
+            
+            utm_source varchar(255),
+            utm_medium varchar(255), 
+            utm_campaign varchar(255),
+            utm_term varchar(255),
+            utm_content varchar(255),
+            gclid varchar(255),
+            referrer text,
+            
+            form_data longtext,
+            final_form_data longtext,
+            
+            is_complete tinyint(1) DEFAULT 0,
+            converted_to_booking tinyint(1) DEFAULT 0,
+            booking_post_id bigint(20),
+            conversion_timestamp datetime,
+            conversion_session_id varchar(255),
+            
+            created_at datetime NOT NULL,
+            last_updated datetime NOT NULL,
+            send_trigger varchar(50),
+            data_send_count int(3) DEFAULT 0,
+            sheets_sync_timestamp datetime DEFAULT NULL,
+            traffic_source varchar(255) DEFAULT '',
+            
+            PRIMARY KEY (id),
+            UNIQUE KEY unique_session_id (session_id),
+            KEY customer_email (customer_email),
+            KEY booking_post_id (booking_post_id),
+            KEY completion_percentage (completion_percentage),
+            KEY is_complete (is_complete),
+            KEY converted_to_booking (converted_to_booking)
+        ) $charset_collate;";
+        
+        // Create the fixed table
+        if (!function_exists('dbDelta')) {
+            require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+        }
+        
+        $result = dbDelta($incomplete_leads_sql);
+        
+        if ($result) {
+            bsp_debug_log("Fixed incomplete_leads table structure", 'DATABASE');
+            return true;
+        } else {
+            bsp_debug_log("Failed to fix incomplete_leads table", 'ERROR');
+            return false;
+        }
     }
     
     /**

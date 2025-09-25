@@ -145,8 +145,9 @@ class Booking_System_Pro {
         // AJAX endpoints
         add_action( 'wp_ajax_bsp_get_slots', [ $this,'ajax_get_slots' ] );
         add_action( 'wp_ajax_nopriv_bsp_get_slots', [ $this,'ajax_get_slots' ] );
-        add_action( 'wp_ajax_bsp_get_availability', [ $this,'ajax_get_availability' ] );
-        add_action( 'wp_ajax_nopriv_bsp_get_availability', [ $this,'ajax_get_availability' ] );
+        // DISABLED: Availability handling moved to BSP_Ajax class for better performance
+        // add_action( 'wp_ajax_bsp_get_availability', [ $this,'ajax_get_availability' ] );
+        // add_action( 'wp_ajax_nopriv_bsp_get_availability', [ $this,'ajax_get_availability' ] );
         add_action( 'wp_ajax_bsp_submit_booking', [ $this,'ajax_submit_booking' ] );
         add_action( 'wp_ajax_nopriv_bsp_submit_booking', [ $this,'ajax_submit_booking' ] );
         

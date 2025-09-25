@@ -87,6 +87,114 @@ jQuery(document).ready(function($) {
         window.bookingFormEntryType = bookingFormEntryType;
     })();
 
+    // ─── USER TRACKING & DEBUGGING ──────────────────
+    (function initializeUserTracking() {
+        console.group('👤 BSP User Tracking Initialized');
+        console.log('Entry Type:', bookingFormEntryType);
+        console.log('Page URL:', window.location.href);
+        console.log('Referrer:', document.referrer);
+        console.log('User Agent:', navigator.userAgent);
+        console.log('Timestamp:', new Date().toISOString());
+        console.groupEnd();
+
+        // Track page visibility changes
+        document.addEventListener('visibilitychange', function() {
+            const state = document.visibilityState;
+            console.log('👁️ Page Visibility Changed:', state, 'at', new Date().toLocaleTimeString());
+            
+            // Track user engagement via visibility changes
+            if (state === 'hidden') {
+                console.log('📊 User left page - potential lead capture opportunity');
+            } else if (state === 'visible') {
+                console.log('📊 User returned to page - continued engagement');
+            }
+        });
+
+        // Track when user is about to leave the page
+        window.addEventListener('beforeunload', function(event) {
+            console.group('🚪 User Leaving Page');
+            console.log('Current Step:', currentStepIndex);
+            console.log('Form State:', formState);
+            console.log('Selected Appointments:', selectedAppointments);
+            console.log('Time on Page:', (Date.now() - window.pageLoadTime) / 1000, 'seconds');
+            
+            // Capture incomplete lead data before leaving
+            captureIncompleteLeadData('beforeunload');
+            console.groupEnd();
+        });
+
+        // Track page load time
+        window.pageLoadTime = Date.now();
+        
+        // Track form field interactions and capture lead data
+        $(document).on('input change', 'input, select, textarea', function(e) {
+            const fieldName = e.target.name || e.target.id || e.target.className;
+            const fieldValue = e.target.type === 'password' ? '[HIDDEN]' : e.target.value;
+            console.log('📝 Form Field Changed:', fieldName, '→', fieldValue);
+            
+            // Update form state based on field name/id
+            if (fieldName.includes('zip') || e.target.id.includes('zip')) {
+                formState.zip_code = fieldValue;
+                console.log('📍 Updated formState.zip_code:', fieldValue);
+            }
+            if (fieldName.includes('name') && !fieldName.includes('company')) {
+                formState.full_name = fieldValue;
+                console.log('👤 Updated formState.full_name:', fieldValue);
+            }
+            if (fieldName.includes('email')) {
+                formState.email = fieldValue;
+                console.log('📧 Updated formState.email:', fieldValue);
+            }
+            if (fieldName.includes('phone')) {
+                formState.phone = fieldValue;
+                console.log('📞 Updated formState.phone:', fieldValue);
+            }
+            if (fieldName.includes('address')) {
+                formState.address = fieldValue;
+                console.log('🏠 Updated formState.address:', fieldValue);
+            }
+            
+            // Debounced lead capture (only after 2 seconds of no activity)
+            clearTimeout(window.leadCaptureTimeout);
+            window.leadCaptureTimeout = setTimeout(function() {
+                console.log('📊 Form State before lead capture:', formState);
+                captureIncompleteLeadData('form_interaction');
+            }, 2000);
+        });
+
+        // Track button clicks and capture lead data
+        $(document).on('click', 'button, .btn', function(e) {
+            const buttonText = $(this).text().trim();
+            const buttonClass = $(this).attr('class') || '';
+            console.log('🔘 Button Clicked:', buttonText, '| Classes:', buttonClass);
+            
+            // Capture lead data on significant button clicks
+            if (buttonClass.includes('service-option') || buttonClass.includes('option-btn') || 
+                buttonClass.includes('btn-request-estimate') || buttonClass.includes('btn-next')) {
+                captureIncompleteLeadData('button_click', {button_action: buttonText});
+            }
+        });
+
+        // Track step changes
+        window.originalNextStep = window.nextStep;
+        window.nextStep = function() {
+            console.log('➡️ Moving to Next Step from:', currentStepIndex);
+            if (window.originalNextStep) {
+                window.originalNextStep();
+            }
+            console.log('✅ Now on Step:', currentStepIndex);
+        };
+
+        window.originalPreviousStep = window.previousStep;
+        window.previousStep = function() {
+            console.log('⬅️ Moving to Previous Step from:', currentStepIndex);
+            if (window.originalPreviousStep) {
+                window.originalPreviousStep();
+            }
+            console.log('✅ Now on Step:', currentStepIndex);
+        };
+    })();
+
     // ─── URL HASH MANAGEMENT (NON-BREAKING) ──────────
     function updateURLHash(hashType) {
         
@@ -1673,6 +1781,65 @@ jQuery(document).ready(function($) {
         });
     }
 
+    // ─── REFRESH ALL COMPANIES AVAILABILITY AFTER BOOKING ─────
+    function refreshAllCompanyAvailability(callback) {
+        const $allCalendars = $('.calendar-grid[data-company]');
+        let calendarsToRefresh = $allCalendars.length;
+        
+        if (calendarsToRefresh === 0) {
+            // No calendars to refresh, execute callback immediately
+            if (callback) callback();
+            return;
+        }
+        
+        console.log(`🔄 Refreshing availability for ${calendarsToRefresh} companies after booking`);
+        
+        $allCalendars.each(function() {
+            const $calendar = $(this);
+            const companyName = $calendar.data('company');
+            const companyData = CONFIG.companies?.find(c => c.name === companyName);
+            
+            if (!companyData) {
+                calendarsToRefresh--;
+                if (calendarsToRefresh === 0 && callback) callback();
+                return;
+            }
+            
+            // Fetch fresh availability from backend
+            $.ajax({
+                url: CONFIG.ajaxUrl,
+                type: 'POST',
+                data: {
+                    action: 'bsp_get_availability',
+                    nonce: CONFIG.nonce,
+                    company_ids: [companyData.id],
+                    date_from: new Date().toISOString().split('T')[0],
+                    date_to: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+                },
+                success: function(response) {
+                    if (response.success && response.data[companyData.id]) {
+                        // Update the calendar with fresh data
+                        $calendar.data('availability-data', response.data[companyData.id]);
+                        // Re-render the calendar
+                        renderCalendarDays($calendar, response.data[companyData.id], companyData.name);
+                        
+                        console.log(`✅ Refreshed availability for ${companyName}`);
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.warn(`⚠️ Failed to refresh availability for ${companyName}:`, error);
+                },
+                complete: function() {
+                    calendarsToRefresh--;
+                    // Execute callback when all calendars are refreshed
+                    if (calendarsToRefresh === 0 && callback) {
+                        callback();
+                    }
+                }
+            });
+        });
+    }
+
     function loadTimeSlots($timeSlots, company, date) {
 
         $timeSlots.empty().append('<div class="loading-spinner">Loading time slots...</div>');
@@ -2228,7 +2395,26 @@ jQuery(document).ready(function($) {
             case 'text':
                 const inputSelector = getInputSelectorForStep(step.id);
                 const inputValue = $currentStep.find(inputSelector).val().trim();
-                formState[step.id] = inputValue;
+                
+                console.log('📝 Text step data collection:', {
+                    step_id: step.id,
+                    input_selector: inputSelector,
+                    raw_value: inputValue,
+                    is_address_step: step.id === 'address'
+                });
+                
+                // Special mapping for address field
+                if (step.id === 'address') {
+                    formState.address = inputValue; // Store as 'address' for backend
+                    formState.street_address = inputValue; // Also store as street_address for compatibility
+                    console.log('🏠 Address field captured:', {
+                        address: inputValue,
+                        stored_as_address: formState.address,
+                        stored_as_street_address: formState.street_address
+                    });
+                } else {
+                    formState[step.id] = inputValue;
+                }
                 
                 // Special handling for ZIP codes - ensure proper data storage
                 if (step.id === 'zip_code' || step.id.endsWith('_zip')) {
@@ -2248,8 +2434,52 @@ jQuery(document).ready(function($) {
                 }
                 break;
             case 'form':
-                formState.phone = $('#phone-input').val().trim();
-                formState.email = $('#email-input').val().trim();
+                // Collect contact form data with explicit field mapping
+                const phoneValue = $('#phone-input').val().trim();
+                const emailValue = $('#email-input').val().trim();
+                
+                // CRITICAL ADDRESS FIX: Collect address field with multiple selectors
+                let addressValue = '';
+                const addressSelectors = [
+                    '#address-input',      // Primary address field
+                    'input[name="address"]',
+                    'input[name="street_address"]',
+                    '#street_address',
+                    '.address-field'
+                ];
+                
+                for (const selector of addressSelectors) {
+                    const addressField = $(selector);
+                    if (addressField.length > 0) {
+                        addressValue = addressField.val().trim();
+                        console.log('🏠 Address field found and captured:', {
+                            selector: selector,
+                            value: addressValue,
+                            field_exists: addressField.length > 0
+                        });
+                        break;
+                    }
+                }
+                
+                // Store multiple variations for backend compatibility
+                formState.phone = phoneValue;
+                formState.phone_number = phoneValue; // Also store as phone_number for compatibility
+                formState.email = emailValue;
+                formState.email_address = emailValue; // Also store as email_address for compatibility
+                
+                // Store address with multiple field names
+                if (addressValue) {
+                    formState.address = addressValue;
+                    formState.street_address = addressValue;
+                    formState.customer_address = addressValue;
+                    console.log('🏠 Address stored in multiple fields:', {
+                        address: formState.address,
+                        street_address: formState.street_address,
+                        customer_address: formState.customer_address
+                    });
+                } else {
+                    console.warn('⚠️ No address field found in contact form');
+                }
                 break;
             case 'datetime':
                 formState.appointments = selectedAppointments;
@@ -2456,14 +2686,64 @@ jQuery(document).ready(function($) {
             selected_time: primaryAppointment.time,
             // Additional data for multiple appointments
             appointments: JSON.stringify(selectedAppointments),
-            total_appointments: selectedAppointments.length
+            total_appointments: selectedAppointments.length,
+            // Lead continuity tracking
+            session_id: getOrCreateSessionId()
         };
 
-        // Add city and state from zip lookup service
-        if (window.zipLookupService) {
+        // DEBUG: Log address data being sent
+        console.group('🏠 ADDRESS DEBUG - Submit Booking');
+        console.log('formState.address:', formState.address);
+        console.log('formState.street_address:', formState.street_address);
+        console.log('formState.customer_address:', formState.customer_address);
+        console.log('formState.email:', formState.email);
+        console.log('bookingData.address:', bookingData.address);
+        console.log('bookingData after formState spread:', {
+            address: bookingData.address,
+            street_address: bookingData.street_address,
+            customer_address: bookingData.customer_address,
+            email: bookingData.email
+        });
+        console.groupEnd();
+
+        // Add city and state from zip lookup service or hidden form fields
+        if (window.zipLookupService && (window.zipLookupService.currentCity || window.zipLookupService.currentState)) {
             bookingData.city = window.zipLookupService.currentCity || '';
             bookingData.state = window.zipLookupService.currentState || '';
+            console.log('🏙️ City/State from zipLookupService:', {
+                city: bookingData.city,
+                state: bookingData.state,
+                serviceLoaded: window.zipLookupService.isDataLoaded
+            });
+        } else {
+            // Fallback: check hidden form fields
+            const cityInput = document.querySelector('input[name="city"], #city');
+            const stateInput = document.querySelector('input[name="state"], #state');
+            bookingData.city = cityInput ? cityInput.value : '';
+            bookingData.state = stateInput ? stateInput.value : '';
+            console.log('🏙️ City/State from hidden form fields:', {
+                city: bookingData.city,
+                state: bookingData.state,
+                cityInputFound: !!cityInput,
+                stateInputFound: !!stateInput
+            });
         }
+
+        // Additional fallback: check formState (including detected values from zip lookup)
+        if (!bookingData.city && (formState.city || formState.detectedCity)) {
+            bookingData.city = formState.city || formState.detectedCity;
+        }
+        if (!bookingData.state && (formState.state || formState.detectedState)) {
+            bookingData.state = formState.state || formState.detectedState;
+        }
+
+        // Final debug log for city/state data
+        console.log('🏙️ Final City/State values:', {
+            city: bookingData.city,
+            state: bookingData.state,
+            cityEmpty: !bookingData.city,
+            stateEmpty: !bookingData.state
+        });
 
         // Add marketing data from cookies and URL parameters
         const utmParams = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'gclid', 'referrer'];
@@ -2498,6 +2778,14 @@ jQuery(document).ready(function($) {
         // Show loading state immediately for user feedback
         $('.btn-submit').prop('disabled', true).html('Processing...');
         
+        // Debug logging for booking submission
+        console.group('🚀 BSP Booking Submission Debug');
+        console.log('📋 Form Data:', formState);
+        console.log('📅 Selected Appointments:', selectedAppointments);
+        console.log('📊 Complete Booking Data:', bookingData);
+        console.log('🌐 Ajax URL:', (typeof BSP_Ajax !== 'undefined') ? BSP_Ajax.ajaxUrl : 'undefined');
+        console.groupEnd();
+        
         if (typeof BSP_Ajax !== 'undefined' && BSP_Ajax.ajaxUrl) {
             // Submit to WordPress with optimized settings for immediate response
             $.ajax({
@@ -2507,14 +2795,34 @@ jQuery(document).ready(function($) {
                 timeout: 10000, // 10 second timeout
                 cache: false,
                 success: function(response) {
+                    console.group('✅ AJAX Success Response');
+                    console.log('Response:', response);
+                    console.log('Success:', response.success);
+                    console.log('Data:', response.data);
+                    console.groupEnd();
+                    
                     if (response.success) {
-                        showSuccessMessage(response.data);
+                        console.log('🎉 Booking successful! ID:', response.data?.booking_id || 'N/A');
+                        
+                        // Refresh availability data for all companies involved in the booking
+                        refreshAllCompanyAvailability(() => {
+                            // Show success message after refreshing data
+                            showSuccessMessage(response.data);
+                        });
                     } else {
+                        console.warn('⚠️ Booking failed:', response.data);
                         // Don't revert URL - just show error message
                         showErrorMessage(response.data || 'Booking failed. Please try again.');
                     }
                 },
                 error: function(xhr, status, error) {
+                    console.group('❌ AJAX Error');
+                    console.error('XHR Status:', xhr.status);
+                    console.error('Status:', status);
+                    console.error('Error:', error);
+                    console.error('Response Text:', xhr.responseText);
+                    console.groupEnd();
+                    
                     // Keep URL on waiting state since user is still on confirmation page
                     // Don't revert URL - just show error message
                     
@@ -2536,6 +2844,7 @@ jQuery(document).ready(function($) {
                     showErrorMessage(errorMessage);
                 },
                 complete: function() {
+                    console.log('🏁 AJAX request completed');
                     // Re-enable button regardless of success/failure
                     $('.btn-submit').prop('disabled', false).html('Confirm Booking');
                 }
@@ -2708,6 +3017,167 @@ jQuery(document).ready(function($) {
         
         nextStep();
     });
+
+    // ─── INCOMPLETE LEAD CAPTURE SYSTEM ──────────────────────────
+    
+    /**
+     * Capture incomplete lead data and send to server
+     * @param {string} trigger - What triggered this capture
+     * @param {object} extraData - Additional data to include
+     */
+    function captureIncompleteLeadData(trigger, extraData = {}) {
+        // Don't capture if we don't have enough data
+        if (!formState || Object.keys(formState).length === 0) {
+            console.log('📊 Skipping lead capture - no form data yet');
+            return;
+        }
+
+        console.group('📊 Capturing Incomplete Lead Data');
+        console.log('Trigger:', trigger);
+        console.log('Current Form State:', formState);
+        console.log('Current Step:', currentStepIndex);
+        console.log('Extra Data:', extraData);
+
+        // Calculate completion percentage
+        const completionPercentage = calculateCompletionPercentage();
+        const formStep = determineCurrentFormStep();
+
+        // Get current form values directly from DOM to ensure we capture everything
+        const getCurrentFieldValue = (selectors) => {
+            for (const selector of selectors) {
+                const element = document.querySelector(selector);
+                if (element && element.value && element.value.trim()) {
+                    return element.value.trim();
+                }
+            }
+            return '';
+        };
+
+        // Prepare lead data with comprehensive field collection
+        const leadData = {
+            action: 'bsp_capture_incomplete_lead',
+            nonce: (typeof bspLeadConfig !== 'undefined') ? bspLeadConfig.nonce : 
+                   (typeof BSP_Ajax !== 'undefined') ? BSP_Ajax.nonce : 'demo_nonce',
+            trigger: trigger,
+            session_id: getOrCreateSessionId(),
+            service_type: formState.service || '',
+            zip_code: formState.zip_code || getCurrentFieldValue(['#zip-input', '#step2-zip-input', 'input[name="zip_code"]', 'input[id*="zip"]']),
+            customer_name: formState.full_name || getCurrentFieldValue(['#full-name-input', 'input[name="full_name"]', 'input[id*="name"]:not([id*="company"])']),
+            customer_email: formState.email_address || formState.email || getCurrentFieldValue(['#email-input', 'input[name="email"]', 'input[type="email"]']),
+            customer_phone: formState.phone_number || formState.phone || getCurrentFieldValue(['#phone-input', 'input[name="phone"]', 'input[type="tel"]']),
+            customer_address: formState.street_address || formState.address || getCurrentFieldValue(['#address-input', 'input[name="street_address"]', 'input[name="address"]', 'textarea[name="address"]']),
+            completion_percentage: completionPercentage,
+            form_step: formStep,
+            current_step_index: currentStepIndex,
+            page_url: window.location.href,
+            referrer: document.referrer,
+            user_agent: navigator.userAgent,
+            timestamp: new Date().toISOString(),
+            time_on_page: Math.round((Date.now() - window.pageLoadTime) / 1000),
+            ...extraData
+        };
+
+        // Add service-specific data
+        const serviceFields = [
+            'kitchen_action', 'kitchen_component', 'roof_action', 'roof_material',
+            'windows_action', 'windows_replace_qty', 'bathroom_option', 
+            'siding_option', 'siding_material', 'decks_action', 'decks_material',
+            'adu_action', 'adu_type'
+        ];
+        
+        serviceFields.forEach(field => {
+            if (formState[field]) {
+                leadData[field] = formState[field];
+            }
+        });
+
+        // Add UTM parameters
+        const utmParams = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content'];
+        utmParams.forEach(param => {
+            const value = getURLParameter(param) || getCookie('bsp_' + param);
+            if (value) {
+                leadData[param] = value;
+            }
+        });
+
+        console.log('📤 Lead Data to Send:', leadData);
+
+        // Send to server
+        if (typeof BSP_Ajax !== 'undefined' && BSP_Ajax.ajaxUrl) {
+            $.ajax({
+                url: BSP_Ajax.ajaxUrl,
+                type: 'POST',
+                data: leadData,
+                success: function(response) {
+                    console.log('✅ Lead data captured successfully:', response);
+                },
+                error: function(xhr, status, error) {
+                    console.error('❌ Failed to capture lead data:', error);
+                }
+            });
+        } else {
+            console.warn('⚠️ BSP_Ajax not available - lead data not sent');
+        }
+
+        console.groupEnd();
+    }
+
+    /**
+     * Calculate completion percentage based on form fields
+     */
+    function calculateCompletionPercentage() {
+        const requiredFields = [
+            'service', 'zip_code', 'full_name', 'email_address', 
+            'phone_number', 'street_address'
+        ];
+        
+        const completedFields = requiredFields.filter(field => {
+            const value = formState[field];
+            return value && value.toString().trim() !== '';
+        });
+        
+        return Math.round((completedFields.length / requiredFields.length) * 100);
+    }
+
+    /**
+     * Determine current form step description
+     */
+    function determineCurrentFormStep() {
+        if (currentStepIndex >= 4) return 'Step 5: Confirmation';
+        if (currentStepIndex >= 3) return 'Step 4: Date Selection';
+        if (currentStepIndex >= 2) return 'Step 3: Contact Info';
+        if (currentStepIndex >= 1) return 'Step 2: Service Details';
+        return 'Step 1: Service Selection';
+    }
+
+    /**
+     * Get or create session ID for tracking
+     */
+    function getOrCreateSessionId() {
+        let sessionId = getCookie('bsp_session_id');
+        if (!sessionId) {
+            sessionId = 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 8);
+            setCookie('bsp_session_id', sessionId, 1); // 1 day
+        }
+        return sessionId;
+    }
+
+    /**
+     * Get URL parameter value
+     */
+    function getURLParameter(name) {
+        const urlParams = new URLSearchParams(window.location.search);
+        return urlParams.get(name);
+    }
+
+    /**
+     * Set cookie helper function
+     */
+    function setCookie(name, value, days) {
+        const expires = new Date();
+        expires.setTime(expires.getTime() + (days * 24 * 60 * 60 * 1000));
+        document.cookie = name + '=' + value + ';expires=' + expires.toUTCString() + ';path=/';
+    }
 
     (function() {
     

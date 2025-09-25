@@ -22,8 +22,12 @@ class BSP_Frontend {
         }
         
         add_action('wp_enqueue_scripts', [$this, 'enqueue_frontend_assets']);
-        add_action('init', [$this, 'register_shortcodes']);
+        // Register shortcodes immediately instead of waiting for init
+        add_action('init', [$this, 'register_shortcodes'], 5); // Earlier priority
         add_filter('the_content', [$this, 'maybe_add_booking_form']);
+        
+        // Also register shortcodes immediately in constructor for immediate availability
+        $this->register_shortcodes();
     }
     
     /**
@@ -63,7 +67,16 @@ class BSP_Frontend {
         
         // Get companies data for the frontend
         $db = BSP_Database_Unified::get_instance();
-        $companies_raw = $db->get_companies();
+        $companies_raw = $db->get_companies(['status' => 'active']);
+        
+        // Debug logging for company loading
+        if (function_exists('bsp_debug_log')) {
+            bsp_debug_log("Frontend companies loading", 'FRONTEND_COMPANIES', [
+                'companies_count' => count($companies_raw),
+                'company_names' => array_map(function($c) { return $c->name; }, $companies_raw),
+                'company_statuses' => array_map(function($c) { return $c->status ?? 'unknown'; }, $companies_raw)
+            ]);
+        }
         
         // Format companies for JavaScript
         $companies = [];
@@ -153,26 +166,65 @@ class BSP_Frontend {
         // Legacy compatibility
         add_shortcode('booking_system_form', [$this, 'booking_form_shortcode']);
         
+        // Test shortcode to verify shortcode processing works
+        add_shortcode('bsp_test', [$this, 'test_shortcode']);
+        
         if (function_exists('bsp_debug_log')) {
-            bsp_debug_log("Frontend shortcodes registered: booking_form, booking_calendar, booking_services, booking_system_form", 'FRONTEND');
+            bsp_debug_log("Frontend shortcodes registered: booking_form, booking_calendar, booking_services, booking_system_form, bsp_test", 'FRONTEND');
         }
+    }
+    
+    /**
+     * Test shortcode to verify shortcode processing works
+     */
+    public function test_shortcode($atts) {
+        if (function_exists('bsp_debug_log')) {
+            bsp_debug_log("TEST SHORTCODE EXECUTED!", 'SHORTCODE');
+        }
+        return '<div style="background: yellow; padding: 10px;">BSP Test Shortcode Working!</div>';
     }
     
     /**
      * Booking form shortcode
      */
     public function booking_form_shortcode($atts) {
-        $atts = shortcode_atts([
-            'company_id' => 0,
-            'service_id' => 0,
-            'style' => 'default',
-            'show_calendar' => 'true',
-            'show_services' => 'true'
-        ], $atts);
+        // Debug at the very start
+        if (function_exists('bsp_debug_log')) {
+            bsp_debug_log("SHORTCODE EXECUTION STARTED", 'SHORTCODE', $atts);
+        }
         
-        ob_start();
-        $this->render_booking_form($atts);
-        return ob_get_clean();
+        try {
+            $atts = shortcode_atts([
+                'company_id' => 0,
+                'service_id' => 0,
+                'style' => 'default',
+                'show_calendar' => 'true',
+                'show_services' => 'true'
+            ], $atts);
+
+            if (function_exists('bsp_debug_log')) {
+                bsp_debug_log("Processing booking form shortcode", 'SHORTCODE', $atts);
+            }
+
+            ob_start();
+            $this->render_booking_form($atts);
+            $output = ob_get_clean();
+
+            if (function_exists('bsp_debug_log')) {
+                bsp_debug_log("Booking form shortcode rendered, output length: " . strlen($output), 'SHORTCODE');
+            }
+
+            return $output;
+            
+        } catch (Exception $e) {
+            if (function_exists('bsp_debug_log')) {
+                bsp_debug_log("SHORTCODE ERROR: " . $e->getMessage(), 'ERROR', [
+                    'file' => $e->getFile(),
+                    'line' => $e->getLine()
+                ]);
+            }
+            return '<div class="bsp-error">Error loading booking form</div>';
+        }
     }
     
     /**
@@ -209,19 +261,45 @@ class BSP_Frontend {
      * Render booking form
      */
     private function render_booking_form($atts) {
-        // Extract attributes
-        $company_id = intval($atts['company_id']);
-        $service_id = intval($atts['service_id']);
+        if (function_exists('bsp_debug_log')) {
+            bsp_debug_log("RENDER METHOD STARTED", 'FRONTEND', $atts);
+        }
         
-        // Include complete template
-        $template_path = BSP_PLUGIN_DIR . 'templates/booking-form-complete.php';
-        if (file_exists($template_path)) {
-            include $template_path;
-        } else {
-            // Fallback: render basic container for JavaScript
-            echo '<div id="booking-form" class="booking-system-form">';
-            echo '<div class="bsp-loading">Loading booking form...</div>';
-            echo '</div>';
+        try {
+            // Extract attributes
+            $company_id = intval($atts['company_id']);
+            $service_id = intval($atts['service_id']);
+
+            // Include complete template
+            $template_path = BSP_PLUGIN_DIR . 'templates/booking-form-complete.php';
+
+            if (function_exists('bsp_debug_log')) {
+                bsp_debug_log("Template path: " . $template_path, 'FRONTEND');
+                bsp_debug_log("Template exists: " . (file_exists($template_path) ? 'Yes' : 'No'), 'FRONTEND');
+            }
+
+            if (file_exists($template_path)) {
+                include $template_path;
+                if (function_exists('bsp_debug_log')) {
+                    bsp_debug_log("Template included successfully", 'FRONTEND');
+                }
+            } else {
+                // Fallback: render basic container for JavaScript
+                echo '<div id="booking-form" class="booking-system-form">';
+                echo '<div class="bsp-loading">Loading booking form...</div>';
+                echo '</div>';
+                if (function_exists('bsp_debug_log')) {
+                    bsp_debug_log("Used fallback form HTML", 'FRONTEND');
+                }
+            }
+        } catch (Exception $e) {
+            if (function_exists('bsp_debug_log')) {
+                bsp_debug_log("RENDER ERROR: " . $e->getMessage(), 'ERROR', [
+                    'file' => $e->getFile(),
+                    'line' => $e->getLine()
+                ]);
+            }
+            echo '<div class="bsp-error">Error rendering booking form</div>';
         }
     }
     

@@ -330,6 +330,15 @@ class ZipCodeLookupService {
             formState.detectedState = this.currentState;
             // Debug output removed for production
         }
+        
+        // Trigger incomplete lead capture when city/state is detected
+        // This ensures that ZIP validation immediately captures the location data
+        if (window.bspLeadCapture && window.bspLeadCapture.LeadCapture) {
+            // Small delay to ensure DOM updates are complete
+            setTimeout(() => {
+                window.bspLeadCapture.LeadCapture.scheduleCapture();
+            }, 100);
+        }
     }
 
     /**

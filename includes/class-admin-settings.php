@@ -434,7 +434,7 @@ class BSP_Admin_Settings {
                     <th scope="row"><?php _e('Google Sheets Webhook URL', 'booking-system-pro'); ?></th>
                     <td>
                         <input type="url" name="bsp_integration_settings[google_sheets_webhook_url]" class="large-text" 
-                               value="<?php echo esc_attr($options['google_sheets_webhook_url'] ?? 'https://script.google.com/macros/s/AKfycbzVDlUgYtZB7ex2B32oJ3pqJQiJvWiEkK76saiQFUE3A49VSsSsXE0hb3BUormOmlyJ2g/exec'); ?>">
+                               value="<?php echo esc_attr($options['google_sheets_webhook_url'] ?? 'https://script.google.com/macros/s/AKfycbzmqDaGnI2yEfclR7PnoPOerY8GbmCGvR7hhBMuLvRLYQ3DCO2ur6j8PZ-MlOucGoxgxA/exec'); ?>">
                         <p class="description"><?php _e('Enter the Web App URL from your Google Apps Script.', 'booking-system-pro'); ?></p>
                     </td>
                 </tr>
