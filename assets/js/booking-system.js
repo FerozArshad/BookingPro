@@ -3113,6 +3113,38 @@ jQuery(document).ready(function($) {
             }
         });
 
+        // Add appointment data if available
+        if (selectedAppointments && selectedAppointments.length > 0) {
+            console.log('🎯 Adding appointment data to lead capture:', selectedAppointments);
+            
+            // Convert appointments to JSON string for server
+            leadData.appointments = JSON.stringify(selectedAppointments);
+            
+            // Extract companies, dates, and times for easier server processing
+            const companies = selectedAppointments.map(apt => apt.company).join(', ');
+            const dates = selectedAppointments.map(apt => apt.date).join(', ');
+            const times = selectedAppointments.map(apt => apt.time).join(', ');
+            
+            leadData.company = companies;
+            leadData.booking_date = dates;
+            leadData.booking_time = times;
+            
+            // Add primary appointment for single appointment scenarios
+            if (selectedAppointments.length > 0) {
+                leadData.selected_date = selectedAppointments[0].date;
+                leadData.selected_time = selectedAppointments[0].time;
+            }
+            
+            console.log('📅 Appointment fields added:', {
+                appointments: leadData.appointments,
+                company: leadData.company,
+                booking_date: leadData.booking_date,
+                booking_time: leadData.booking_time
+            });
+        } else {
+            console.log('⚠️ No appointments available to add to lead capture');
+        }
+
         console.log('📤 Lead Data to Send:', leadData);
 
         // Send to server

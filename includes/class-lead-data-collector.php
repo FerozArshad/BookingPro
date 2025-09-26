@@ -691,7 +691,7 @@ class BSP_Lead_Data_Collector {
             'service' => $lead_data['service'] ?? 'unknown'
         ]);
         
-        // Minimal data for fast save
+        // Minimal data for fast save - INCLUDE APPOINTMENT DATA
         $db_data = [
             'session_id' => $lead_data['session_id'] ?? wp_generate_uuid4(),
             'service' => $lead_data['service'] ?? '',
@@ -699,13 +699,28 @@ class BSP_Lead_Data_Collector {
             'customer_name' => $lead_data['full_name'] ?? '',
             'customer_email' => $lead_data['email'] ?? '',
             'customer_phone' => $lead_data['phone'] ?? '',
+            'customer_address' => $lead_data['address'] ?? '',
+            'city' => $lead_data['city'] ?? '',
+            'state' => $lead_data['state'] ?? '',
             'lead_type' => 'Processing',
             'created_at' => current_time('mysql'),
             'last_updated' => current_time('mysql'),
+            // CRITICAL FIX: Include appointment data in fast save
+            'form_data' => json_encode($lead_data) // This preserves ALL sanitized data including appointments
         ];
         
         bsp_debug_log("Database data prepared", 'DATABASE_DATA_PREPARED', [
-            'db_data' => $db_data
+            'db_data' => $db_data,
+            'appointment_data_included' => [
+                'has_form_data' => isset($db_data['form_data']),
+                'form_data_length' => isset($db_data['form_data']) ? strlen($db_data['form_data']) : 0,
+                'original_appointment_fields' => [
+                    'appointments' => isset($lead_data['appointments']),
+                    'company' => isset($lead_data['company']),
+                    'date' => isset($lead_data['date']),
+                    'time' => isset($lead_data['time'])
+                ]
+            ]
         ]);
         
         // Quick insert/update without heavy processing
@@ -775,20 +790,50 @@ class BSP_Lead_Data_Collector {
             return;
         }
         
-        // Full data update with all fields and processing
+        // CRITICAL FIX: Merge appointment data from stored form_data
+        $stored_form_data = [];
+        if ($existing_lead && !empty($existing_lead->form_data)) {
+            $stored_form_data = json_decode($existing_lead->form_data, true) ?? [];
+            bsp_debug_log("Retrieved stored form data from database", 'BACKGROUND_FORM_DATA', [
+                'lead_id' => $lead_id,
+                'stored_keys' => array_keys($stored_form_data),
+                'has_appointments' => isset($stored_form_data['appointments']),
+                'has_date' => isset($stored_form_data['date']),
+                'has_time' => isset($stored_form_data['time'])
+            ]);
+        }
+        
+        // Merge the stored appointment data with current lead data
+        $complete_lead_data = array_merge($lead_data, $stored_form_data);
+        
+        bsp_debug_log("Merged lead data for background processing", 'BACKGROUND_MERGE', [
+            'original_lead_keys' => array_keys($lead_data),
+            'stored_form_keys' => array_keys($stored_form_data),
+            'merged_keys' => array_keys($complete_lead_data),
+            'appointment_fields_present' => [
+                'appointments' => isset($complete_lead_data['appointments']),
+                'company' => isset($complete_lead_data['company']),
+                'date' => isset($complete_lead_data['date']),
+                'time' => isset($complete_lead_data['time']),
+                'booking_date' => isset($complete_lead_data['booking_date']),
+                'booking_time' => isset($complete_lead_data['booking_time'])
+            ]
+        ]);
+        
+        // Full data update with all fields and processing - USE MERGED DATA
         $full_db_data = [
-            'completion_percentage' => $lead_data['completion_percentage'] ?? 0,
-            'lead_type' => $this->determine_lead_type($lead_data),
-            'utm_source' => $lead_data['utm_source'] ?? '',
-            'utm_medium' => $lead_data['utm_medium'] ?? '',
-            'utm_campaign' => $lead_data['utm_campaign'] ?? '',
-            'utm_term' => $lead_data['utm_term'] ?? '',
-            'utm_content' => $lead_data['utm_content'] ?? '',
-            'gclid' => $lead_data['gclid'] ?? '',
-            'referrer' => $lead_data['referrer'] ?? '',
-            'form_data' => json_encode($this->compile_form_data($lead_data)),
+            'completion_percentage' => $complete_lead_data['completion_percentage'] ?? 0,
+            'lead_type' => $this->determine_lead_type($complete_lead_data),
+            'utm_source' => $complete_lead_data['utm_source'] ?? '',
+            'utm_medium' => $complete_lead_data['utm_medium'] ?? '',
+            'utm_campaign' => $complete_lead_data['utm_campaign'] ?? '',
+            'utm_term' => $complete_lead_data['utm_term'] ?? '',
+            'utm_content' => $complete_lead_data['utm_content'] ?? '',
+            'gclid' => $complete_lead_data['gclid'] ?? '',
+            'referrer' => $complete_lead_data['referrer'] ?? '',
+            'form_data' => json_encode($this->compile_form_data($complete_lead_data)),
             'last_updated' => current_time('mysql'),
-            'send_trigger' => $lead_data['trigger'] ?? 'form_interaction'
+            'send_trigger' => $complete_lead_data['trigger'] ?? 'form_interaction'
         ];
         
         // Update with full data
@@ -803,11 +848,11 @@ class BSP_Lead_Data_Collector {
         if ($result !== false) {
             $this->safe_lead_log("Lead background processing completed", [
                 'lead_id' => $lead_id,
-                'session_id' => $lead_data['session_id'] ?? 'unknown'
+                'session_id' => $complete_lead_data['session_id'] ?? 'unknown'
             ], 'BACKGROUND_COMPLETE');
             
-            // Trigger Google Sheets sync (this will also be background processed)
-            do_action('bsp_incomplete_lead_captured', $lead_id, array_merge($lead_data, $full_db_data));
+            // Trigger Google Sheets sync with COMPLETE data including appointments
+            do_action('bsp_incomplete_lead_captured', $lead_id, array_merge($complete_lead_data, $full_db_data));
         } else {
             $this->safe_lead_log("Background processing failed for lead", [
                 'lead_id' => $lead_id,

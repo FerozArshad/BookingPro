@@ -193,11 +193,11 @@ class BSP_Google_Sheets_Integration {
             'service' => $sheet_data['service'] ?? $lead_data['service'] ?? $this->extract_service_from_lead_data($lead_data) ?? '',
             'specifications' => $sheet_data['service_details'] ?? $lead_data['service_details'] ?? $lead_data['specifications'] ?? '',
             
-            // Company and booking info (usually empty for incomplete)
+            // Company and booking info - FIXED: Allow appointment data for incomplete leads
             'company' => $sheet_data['company'] ?? $lead_data['company'] ?? '',
-            'booking_id' => '', // Empty for incomplete leads
-            'date' => '', // Empty for incomplete leads
-            'time' => '', // Empty for incomplete leads
+            'booking_id' => $sheet_data['booking_id'] ?? $lead_data['booking_id'] ?? '', 
+            'date' => $sheet_data['date'] ?? $sheet_data['formatted_date'] ?? $lead_data['booking_date'] ?? $lead_data['date'] ?? '',
+            'time' => $sheet_data['time'] ?? $sheet_data['formatted_time'] ?? $lead_data['booking_time'] ?? $lead_data['time'] ?? '',
             
             // Progress tracking
             'form_step' => $lead_data['form_step'] ?? 0,

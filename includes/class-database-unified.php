@@ -291,6 +291,9 @@ class BSP_Database_Unified {
             customer_name varchar(255),
             customer_email varchar(255),
             customer_phone varchar(20),
+            customer_address text,
+            city varchar(100),
+            state varchar(100),
             completion_percentage int(3) DEFAULT 0,
             lead_type varchar(50),
             
@@ -393,6 +396,9 @@ class BSP_Database_Unified {
             customer_name varchar(255),
             customer_email varchar(255),
             customer_phone varchar(20),
+            customer_address text,
+            city varchar(100),
+            state varchar(100),
             completion_percentage int(3) DEFAULT 0,
             lead_type varchar(50),
             

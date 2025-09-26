@@ -185,6 +185,22 @@ class BSP_Data_Processor_Unified {
             'booking_time' => $data['booking_time'] ?? $data['selected_time'] ?? ''
         ];
         
+        // CRITICAL FIX: Add properly formatted date and time for Google Sheets
+        $formatted['formatted_date'] = $this->format_date_for_sheets($formatted['booking_date']);
+        $formatted['formatted_time'] = $this->format_time_for_sheets($formatted['booking_time']);
+        $formatted['date'] = $formatted['formatted_date']; // Fallback for Google Sheets compatibility
+        $formatted['time'] = $formatted['formatted_time']; // Fallback for Google Sheets compatibility
+        
+        // Debug the date/time formatting
+        if (function_exists('bsp_debug_log')) {
+            bsp_debug_log("Date/Time formatting for Google Sheets", 'DATETIME_FORMAT', [
+                'original_booking_date' => $formatted['booking_date'],
+                'original_booking_time' => $formatted['booking_time'],
+                'formatted_date' => $formatted['formatted_date'],
+                'formatted_time' => $formatted['formatted_time']
+            ]);
+        }
+        
         // UTM and marketing data
         $utm_fields = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'gclid', 'referrer'];
         foreach ($utm_fields as $field) {
@@ -539,6 +555,102 @@ class BSP_Data_Processor_Unified {
         
         // Default fallback company
         return 'Top Remodeling Pro';
+    }
+    
+    /**
+     * Format date for Google Sheets (MM/dd/yyyy format)
+     */
+    private function format_date_for_sheets($date_string) {
+        if (empty($date_string) || trim($date_string) === '') {
+            return '';
+        }
+        
+        // Handle multiple dates (comma-separated)
+        if (strpos($date_string, ',') !== false) {
+            $dates = array_map('trim', explode(',', $date_string));
+            $formatted_dates = [];
+            foreach ($dates as $date) {
+                $formatted = $this->format_single_date($date);
+                if (!empty($formatted)) {
+                    $formatted_dates[] = $formatted;
+                }
+            }
+            return implode(', ', array_unique($formatted_dates));
+        }
+        
+        return $this->format_single_date($date_string);
+    }
+    
+    /**
+     * Format a single date string
+     */
+    private function format_single_date($date_string) {
+        if (empty($date_string) || trim($date_string) === '') {
+            return '';
+        }
+        
+        // Try to parse the date
+        $timestamp = strtotime($date_string);
+        if ($timestamp === false || $timestamp <= 0) {
+            // If strtotime fails, return the original string
+            return trim($date_string);
+        }
+        
+        // Format as MM/dd/yyyy for Google Sheets
+        return date('m/d/Y', $timestamp);
+    }
+    
+    /**
+     * Format time for Google Sheets (h:mm AM/PM format)
+     */
+    private function format_time_for_sheets($time_string) {
+        if (empty($time_string) || trim($time_string) === '') {
+            return '';
+        }
+        
+        // Handle multiple times (comma-separated)
+        if (strpos($time_string, ',') !== false) {
+            $times = array_map('trim', explode(',', $time_string));
+            $formatted_times = [];
+            foreach ($times as $time) {
+                $formatted = $this->format_single_time($time);
+                if (!empty($formatted)) {
+                    $formatted_times[] = $formatted;
+                }
+            }
+            return implode(', ', array_unique($formatted_times));
+        }
+        
+        return $this->format_single_time($time_string);
+    }
+    
+    /**
+     * Format a single time string
+     */
+    private function format_single_time($time_string) {
+        if (empty($time_string) || trim($time_string) === '') {
+            return '';
+        }
+        
+        // Handle 24-hour format (HH:mm)
+        if (preg_match('/^(\d{1,2}):(\d{2})$/', $time_string, $matches)) {
+            $hour = (int)$matches[1];
+            $minute = (int)$matches[2];
+            
+            if ($hour >= 0 && $hour <= 23 && $minute >= 0 && $minute <= 59) {
+                $timestamp = mktime($hour, $minute, 0);
+                return date('g:i A', $timestamp); // Format as h:mm AM/PM
+            }
+        }
+        
+        // Try to parse with strtotime
+        $timestamp = strtotime($time_string);
+        if ($timestamp !== false) {
+            return date('g:i A', $timestamp);
+        }
+        
+        // Return original if can't parse
+        return trim($time_string);
     }
 }
 
