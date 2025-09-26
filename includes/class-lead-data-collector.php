@@ -377,6 +377,19 @@ class BSP_Lead_Data_Collector {
             }
         }
 
+        // CRITICAL FIX: Extract service from URL if not directly provided
+        if (empty($sanitized['service'])) {
+            $service_from_url = $this->extract_service_from_request($raw_data);
+            if ($service_from_url) {
+                $sanitized['service'] = $service_from_url;
+                bsp_debug_log("Service extracted from URL parameters", 'SERVICE_EXTRACTION', [
+                    'extracted_service' => $service_from_url,
+                    'referrer' => $raw_data['referrer'] ?? '',
+                    'extraction_method' => 'url_parameter_fallback'
+                ]);
+            }
+        }
+
         // Map alternate field names to standard ones
         if (empty($sanitized['service']) && !empty($sanitized['service_type'])) {
             $sanitized['service'] = $sanitized['service_type'];
@@ -507,6 +520,51 @@ class BSP_Lead_Data_Collector {
     /**
      * Validate minimum data requirements for incomplete leads - ULTRA RELAXED for maximum capture
      */
+    /**
+     * Extract service from URL parameters or referrer
+     */
+    private function extract_service_from_request($raw_data) {
+        // Method 1: Check URL parameters in referrer
+        if (!empty($raw_data['referrer'])) {
+            $parsed_url = parse_url($raw_data['referrer']);
+            if (isset($parsed_url['query'])) {
+                parse_str($parsed_url['query'], $params);
+                if (!empty($params['service'])) {
+                    return ucfirst(strtolower($params['service']));
+                }
+            }
+            
+            // Method 2: Check URL path for service names
+            if (isset($parsed_url['path'])) {
+                $path = strtolower($parsed_url['path']);
+                $services = ['roof', 'windows', 'bathroom', 'kitchen', 'siding', 'decks', 'adu'];
+                foreach ($services as $service) {
+                    if (strpos($path, $service) !== false) {
+                        return ucfirst($service);
+                    }
+                }
+            }
+        }
+        
+        // Method 3: Check current $_GET parameters
+        if (!empty($_GET['service'])) {
+            return ucfirst(strtolower($_GET['service']));
+        }
+        
+        // Method 4: Check current URL path
+        $current_url = $_SERVER['REQUEST_URI'] ?? '';
+        if ($current_url) {
+            $services = ['roof', 'windows', 'bathroom', 'kitchen', 'siding', 'decks', 'adu'];
+            foreach ($services as $service) {
+                if (strpos(strtolower($current_url), $service) !== false) {
+                    return ucfirst($service);
+                }
+            }
+        }
+        
+        return null;
+    }
+
     private function validate_minimum_data($lead_data) {
         // Use field mapper for consistent validation
         $mapped_data = BSP_Field_Mapper::map_form_data($lead_data);
@@ -668,6 +726,61 @@ class BSP_Lead_Data_Collector {
         
         // Use field mapper for consistent data handling
         $mapped_data = BSP_Field_Mapper::map_form_data($lead_data);
+        
+        // CRITICAL FIX: Extract service from URL if not in form data
+        if (empty($mapped_data['service_type'])) {
+            // Check referrer URL first
+            if (!empty($_SERVER['HTTP_REFERER'])) {
+                $referrer = $_SERVER['HTTP_REFERER'];
+                if (preg_match('/[?&]service=([^&]+)/', $referrer, $matches)) {
+                    $service_from_url = urldecode($matches[1]);
+                    $mapped_data['service_type'] = ucfirst(strtolower($service_from_url));
+                    bsp_debug_log("Service extracted from referrer URL", 'SERVICE_EXTRACTION', [
+                        'referrer' => $referrer,
+                        'extracted_service' => $mapped_data['service_type']
+                    ]);
+                }
+            }
+            
+            // Check current REQUEST_URI
+            if (empty($mapped_data['service_type']) && !empty($_SERVER['REQUEST_URI'])) {
+                $request_uri = $_SERVER['REQUEST_URI'];
+                if (preg_match('/[?&]service=([^&]+)/', $request_uri, $matches)) {
+                    $service_from_url = urldecode($matches[1]);
+                    $mapped_data['service_type'] = ucfirst(strtolower($service_from_url));
+                    bsp_debug_log("Service extracted from request URI", 'SERVICE_EXTRACTION', [
+                        'request_uri' => $request_uri,
+                        'extracted_service' => $mapped_data['service_type']
+                    ]);
+                }
+            }
+            
+            // Check WordPress query vars
+            if (empty($mapped_data['service_type'])) {
+                $service_from_query = get_query_var('service');
+                if (!empty($service_from_query)) {
+                    $mapped_data['service_type'] = ucfirst(strtolower($service_from_query));
+                    bsp_debug_log("Service extracted from WordPress query var", 'SERVICE_EXTRACTION', [
+                        'query_var' => $service_from_query,
+                        'extracted_service' => $mapped_data['service_type']
+                    ]);
+                }
+            }
+        }
+        
+        // Also check if service is in session data
+        if (empty($mapped_data['service_type']) && !empty($mapped_data['session_id'])) {
+            // Try to get service from existing lead data in database
+            global $wpdb;
+            $existing_lead = $this->get_incomplete_lead($mapped_data['session_id']);
+            if ($existing_lead && !empty($existing_lead->service)) {
+                $mapped_data['service_type'] = $existing_lead->service;
+                bsp_debug_log("Service retrieved from existing lead", 'SERVICE_RETRIEVAL', [
+                    'session_id' => $mapped_data['session_id'],
+                    'retrieved_service' => $mapped_data['service_type']
+                ]);
+            }
+        }
         
         $table_name = BSP_Database_Unified::$tables['incomplete_leads'];
         

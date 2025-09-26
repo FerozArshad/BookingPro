@@ -118,28 +118,43 @@ class BSP_Google_Sheets_Integration {
             'has_address' => !empty($sheet_data['customer_address'])
         ]);
 
-        // Create simplified payload matching Google Apps Script expectations exactly
+        // Create payload with ALL essential data for Google Sheets
         $webhook_payload = [
-            // Core fields expected by Google Apps Script
+            // CRITICAL: Session and identification
             'session_id' => $sheet_data['session_id'] ?? $lead_data['session_id'] ?? '',
-            'customer_name' => $sheet_data['customer_name'] ?? $lead_data['full_name'] ?? $lead_data['customer_name'] ?? '',
+            'action' => 'incomplete_lead',
+            
+            // Customer data - use multiple fallback methods
+            'name' => $sheet_data['customer_name'] ?? $lead_data['full_name'] ?? $lead_data['customer_name'] ?? $lead_data['name'] ?? '',
+            'customer_name' => $sheet_data['customer_name'] ?? $lead_data['full_name'] ?? $lead_data['customer_name'] ?? $lead_data['name'] ?? '',
             'customer_email' => $sheet_data['customer_email'] ?? $lead_data['email'] ?? $lead_data['customer_email'] ?? '',
             'customer_phone' => $sheet_data['customer_phone'] ?? $lead_data['phone'] ?? $lead_data['customer_phone'] ?? '',
             'customer_address' => $sheet_data['customer_address'] ?? $lead_data['address'] ?? $lead_data['customer_address'] ?? '',
+            
+            // Location data
             'city' => $sheet_data['city'] ?? $lead_data['city'] ?? '',
             'state' => $sheet_data['state'] ?? $lead_data['state'] ?? '',
             'zip_code' => $sheet_data['zip_code'] ?? $lead_data['zip_code'] ?? '',
-            'service' => $sheet_data['service'] ?? $lead_data['service'] ?? $lead_data['service_type'] ?? '',
+            
+            // Service data - use multiple fallback methods
+            'service' => $sheet_data['service'] ?? $lead_data['service'] ?? $lead_data['service_type'] ?? $this->extract_service_from_lead_data($lead_data) ?? '',
+            'service_type' => $sheet_data['service'] ?? $lead_data['service'] ?? $lead_data['service_type'] ?? $this->extract_service_from_lead_data($lead_data) ?? '',
+            
+            // Company and booking info
             'company' => $sheet_data['company'] ?? $lead_data['company'] ?? $lead_data['company_name'] ?? '',
             'booking_date' => $sheet_data['booking_date'] ?? $lead_data['booking_date'] ?? $lead_data['selected_date'] ?? '',
             'booking_time' => $sheet_data['booking_time'] ?? $lead_data['booking_time'] ?? $lead_data['selected_time'] ?? '',
+            
+            // UTM and tracking data
             'utm_source' => $sheet_data['utm_source'] ?? $lead_data['utm_source'] ?? '',
             'utm_medium' => $sheet_data['utm_medium'] ?? $lead_data['utm_medium'] ?? '',
             'utm_campaign' => $sheet_data['utm_campaign'] ?? $lead_data['utm_campaign'] ?? '',
             'referrer' => $sheet_data['referrer'] ?? $lead_data['referrer'] ?? '',
+            
+            // Status fields
             'lead_status' => 'In Progress',
             'completion_percentage' => $sheet_data['completion_percentage'] ?? 0,
-            'action' => 'incomplete_lead',
+            
             // Service-specific fields - only include if they have values
             'windows_action' => $lead_data['windows_action'] ?? '',
             'windows_replace_qty' => $lead_data['windows_replace_qty'] ?? '',
@@ -151,10 +166,11 @@ class BSP_Google_Sheets_Integration {
             'adu_action' => $lead_data['adu_action'] ?? ''
         ];
         
-        // Remove empty fields to avoid payload bloat
-        $webhook_payload = array_filter($webhook_payload, function($value) {
-            return $value !== '' && $value !== null;
-        });
+        // Remove empty fields but keep essential ones
+        $essential_fields = ['session_id', 'action', 'lead_status'];
+        $webhook_payload = array_filter($webhook_payload, function($value, $key) use ($essential_fields) {
+            return in_array($key, $essential_fields) || ($value !== '' && $value !== null);
+        }, ARRAY_FILTER_USE_BOTH);
         
         // Send to webhook server
         $result = $this->send_webhook_data($webhook_payload);
@@ -183,6 +199,54 @@ class BSP_Google_Sheets_Integration {
     }
     
     /**
+     * Extract service from lead data using multiple fallback methods
+     */
+    private function extract_service_from_lead_data($lead_data) {
+        // Method 1: Check referrer URL for service parameter
+        if (!empty($lead_data['referrer'])) {
+            $parsed_url = parse_url($lead_data['referrer']);
+            if (isset($parsed_url['query'])) {
+                parse_str($parsed_url['query'], $params);
+                if (!empty($params['service'])) {
+                    return ucfirst(strtolower($params['service']));
+                }
+            }
+            
+            // Method 2: Check URL path for service names
+            if (isset($parsed_url['path'])) {
+                $path = strtolower($parsed_url['path']);
+                $services = ['roof', 'windows', 'bathroom', 'kitchen', 'siding', 'decks', 'adu'];
+                foreach ($services as $service) {
+                    if (strpos($path, $service) !== false) {
+                        return ucfirst($service);
+                    }
+                }
+            }
+        }
+        
+        // Method 3: Check service-specific fields to determine service type
+        $service_indicators = [
+            'Roof' => ['roof_action', 'roof_material'],
+            'Windows' => ['windows_action', 'windows_replace_qty'],
+            'Bathroom' => ['bathroom_option'],
+            'Kitchen' => ['kitchen_action', 'kitchen_component'],
+            'Siding' => ['siding_option', 'siding_material'],
+            'Decks' => ['decks_action', 'decks_material'],
+            'ADU' => ['adu_action', 'adu_type']
+        ];
+        
+        foreach ($service_indicators as $service => $fields) {
+            foreach ($fields as $field) {
+                if (!empty($lead_data[$field])) {
+                    return $service;
+                }
+            }
+        }
+        
+        return null;
+    }
+
+    /**
      * Send data to webhook server for Google Sheets integration
      */
     private function send_webhook_data($payload) {
@@ -206,6 +270,15 @@ class BSP_Google_Sheets_Integration {
             return ['success' => true, 'message' => 'Data logged locally (no webhook URL)'];
         }
         
+        // Debug: Log exact payload being sent
+        bsp_debug_log("WEBHOOK DEBUG - Exact payload being sent", 'WEBHOOK_DEBUG', [
+            'payload' => $payload,
+            'payload_json' => json_encode($payload),
+            'payload_count' => count($payload),
+            'session_id_type' => gettype($payload['session_id'] ?? 'missing'),
+            'action_value' => $payload['action'] ?? 'missing'
+        ]);
+        
         // Try form data format first (Google Apps Script prefers this)
         $form_args = [
             'method' => 'POST',
@@ -213,7 +286,7 @@ class BSP_Google_Sheets_Integration {
                 'User-Agent' => 'BookingPro-WordPress-Plugin/1.0'
             ],
             'body' => $payload, // WordPress will convert array to form data
-            'timeout' => 15,
+            'timeout' => 30, // Increased timeout
             'blocking' => true
         ];
         
@@ -376,16 +449,16 @@ class BSP_Google_Sheets_Integration {
                 'lead_status' => $webhook_payload['lead_status']
             ]);
             
-            // Create streamlined payload for Google Sheets (avoid timeout issues with too many fields)
+            // Create streamlined payload for Google Sheets - match format
             $streamlined_payload = [
-                // Core identification - CRITICAL: booking_id must be the actual WordPress post ID
-                'spreadsheet_id' => $this->spreadsheet_id,
+                // Core identification
                 'session_id' => $session_id,
-                'booking_id' => $booking_id, // Always use the actual WordPress post ID
+                'booking_id' => $booking_id, // WordPress post ID
                 'action' => 'complete_booking',
                 'lead_status' => 'Complete',
                 
-                // Customer info
+                // Customer info - use both field names for compatibility
+                'name' => $webhook_payload['customer_name'] ?? '',
                 'customer_name' => $webhook_payload['customer_name'] ?? '',
                 'customer_email' => $webhook_payload['customer_email'] ?? '',
                 'customer_phone' => $webhook_payload['customer_phone'] ?? '',
@@ -398,6 +471,7 @@ class BSP_Google_Sheets_Integration {
                 
                 // Booking details
                 'service' => $webhook_payload['service'] ?? '',
+                'service_type' => $webhook_payload['service'] ?? '',
                 'company' => $webhook_payload['company'] ?? '',
                 'booking_date' => $webhook_payload['booking_date'] ?? '',
                 'booking_time' => $webhook_payload['booking_time'] ?? '',

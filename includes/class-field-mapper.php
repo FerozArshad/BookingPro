@@ -19,8 +19,8 @@ class BSP_Field_Mapper {
         'customer_address' => ['address', 'customer_address'],
         
         // Service fields
-        'service_type' => ['service', 'service_type'],
-        'service_details' => ['service_details', 'specifications', '_specifications'],
+        'service_type' => ['service', 'service_type', 'selected_service'],
+        'service_details' => ['service_details', 'specifications', '_specifications', 'description'],
         
         // Location fields
         'zip_code' => ['zip_code', 'zipcode', 'postal_code'],
