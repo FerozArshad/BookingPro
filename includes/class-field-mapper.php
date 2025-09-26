@@ -14,16 +14,16 @@ class BSP_Field_Mapper {
     private static $field_mappings = [
         // Customer fields
         'customer_name' => ['full_name', 'customer_name', 'name'],
-        'customer_email' => ['email', 'customer_email'],
+        'customer_email' => ['email', 'customer_email', 'email_address'],
         'customer_phone' => ['phone', 'customer_phone', 'phone_number'],
-        'customer_address' => ['address', 'customer_address'],
+        'customer_address' => ['address', 'customer_address', 'street_address'],
         
         // Service fields
         'service_type' => ['service', 'service_type', 'selected_service'],
         'service_details' => ['service_details', 'specifications', '_specifications', 'description'],
         
         // Location fields
-        'zip_code' => ['zip_code', 'zipcode', 'postal_code'],
+        'zip_code' => ['zip_code', 'zipcode', 'postal_code', 'bathroom_zip', 'roof_zip', 'windows_zip', 'siding_zip', 'kitchen_zip', 'decks_zip', 'adu_zip'],
         'city' => ['city'],
         'state' => ['state'],
         

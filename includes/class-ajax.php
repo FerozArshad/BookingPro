@@ -530,6 +530,19 @@ class BSP_Ajax {
         
         $primary_booking_id = $created_booking_ids[0];
         
+        // CRITICAL: Mark lead as converted IMMEDIATELY - BEFORE background jobs
+        if ($session_id && class_exists('BSP_Lead_Conversion_Tracker')) {
+            $conversion_tracker = BSP_Lead_Conversion_Tracker::get_instance();
+            if ($conversion_tracker && method_exists($conversion_tracker, 'track_lead_conversion')) {
+                $conversion_tracker->track_lead_conversion($session_id, $primary_booking_id, $booking_data);
+                bsp_debug_log("=== LEAD MARKED AS CONVERTED IMMEDIATELY ===", 'CONVERSION', [
+                    'booking_id' => $primary_booking_id,
+                    'session_id' => $session_id,
+                    'timing' => 'BEFORE_BACKGROUND_JOBS'
+                ]);
+            }
+        }
+        
         // CRITICAL: Schedule all background jobs AFTER the response is sent using shutdown hook
         add_action('shutdown', function() use ($primary_booking_id, $booking_data, $session_id) {
             bsp_debug_log("=== SCHEDULING BACKGROUND JOBS AFTER RESPONSE ===", 'INTEGRATION', [

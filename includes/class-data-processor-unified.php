@@ -180,7 +180,7 @@ class BSP_Data_Processor_Unified {
             'customer_address' => $data['customer_address'] ?? $data['address'] ?? '',
             'city' => $data['city'] ?? '',
             'state' => $data['state'] ?? '',
-            'company' => $data['company'] ?? $data['company_name'] ?? '',
+            'company' => $this->get_company_for_lead($data),
             'booking_date' => $data['booking_date'] ?? $data['selected_date'] ?? '',
             'booking_time' => $data['booking_time'] ?? $data['selected_time'] ?? ''
         ];
@@ -506,6 +506,39 @@ class BSP_Data_Processor_Unified {
                 'session_id', 'capture_timestamp', 'ip_address', 'user_agent', 'form_step'
             ]
         ];
+    }
+    
+    /**
+     * Get appropriate company for lead based on service type and existing data
+     */
+    private function get_company_for_lead($data) {
+        // If company is already provided, use it
+        if (!empty($data['company']) || !empty($data['company_name'])) {
+            return $data['company'] ?? $data['company_name'];
+        }
+        
+        // Default company mapping based on service type
+        $service_company_map = [
+            'Roof' => 'Top Remodeling Pro',
+            'Roofing' => 'Top Remodeling Pro', 
+            'Windows' => 'RH Remodeling',
+            'Window' => 'RH Remodeling',
+            'Bathroom' => 'RH Remodeling',
+            'Kitchen' => 'RH Remodeling',
+            'Siding' => 'Eco Green',
+            'Decks' => 'Top Remodeling Pro',
+            'Deck' => 'Top Remodeling Pro',
+            'ADU' => 'RH Remodeling'
+        ];
+        
+        $service = $data['service'] ?? $data['service_type'] ?? '';
+        
+        if (!empty($service) && isset($service_company_map[$service])) {
+            return $service_company_map[$service];
+        }
+        
+        // Default fallback company
+        return 'Top Remodeling Pro';
     }
 }
 

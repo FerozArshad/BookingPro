@@ -369,8 +369,17 @@ class BSP_Lead_Data_Collector {
     private function sanitize_lead_data($raw_data) {
         $sanitized = [];
         
-        // Basic contact fields
-        $text_fields = ['service', 'service_type', 'full_name', 'customer_name', 'email', 'customer_email', 'phone', 'customer_phone', 'address', 'customer_address', 'city', 'state', 'zip_code', 'company'];
+        // Basic contact fields with form field name variations
+        $text_fields = [
+            'service', 'service_type', 
+            'full_name', 'customer_name', 
+            'email', 'customer_email', 'email_address',
+            'phone', 'customer_phone', 'phone_number',
+            'address', 'customer_address', 'street_address',
+            'city', 'state', 
+            'zip_code', 'bathroom_zip', 'zip',
+            'company'
+        ];
         foreach ($text_fields as $field) {
             if (isset($raw_data[$field]) && !empty($raw_data[$field])) {
                 $sanitized[$field] = sanitize_text_field($raw_data[$field]);
@@ -400,11 +409,23 @@ class BSP_Lead_Data_Collector {
         if (empty($sanitized['email']) && !empty($sanitized['customer_email'])) {
             $sanitized['email'] = $sanitized['customer_email'];
         }
+        if (empty($sanitized['email']) && !empty($sanitized['email_address'])) {
+            $sanitized['email'] = $sanitized['email_address'];
+        }
         if (empty($sanitized['phone']) && !empty($sanitized['customer_phone'])) {
             $sanitized['phone'] = $sanitized['customer_phone'];
         }
+        if (empty($sanitized['phone']) && !empty($sanitized['phone_number'])) {
+            $sanitized['phone'] = $sanitized['phone_number'];
+        }
         if (empty($sanitized['address']) && !empty($sanitized['customer_address'])) {
             $sanitized['address'] = $sanitized['customer_address'];
+        }
+        if (empty($sanitized['address']) && !empty($sanitized['street_address'])) {
+            $sanitized['address'] = $sanitized['street_address'];
+        }
+        if (empty($sanitized['zip_code']) && !empty($sanitized['bathroom_zip'])) {
+            $sanitized['zip_code'] = $sanitized['bathroom_zip'];
         }
         
         // Service-specific fields
@@ -425,12 +446,36 @@ class BSP_Lead_Data_Collector {
         }
         
         // CRITICAL FIX: Handle appointment data for incomplete leads on confirmation page
+        bsp_debug_log("Processing appointment data in sanitize_lead_data", 'APPOINTMENTS_DEBUG', [
+            'has_appointments_key' => isset($raw_data['appointments']),
+            'appointments_value' => $raw_data['appointments'] ?? 'NOT_SET',
+            'appointments_type' => gettype($raw_data['appointments'] ?? null),
+            'appointments_empty' => empty($raw_data['appointments']),
+            'all_raw_keys' => array_keys($raw_data),
+            'appointment_related_keys' => array_intersect_key($raw_data, array_flip([
+                'appointments', 'company', 'booking_date', 'booking_time', 
+                'selected_date', 'selected_time', 'date', 'time'
+            ]))
+        ]);
+        
         if (isset($raw_data['appointments']) && !empty($raw_data['appointments'])) {
+            bsp_debug_log("Found appointments data", 'APPOINTMENTS_FOUND', [
+                'appointments_raw' => $raw_data['appointments']
+            ]);
+            
             // Handle both JSON string and array formats
             if (is_string($raw_data['appointments'])) {
                 $appointments = json_decode(stripslashes($raw_data['appointments']), true);
+                bsp_debug_log("Decoded appointments from JSON string", 'APPOINTMENTS_DECODED', [
+                    'json_string' => $raw_data['appointments'],
+                    'decoded_result' => $appointments,
+                    'json_error' => json_last_error_msg()
+                ]);
             } else {
                 $appointments = $raw_data['appointments'];
+                bsp_debug_log("Using appointments as array", 'APPOINTMENTS_ARRAY', [
+                    'appointments' => $appointments
+                ]);
             }
             
             if (is_array($appointments) && !empty($appointments)) {
@@ -454,27 +499,65 @@ class BSP_Lead_Data_Collector {
                 if (!empty($dates)) {
                     $sanitized['booking_date'] = implode(', ', array_unique($dates));
                     $sanitized['selected_date'] = $dates[0]; // Primary date for compatibility
+                    $sanitized['date'] = $dates[0]; // CRITICAL: Also set 'date' field for Google Sheets
                 }
                 if (!empty($times)) {
                     $sanitized['booking_time'] = implode(', ', array_unique($times));
                     $sanitized['selected_time'] = $times[0]; // Primary time for compatibility
+                    $sanitized['time'] = $times[0]; // CRITICAL: Also set 'time' field for Google Sheets
                 }
                 
                 bsp_debug_log("Appointment data extracted for incomplete lead", 'LEAD_APPOINTMENTS', [
                     'appointments_count' => count($appointments),
                     'companies' => $companies,
                     'dates' => $dates,
-                    'times' => $times
+                    'times' => $times,
+                    'sanitized_fields_set' => [
+                        'company' => $sanitized['company'] ?? 'NOT_SET',
+                        'booking_date' => $sanitized['booking_date'] ?? 'NOT_SET',
+                        'booking_time' => $sanitized['booking_time'] ?? 'NOT_SET',
+                        'selected_date' => $sanitized['selected_date'] ?? 'NOT_SET',
+                        'selected_time' => $sanitized['selected_time'] ?? 'NOT_SET',
+                        'date' => $sanitized['date'] ?? 'NOT_SET',
+                        'time' => $sanitized['time'] ?? 'NOT_SET'
+                    ]
+                ]);
+            } else {
+                bsp_debug_log("Appointments data is not valid array", 'APPOINTMENTS_INVALID', [
+                    'appointments' => $appointments,
+                    'is_array' => is_array($appointments),
+                    'is_empty' => empty($appointments)
                 ]);
             }
+        } else {
+            bsp_debug_log("No appointments data found in raw data", 'APPOINTMENTS_MISSING', [
+                'has_appointments_key' => isset($raw_data['appointments']),
+                'appointments_value' => $raw_data['appointments'] ?? 'KEY_NOT_SET',
+                'is_empty' => isset($raw_data['appointments']) ? empty($raw_data['appointments']) : 'KEY_NOT_SET'
+            ]);
         }
         
-        // Handle individual appointment data (fallback)
-        $appointment_fields = ['company', 'selected_date', 'selected_time', 'booking_date', 'booking_time'];
+        // Handle individual appointment data (fallback and direct field mapping)
+        $appointment_fields = [
+            'company', 'selected_date', 'selected_time', 
+            'booking_date', 'booking_time',
+            'company_name', 'appointment_date', 'appointment_time'
+        ];
         foreach ($appointment_fields as $field) {
             if (isset($raw_data[$field]) && !empty($raw_data[$field]) && !isset($sanitized[$field])) {
                 $sanitized[$field] = sanitize_text_field($raw_data[$field]);
             }
+        }
+        
+        // Additional mapping for appointment data consistency
+        if (!isset($sanitized['company']) && !empty($sanitized['company_name'])) {
+            $sanitized['company'] = $sanitized['company_name'];
+        }
+        if (!isset($sanitized['booking_date']) && !empty($sanitized['selected_date'])) {
+            $sanitized['booking_date'] = $sanitized['selected_date'];
+        }
+        if (!isset($sanitized['booking_time']) && !empty($sanitized['selected_time'])) {
+            $sanitized['booking_time'] = $sanitized['selected_time'];
         }
         
         // UTM/Marketing data
@@ -676,6 +759,21 @@ class BSP_Lead_Data_Collector {
         global $wpdb;
         
         $table_name = BSP_Database_Unified::$tables['incomplete_leads'];
+        
+        // CRITICAL: Check if lead has already been converted to booking
+        $existing_lead = $wpdb->get_row($wpdb->prepare(
+            "SELECT * FROM $table_name WHERE id = %d",
+            $lead_id
+        ));
+        
+        if ($existing_lead && !empty($existing_lead->booking_post_id)) {
+            $this->safe_lead_log("SKIPPING: Lead already converted to booking", [
+                'lead_id' => $lead_id,
+                'booking_post_id' => $existing_lead->booking_post_id,
+                'session_id' => $lead_data['session_id'] ?? 'unknown'
+            ], 'PROCESSING_SKIP_CONVERTED');
+            return;
+        }
         
         // Full data update with all fields and processing
         $full_db_data = [

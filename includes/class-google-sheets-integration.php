@@ -66,16 +66,42 @@ class BSP_Google_Sheets_Integration {
      */
     public function sync_incomplete_lead($lead_id, $lead_data) {
         $session_id = $lead_data['session_id'] ?? 'unknown';
-        $cache_key = 'incomplete_' . $session_id . '_' . ($lead_data['form_step'] ?? 'unknown') . '_' . time(); // Add timestamp to prevent collision
         
-        // Check if we've already sent this lead data recently (within 30 seconds)
+        // CRITICAL FIX: Improved deduplication - check if lead already converted
+        global $wpdb;
+        BSP_Database_Unified::init_tables();
+        $table_name = BSP_Database_Unified::$tables['incomplete_leads'];
+        
+        $existing_lead = $wpdb->get_row($wpdb->prepare(
+            "SELECT * FROM $table_name WHERE session_id = %s ORDER BY id DESC LIMIT 1",
+            $session_id
+        ));
+        
+        // If lead is already converted to booking, stop sending incomplete data
+        if ($existing_lead && !empty($existing_lead->booking_post_id)) {
+            bsp_debug_log("SKIPPING: Lead already converted to booking", 'SHEETS_SKIP_CONVERTED', [
+                'session_id' => $session_id,
+                'booking_post_id' => $existing_lead->booking_post_id,
+                'lead_type' => $existing_lead->lead_type ?? 'unknown'
+            ]);
+            return true; // Return success but don't send webhook
+        }
+        
+        // Create improved cache key with form step and completion percentage
+        $completion = $lead_data['completion_percentage'] ?? 0;
+        $form_step = $lead_data['form_step'] ?? 0;
+        $cache_key = 'incomplete_' . $session_id . '_step_' . $form_step . '_completion_' . $completion;
+        
+        // Check recent webhook cache (prevent duplicate sends within 60 seconds)
         if (isset(self::$webhook_cache[$cache_key])) {
             $time_diff = time() - self::$webhook_cache[$cache_key];
-            if ($time_diff < 30) {
-                bsp_debug_log("Skipping duplicate webhook for same lead", 'SHEETS_DUPLICATE_SKIP', [
+            if ($time_diff < 60) {
+                bsp_debug_log("SKIPPING: Duplicate webhook within 60 seconds", 'SHEETS_DUPLICATE_SKIP', [
                     'session_id' => $session_id,
                     'cache_key' => $cache_key,
-                    'time_since_last' => $time_diff
+                    'time_since_last' => $time_diff,
+                    'form_step' => $form_step,
+                    'completion' => $completion
                 ]);
                 return true;
             }
@@ -116,6 +142,28 @@ class BSP_Google_Sheets_Integration {
             'has_state' => !empty($sheet_data['state']),
             'has_company' => !empty($sheet_data['company']),
             'has_address' => !empty($sheet_data['customer_address'])
+        ]);
+
+        // CRITICAL DEBUG: Log service-specific fields from original lead_data
+        $service_fields_debug = [];
+        $all_service_fields = [
+            'roof_action', 'roof_material',
+            'windows_action', 'windows_replace_qty', 'windows_repair_needed',
+            'bathroom_option',
+            'siding_option', 'siding_material', 
+            'kitchen_action', 'kitchen_component',
+            'decks_action', 'decks_material',
+            'adu_action', 'adu_type'
+        ];
+        
+        foreach ($all_service_fields as $field) {
+            $service_fields_debug[$field] = $lead_data[$field] ?? 'missing';
+        }
+        
+        bsp_debug_log("Service-specific fields analysis", 'SERVICE_FIELDS_DEBUG', [
+            'service_detected' => $lead_data['service'] ?? 'no_service',
+            'service_fields' => $service_fields_debug,
+            'lead_data_keys' => array_keys($lead_data)
         ]);
 
         // Create a comprehensive payload matching all Google Sheets columns
@@ -397,10 +445,10 @@ class BSP_Google_Sheets_Integration {
                 continue;
             }
             
-            // Clean the key name
+            // Clean the key name - ensure it's Apps Script compatible
             $clean_key = preg_replace('/[^a-zA-Z0-9_]/', '_', $key);
             
-            // Handle the value
+            // Handle the value - ensure Apps Script compatibility
             if ($value === null) {
                 $clean_payload[$clean_key] = '';
             } elseif (is_bool($value)) {
@@ -408,9 +456,12 @@ class BSP_Google_Sheets_Integration {
             } elseif (is_array($value) || is_object($value)) {
                 $clean_payload[$clean_key] = json_encode($value);
             } else {
-                // Convert to string and clean
+                // Convert to string and clean - handle special characters that might break Apps Script
                 $string_value = (string) $value;
-                $clean_payload[$clean_key] = trim($string_value);
+                // Remove any characters that might cause Apps Script issues
+                $string_value = preg_replace('/[\x00-\x1F\x7F]/', '', $string_value); // Remove control characters
+                $string_value = trim($string_value);
+                $clean_payload[$clean_key] = $string_value;
             }
         }
         
@@ -444,13 +495,40 @@ class BSP_Google_Sheets_Integration {
      */
     public function sync_converted_lead($booking_id, $booking_data) {
         $session_id = $booking_data['session_id'] ?? $this->extract_session_id_from_booking($booking_data);
+        
+        // CRITICAL: Mark the lead as converted in database to stop incomplete webhooks
+        if ($session_id) {
+            global $wpdb;
+            BSP_Database_Unified::init_tables();
+            $table_name = BSP_Database_Unified::$tables['incomplete_leads'];
+            
+            $wpdb->update(
+                $table_name,
+                [
+                    'booking_post_id' => $booking_id,
+                    'converted_to_booking' => 1,
+                    'lead_type' => 'Complete',
+                    'conversion_timestamp' => current_time('mysql')
+                ],
+                ['session_id' => $session_id],
+                ['%d', '%d', '%s', '%s'],
+                ['%s']
+            );
+            
+            bsp_debug_log("Marked lead as converted in database", 'CONVERSION_TRACKING', [
+                'booking_id' => $booking_id,
+                'session_id' => $session_id,
+                'update_result' => 'success'
+            ]);
+        }
+        
         $cache_key = 'complete_' . $booking_id . '_' . $session_id;
         
         // Check if we've already sent this booking data recently
         if (isset(self::$webhook_cache[$cache_key])) {
             $time_diff = time() - self::$webhook_cache[$cache_key];
-            if ($time_diff < 60) { // Longer window for complete bookings
-                bsp_debug_log("Skipping duplicate webhook for complete booking", 'SHEETS_DUPLICATE_SKIP', [
+            if ($time_diff < 300) { // 5 minute window for complete bookings
+                bsp_debug_log("SKIPPING: Complete booking already sent recently", 'SHEETS_DUPLICATE_SKIP', [
                     'booking_id' => $booking_id,
                     'session_id' => $session_id,
                     'cache_key' => $cache_key,
@@ -492,7 +570,24 @@ class BSP_Google_Sheets_Integration {
                 'service' => get_post_meta($booking_id, '_service_type', true) ?: ($booking_data['service'] ?? ''),
                 'city' => get_post_meta($booking_id, '_city', true) ?: ($booking_data['city'] ?? ''),
                 'state' => get_post_meta($booking_id, '_state', true) ?: ($booking_data['state'] ?? ''),
-                'zip_code' => get_post_meta($booking_id, '_zip_code', true) ?: ($booking_data['zip_code'] ?? '')
+                'zip_code' => get_post_meta($booking_id, '_zip_code', true) ?: ($booking_data['zip_code'] ?? ''),
+                'specifications' => get_post_meta($booking_id, '_specifications', true) ?: ($booking_data['service_details'] ?? ''),
+                
+                // CRITICAL: Extract ALL service-specific fields from post meta
+                'roof_action' => get_post_meta($booking_id, '_roof_action', true) ?: ($booking_data['roof_action'] ?? ''),
+                'roof_material' => get_post_meta($booking_id, '_roof_material', true) ?: ($booking_data['roof_material'] ?? ''),
+                'windows_action' => get_post_meta($booking_id, '_windows_action', true) ?: ($booking_data['windows_action'] ?? ''),
+                'windows_replace_qty' => get_post_meta($booking_id, '_windows_replace_qty', true) ?: ($booking_data['windows_replace_qty'] ?? ''),
+                'windows_repair_needed' => get_post_meta($booking_id, '_windows_repair_needed', true) ?: ($booking_data['windows_repair_needed'] ?? ''),
+                'bathroom_option' => get_post_meta($booking_id, '_bathroom_option', true) ?: ($booking_data['bathroom_option'] ?? ''),
+                'siding_option' => get_post_meta($booking_id, '_siding_option', true) ?: ($booking_data['siding_option'] ?? ''),
+                'siding_material' => get_post_meta($booking_id, '_siding_material', true) ?: ($booking_data['siding_material'] ?? ''),
+                'kitchen_action' => get_post_meta($booking_id, '_kitchen_action', true) ?: ($booking_data['kitchen_action'] ?? ''),
+                'kitchen_component' => get_post_meta($booking_id, '_kitchen_component', true) ?: ($booking_data['kitchen_component'] ?? ''),
+                'decks_action' => get_post_meta($booking_id, '_decks_action', true) ?: ($booking_data['decks_action'] ?? ''),
+                'decks_material' => get_post_meta($booking_id, '_decks_material', true) ?: ($booking_data['decks_material'] ?? ''),
+                'adu_action' => get_post_meta($booking_id, '_adu_action', true) ?: ($booking_data['adu_action'] ?? ''),
+                'adu_type' => get_post_meta($booking_id, '_adu_type', true) ?: ($booking_data['adu_type'] ?? '')
             ];
             
             bsp_debug_log("WordPress post meta data extracted", 'SHEETS_BOOKING_SYNC', [
@@ -500,7 +595,16 @@ class BSP_Google_Sheets_Integration {
                 'company' => $wp_booking_data['company'],
                 'booking_date' => $wp_booking_data['booking_date'],
                 'booking_time' => $wp_booking_data['booking_time'],
-                'customer_address' => $wp_booking_data['customer_address']
+                'customer_address' => $wp_booking_data['customer_address'],
+                'service_fields_extracted' => [
+                    'roof_action' => $wp_booking_data['roof_action'] ?: 'empty',
+                    'roof_material' => $wp_booking_data['roof_material'] ?: 'empty',
+                    'windows_action' => $wp_booking_data['windows_action'] ?: 'empty',
+                    'bathroom_option' => $wp_booking_data['bathroom_option'] ?: 'empty',
+                    'adu_action' => $wp_booking_data['adu_action'] ?: 'empty',
+                    'adu_type' => $wp_booking_data['adu_type'] ?: 'empty'
+                ],
+                'specifications' => $wp_booking_data['specifications'] ?: 'empty'
             ]);
             
             // Merge WordPress booking data with original booking data and session data

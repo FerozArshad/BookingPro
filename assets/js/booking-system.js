@@ -63,6 +63,19 @@ jQuery(document).ready(function($) {
     let currentStepIndex = 0;
     let formState = {};
     let selectedAppointments = []; // Array to store multiple company/date/time selections
+    
+    // Make selectedAppointments accessible globally for lead capture system (non-destructive approach)
+    window.getSelectedAppointments = function() {
+        return selectedAppointments;
+    };
+    
+    // Also expose it via window for backward compatibility, but keep original declaration intact
+    Object.defineProperty(window, 'selectedAppointments', {
+        get: function() { return selectedAppointments; },
+        set: function(value) { selectedAppointments = value; },
+        enumerable: true,
+        configurable: true
+    });
 
     let bookingFormEntryType = 'unknown';
     (function detectEntryMethod() {

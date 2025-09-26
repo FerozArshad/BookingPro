@@ -27,10 +27,18 @@
         safeIntegration: null,
         sessionId: null,
         captureTimer: null,
+        periodicTimer: null, // Add periodic timer reference
         lastCaptureData: null,
         isInitialized: false,
+        isDestroyed: false, // Add destruction flag
         
         init: async function() {
+            // CRITICAL: Prevent multiple initializations
+            if (this.isInitialized) {
+                console.warn('BSP Lead Capture: Already initialized, skipping');
+                return;
+            }
+            
             // Wait for dependencies
             await waitForDependencies();
             
@@ -49,13 +57,12 @@
             this.startPeriodicCapture();
             this.isInitialized = true;
             
-            if (this.config.debug) {
-                console.log('BSP Lead Capture initialized with UTM integration', {
-                    sessionId: this.sessionId,
-                    config: this.config,
-                    utmData: this.getUTMData()
-                });
-            }
+            console.log('BSP Lead Capture initialized', {
+                sessionId: this.sessionId,
+                config: this.config,
+                utmData: this.getUTMData(),
+                timestamp: new Date().toISOString()
+            });
         },
         
         generateSessionId: function() {
@@ -239,13 +246,32 @@
                 }
             });
             
-            // Also capture on beforeunload
+            // CRITICAL FIX: Properly handle page unload and cleanup
             window.addEventListener('beforeunload', () => {
+                console.log('BSP Lead Capture: Page unloading - final capture and cleanup');
                 this.captureLeadData(true);
+                this.destroy(); // Clean up timers and resources
+            });
+            
+            // Also handle page hide (more reliable than beforeunload)
+            window.addEventListener('pagehide', () => {
+                console.log('BSP Lead Capture: Page hiding - cleanup');
+                this.destroy();
+            });
+            
+            // Handle unload as final fallback
+            window.addEventListener('unload', () => {
+                console.log('BSP Lead Capture: Page unloading - emergency cleanup');
+                this.destroy();
             });
         },
         
         scheduleCapture: function() {
+            // CRITICAL: Don't schedule if destroyed
+            if (this.isDestroyed) {
+                return;
+            }
+            
             // Clear existing timer
             if (this.captureTimer) {
                 clearTimeout(this.captureTimer);
@@ -253,17 +279,33 @@
             
             // Schedule new capture
             this.captureTimer = setTimeout(() => {
-                this.captureLeadData();
+                // Double-check destruction state before executing
+                if (!this.isDestroyed) {
+                    this.captureLeadData();
+                }
             }, this.config.captureDelay || 2000);
         },
         
         startPeriodicCapture: function() {
+            // CRITICAL FIX: Store interval reference and clear any existing interval
+            if (this.periodicTimer) {
+                clearInterval(this.periodicTimer);
+            }
+            
             // Capture every 30 seconds if there's active form interaction
-            setInterval(() => {
+            this.periodicTimer = setInterval(() => {
+                // CRITICAL: Check if system is destroyed before running
+                if (this.isDestroyed) {
+                    clearInterval(this.periodicTimer);
+                    return;
+                }
+                
                 if (this.hasFormData()) {
                     this.captureLeadData();
                 }
             }, 30000);
+            
+            console.log('BSP Lead Capture: Periodic capture started with timer ID:', this.periodicTimer);
         },
         
         hasFormData: function() {
@@ -355,30 +397,175 @@
             }
             
             // CRITICAL FIX: Add appointment data for incomplete leads on confirmation page
-            if (typeof selectedAppointments !== 'undefined' && selectedAppointments && selectedAppointments.length > 0) {
-                data.appointments = JSON.stringify(selectedAppointments);
+            // Use the official getter function for safe variable access
+            let appointmentsData = null;
+            
+            // Method 1: Use official getSelectedAppointments() function (preferred)
+            if (typeof window.getSelectedAppointments === 'function') {
+                try {
+                    appointmentsData = window.getSelectedAppointments();
+                } catch (e) {
+                    console.error('BSP Lead Capture: Error accessing getSelectedAppointments()', e);
+                }
+            }
+            
+            // Method 2: Use SafeIntegration for additional security
+            if (!appointmentsData && typeof SafeIntegration !== 'undefined' && SafeIntegration.safeAccess) {
+                appointmentsData = SafeIntegration.safeAccess(window, 'selectedAppointments');
+            }
+            
+            // Method 3: Direct access fallback
+            if (!appointmentsData) {
+                if (typeof selectedAppointments !== 'undefined' && selectedAppointments && selectedAppointments.length > 0) {
+                    appointmentsData = selectedAppointments;
+                } else if (window.selectedAppointments && window.selectedAppointments.length > 0) {
+                    appointmentsData = window.selectedAppointments;
+                }
+            }
+            
+            // Process appointment data if found
+            if (appointmentsData && Array.isArray(appointmentsData) && appointmentsData.length > 0) {
+                data.appointments = JSON.stringify(appointmentsData);
                 
-                // Also extract primary appointment data for compatibility
-                const primary = selectedAppointments[0];
-                if (primary) {
-                    data.company = primary.company || '';
-                    data.selected_date = primary.date || '';
-                    data.selected_time = primary.time || '';
-                    
-                    // For multiple appointments, join with commas
-                    if (selectedAppointments.length > 1) {
-                        data.company = selectedAppointments.map(apt => apt.company).filter(c => c).join(', ');
-                        data.booking_date = selectedAppointments.map(apt => apt.date).filter(d => d).join(', ');
-                        data.booking_time = selectedAppointments.map(apt => apt.time).filter(t => t).join(', ');
+                // Extract appointment data (structure: {company, companyId, date, time})
+                const companies = [];
+                const dates = [];
+                const times = [];
+                
+                appointmentsData.forEach(apt => {
+                    if (apt.company) companies.push(apt.company);
+                    if (apt.date) dates.push(apt.date);
+                    if (apt.time) times.push(apt.time);
+                });
+                
+                // Set primary appointment data
+                if (companies.length > 0) {
+                    data.company = companies.join(', ');
+                    data.company_name = companies[0]; // Primary company for compatibility
+                }
+                
+                if (dates.length > 0) {
+                    data.booking_date = dates.join(', ');
+                    data.selected_date = dates[0]; // Primary date for compatibility
+                    data.date = dates[0]; // Alternative field name
+                }
+                
+                if (times.length > 0) {
+                    data.booking_time = times.join(', ');
+                    data.selected_time = times[0]; // Primary time for compatibility
+                    data.time = times[0]; // Alternative field name
+                }
+                
+                // SUCCESS LOG - appointments captured
+                console.log('🎉 BSP: Appointments captured successfully', {
+                    count: appointmentsData.length,
+                    companies: companies,
+                    dates: dates,
+                    times: times
+                });
+            } else {
+                console.warn('❌ BSP: No appointment data found');
+            }
+            // Method 4: Check hidden form fields (DOM-based fallback)  
+            if (!appointmentsData) {
+                console.log('===== METHOD 4: DOM FALLBACK =====');
+                console.log('BSP Lead Capture: Trying DOM fallback methods...');
+                
+                // Check for appointments input field
+                const appointmentsInput = document.querySelector('input[name="appointments"]');
+                console.log('Appointments input field:', appointmentsInput);
+                if (appointmentsInput && appointmentsInput.value) {
+                    console.log('Appointments input value:', appointmentsInput.value);
+                    try {
+                        const appointments = JSON.parse(appointmentsInput.value);
+                        if (appointments && appointments.length > 0) {
+                            data.appointments = appointmentsInput.value;
+                            appointmentsData = appointments; // Set for logging consistency
+                            
+                            const primary = appointments[0];
+                            if (primary) {
+                                data.company = primary.company || '';
+                                data.selected_date = primary.date || '';
+                                data.selected_time = primary.time || '';
+                            }
+                            
+                            console.log('✓ Appointment data collected from form input', {
+                                appointments_count: appointments.length,
+                                primary_company: data.company
+                            });
+                        }
+                    } catch (e) {
+                        console.warn('✗ Could not parse appointments from form input', e);
                     }
                 }
                 
-                if (this.config.debug) {
-                    console.log('BSP Lead Capture: Appointment data collected', {
-                        appointments_count: selectedAppointments.length,
-                        primary_company: data.company,
-                        appointments: selectedAppointments
+                // Method 4B: Check individual company/date/time form fields
+                console.log('Checking individual form fields...');
+                const companyInput = document.querySelector('input[name="company"], select[name="company"]');
+                const dateInput = document.querySelector('input[name="selected_date"], input[name="booking_date"]');
+                const timeInput = document.querySelector('input[name="selected_time"], input[name="booking_time"]');
+                
+                console.log('Individual form fields:', { 
+                    companyInput: companyInput?.value, 
+                    dateInput: dateInput?.value, 
+                    timeInput: timeInput?.value 
+                });
+                
+                if (companyInput && companyInput.value) {
+                    data.company = companyInput.value;
+                    console.log('Set company from form field:', data.company);
+                }
+                if (dateInput && dateInput.value) {
+                    data.selected_date = dateInput.value;
+                    data.booking_date = dateInput.value;
+                    console.log('Set date from form field:', data.selected_date);
+                }
+                if (timeInput && timeInput.value) {
+                    data.selected_time = timeInput.value;
+                    data.booking_time = timeInput.value;
+                    console.log('Set time from form field:', data.selected_time);
+                }
+                
+                // Method 4C: EXAMINE THE MYSTERY - Check where multiple companies are coming from
+                console.log('===== INVESTIGATING COMPANY SOURCE =====');
+                
+                // Look for any element containing company names
+                const allElements = document.querySelectorAll('*');
+                const elementsWithCompanyData = [];
+                
+                allElements.forEach(element => {
+                    const text = element.textContent || '';
+                    const value = element.value || '';
+                    const innerHTML = element.innerHTML || '';
+                    
+                    if (text.includes('Home Improvement Experts') || 
+                        text.includes('Pro Remodeling Solutions') || 
+                        text.includes('Top Remodeling Pro') ||
+                        value.includes('Home Improvement Experts') ||
+                        innerHTML.includes('Home Improvement Experts')) {
+                        
+                        elementsWithCompanyData.push({
+                            tagName: element.tagName,
+                            className: element.className,
+                            id: element.id,
+                            name: element.name,
+                            value: element.value,
+                            textContent: text.substring(0, 100),
+                            innerHTML: innerHTML.substring(0, 100)
+                        });
+                    }
+                });
+                
+                console.log('Elements containing company data:', elementsWithCompanyData);
+                
+                if (data.company || data.selected_date || data.selected_time) {
+                    console.log('✓ Some appointment data collected from DOM fallback', {
+                        company: data.company,
+                        date: data.selected_date,
+                        time: data.selected_time
                     });
+                } else {
+                    console.log('✗ No appointment data found in DOM fallback');
                 }
             }
             
@@ -426,6 +613,12 @@
         },
         
         captureLeadData: function(forceCapture = false) {
+            // CRITICAL: Don't capture if destroyed
+            if (this.isDestroyed) {
+                console.log('BSP Lead Capture: Skipping capture - system destroyed');
+                return;
+            }
+            
             const formData = this.collectFormData();
             
             // Check if we have minimum required data
@@ -451,7 +644,52 @@
             this.sendLeadData(formData);
         },
         
+        // CRITICAL: Add destroy method to clean up all resources
+        destroy: function() {
+            console.log('BSP Lead Capture: Destroying and cleaning up resources...');
+            
+            // Mark as destroyed
+            this.isDestroyed = true;
+            
+            // Clear all timers
+            if (this.captureTimer) {
+                clearTimeout(this.captureTimer);
+                this.captureTimer = null;
+                console.log('BSP: Cleared capture timer');
+            }
+            
+            if (this.periodicTimer) {
+                clearInterval(this.periodicTimer);
+                this.periodicTimer = null;
+                console.log('BSP: Cleared periodic timer');
+            }
+            
+            // Clean up event listeners would require storing references
+            // For now, the checks for isDestroyed will prevent execution
+            
+            console.log('BSP Lead Capture: Cleanup complete');
+        },
+        
         sendLeadData: function(formData) {
+            // CRITICAL: Don't send if destroyed
+            if (this.isDestroyed) {
+                console.log('BSP Lead Capture: Skipping send - system destroyed');
+                return;
+            }
+            
+            // Always log what we're about to send
+            console.log('BSP Lead Capture: Sending data to server', {
+                formData: formData,
+                hasAppointments: !!formData.appointments,
+                appointmentsData: formData.appointments,
+                company: formData.company,
+                booking_date: formData.booking_date,
+                booking_time: formData.booking_time,
+                all_keys: Object.keys(formData),
+                session_id: formData.session_id,
+                timestamp: new Date().toISOString()
+            });
+            
             const requestData = new FormData();
             requestData.append('action', 'bsp_capture_incomplete_lead');
             requestData.append('nonce', this.config.nonce);
@@ -459,6 +697,11 @@
             // Add form data
             Object.keys(formData).forEach(key => {
                 requestData.append(key, formData[key]);
+                
+                // Log appointment-related fields specifically
+                if (['appointments', 'company', 'booking_date', 'booking_time', 'selected_date', 'selected_time'].includes(key)) {
+                    console.log(`BSP: Adding ${key} = ${formData[key]}`);
+                }
             });
             
             // Make AJAX request
