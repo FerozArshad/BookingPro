@@ -276,8 +276,40 @@ class BSP_Lead_Data_Collector {
      * Handle AJAX request to capture incomplete lead data
      */
     public function capture_incomplete_lead() {
+        $session_id = sanitize_text_field($_POST['session_id'] ?? '');
+        $trigger_type = sanitize_text_field($_POST['trigger'] ?? 'form_submit');
+        
+        // REQUEST DEDUPLICATION: Prevent simultaneous requests for same session
+        $request_key = "bsp_processing_" . $session_id;
+        $current_time = time();
+        
+        // Check if same session is already being processed (within 5 seconds)
+        $existing_processing = get_transient($request_key);
+        if ($existing_processing && ($current_time - $existing_processing) < 5) {
+            bsp_debug_log("DUPLICATE REQUEST BLOCKED", 'REQUEST_DEDUP', [
+                'session_id' => $session_id,
+                'trigger' => $trigger_type,
+                'existing_processing_time' => $existing_processing,
+                'current_time' => $current_time,
+                'time_diff' => $current_time - $existing_processing
+            ]);
+            
+            // For beforeunload triggers, silently succeed to prevent browser errors
+            if ($trigger_type === 'beforeunload') {
+                wp_send_json_success(['message' => 'Request deduped - beforeunload ignored']);
+            } else {
+                wp_send_json_error('Duplicate request - already processing');
+            }
+            return;
+        }
+        
+        // Set processing flag for this session
+        set_transient($request_key, $current_time, 10); // 10 second timeout
+        
         // Log all incoming requests for debugging
         bsp_debug_log("AJAX capture request received", 'AJAX_CAPTURE', [
+            'session_id' => $session_id,
+            'trigger' => $trigger_type,
             'post_data' => $_POST,
             'has_nonce' => isset($_POST['nonce']),
             'action' => $_POST['action'] ?? 'missing'
@@ -289,6 +321,7 @@ class BSP_Lead_Data_Collector {
         
         if (!$nonce_valid) {
             $this->safe_lead_log("Lead capture failed: Invalid nonce", [], 'SECURITY_ERROR');
+            delete_transient($request_key); // Cleanup processing flag
             wp_send_json_error('Security check failed.');
         }
         
@@ -328,6 +361,7 @@ class BSP_Lead_Data_Collector {
                 'service' => $lead_data['service'] ?? 'none',
                 'has_contact_info' => !empty($lead_data['full_name']) || !empty($lead_data['email']) || !empty($lead_data['phone'])
             ], 'VALIDATION_ERROR');
+            delete_transient($request_key); // Cleanup processing flag
             wp_send_json_error('Insufficient data for lead capture.');
         }
 
@@ -349,6 +383,7 @@ class BSP_Lead_Data_Collector {
             ]);
             
             // IMMEDIATE RESPONSE - Send success to user (this terminates execution)
+            delete_transient($request_key); // Cleanup processing flag
             wp_send_json_success([
                 'lead_id' => $lead_id,
                 'message' => 'Lead data captured successfully'
@@ -359,6 +394,7 @@ class BSP_Lead_Data_Collector {
                 'session_id' => $lead_data['session_id'] ?? 'unknown',
                 'service' => $lead_data['service'] ?? ''
             ], 'DATABASE_ERROR');
+            delete_transient($request_key); // Cleanup processing flag
             wp_send_json_error('Failed to save lead data.');
         }
     }

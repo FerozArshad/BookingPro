@@ -110,153 +110,133 @@ class BSP_Google_Sheets_Integration {
         // Mark this webhook as sent
         self::$webhook_cache[$cache_key] = time();
         
-        // Log the sync attempt with real data
-        bsp_debug_log("Google Sheets webhook sync attempt", 'SHEETS_SYNC_ATTEMPT', [
+        // Optimized logging - only critical sync info
+        bsp_debug_log("Google Sheets sync started", 'SHEETS_SYNC_START', [
             'lead_id' => $lead_id,
             'session_id' => $session_id,
             'service' => $lead_data['service'] ?? 'unknown',
-            'spreadsheet_id' => $this->spreadsheet_id,
-            'has_webhook_url' => !empty($this->webhook_url),
-            'available_lead_data_keys' => array_keys($lead_data),
+            'has_appointments' => !empty($lead_data['appointments']),
             'cache_key' => $cache_key
         ]);
+        
+        // CRITICAL: Skip processing leads with no valuable data to prevent HTTP 400 errors
+        $has_customer_data = !empty($lead_data['customer_name']) || !empty($lead_data['name']) || !empty($lead_data['email']) || !empty($lead_data['customer_email']);
+        $has_service_data = !empty($lead_data['service']) || !empty($lead_data['service_type']);
+        $has_appointment_data = !empty($lead_data['appointments']);
+        
+        if (!$has_customer_data && !$has_service_data && !$has_appointment_data) {
+            bsp_debug_log("SKIPPING: Lead has no valuable data - preventing HTTP 400 error", 'SHEETS_SKIP_EMPTY', [
+                'lead_id' => $lead_id,
+                'has_customer_data' => $has_customer_data,
+                'has_service_data' => $has_service_data,
+                'has_appointment_data' => $has_appointment_data,
+                'available_keys' => array_keys($lead_data)
+            ]);
+            return true; // Return success to prevent retries
+        }
         
         // Use field mapper for consistent data formatting
         if (class_exists('BSP_Field_Mapper')) {
             $mapped_data = BSP_Field_Mapper::map_form_data($lead_data);
-            bsp_debug_log("Field mapper applied to lead data", 'SHEETS_MAPPING', [
-                'original_keys' => array_keys($lead_data),
-                'mapped_keys' => array_keys($mapped_data)
-            ]);
         } else {
-            $mapped_data = $lead_data; // Fallback if mapper not available
+            $mapped_data = $lead_data;
         }
         
         // Use centralized data processor to format real lead data
         $sheet_data = $this->data_processor->format_for_external_system($mapped_data, 'google_sheets');
-        
-        // Log what the data processor returned
-        bsp_debug_log("Data processor output for Google Sheets", 'SHEETS_DATA_PROCESSED', [
-            'processed_keys' => array_keys($sheet_data),
-            'has_city' => !empty($sheet_data['city']),
-            'has_state' => !empty($sheet_data['state']),
-            'has_company' => !empty($sheet_data['company']),
-            'has_address' => !empty($sheet_data['customer_address'])
-        ]);
 
-        // CRITICAL DEBUG: Log service-specific fields from original lead_data
-        $service_fields_debug = [];
-        $all_service_fields = [
-            'roof_action', 'roof_material',
-            'windows_action', 'windows_replace_qty', 'windows_repair_needed',
-            'bathroom_option',
-            'siding_option', 'siding_material', 
-            'kitchen_action', 'kitchen_component',
-            'decks_action', 'decks_material',
-            'adu_action', 'adu_type'
-        ];
-        
-        foreach ($all_service_fields as $field) {
-            $service_fields_debug[$field] = $lead_data[$field] ?? 'missing';
+        // Check if we have multiple appointments data
+        $appointments_data = [];
+        if (!empty($lead_data['appointments'])) {
+            $appointments_json = $lead_data['appointments'];
+            if (is_string($appointments_json)) {
+                $appointments_array = json_decode($appointments_json, true);
+                if ($appointments_array && is_array($appointments_array)) {
+                    $appointments_data = $appointments_array;
+                    
+                    bsp_debug_log("CRITICAL: Multiple appointments found", 'SHEETS_MULTI_DETECT', [
+                        'lead_id' => $lead_id,
+                        'appointments_count' => count($appointments_data),
+                        'first_appointment' => $appointments_data[0] ?? 'none'
+                    ]);
+                } else {
+                    bsp_debug_log("ERROR: Failed to decode appointments JSON", 'SHEETS_JSON_ERROR', [
+                        'appointments_json' => $appointments_json,
+                        'json_error' => json_last_error_msg()
+                    ]);
+                }
+            }
         }
         
-        bsp_debug_log("Service-specific fields analysis", 'SERVICE_FIELDS_DEBUG', [
-            'service_detected' => $lead_data['service'] ?? 'no_service',
-            'service_fields' => $service_fields_debug,
-            'lead_data_keys' => array_keys($lead_data)
+        // If we have multiple appointments, send each as a separate row
+        if (!empty($appointments_data)) {
+            bsp_debug_log("Processing multiple appointments", 'SHEETS_MULTI_START', [
+                'appointments_count' => count($appointments_data),
+                'lead_id' => $lead_id
+            ]);
+            
+            $results = [];
+            foreach ($appointments_data as $index => $appointment) {
+                try {
+                    // Build the webhook payload for each appointment
+                    $appointment_payload = $this->build_appointment_payload($sheet_data, $lead_data, $appointment, $index);
+                    
+                    // Send to webhook server
+                    $result = $this->send_webhook_data($appointment_payload);
+                    $results[] = $result;
+                    
+                    bsp_debug_log("Appointment sent to Google Sheets", 'SHEETS_APPOINTMENT_SENT', [
+                        'appointment_index' => $index + 1,
+                        'company' => $appointment['company'] ?? '',
+                        'success' => $result['success'] ?? false,
+                        'error' => $result['error'] ?? null
+                    ]);
+                } catch (Exception $e) {
+                    bsp_debug_log("ERROR: Appointment processing failed", 'SHEETS_APPOINTMENT_ERROR', [
+                        'appointment_index' => $index + 1,
+                        'error' => $e->getMessage()
+                    ]);
+                    $results[] = ['success' => false, 'error' => $e->getMessage()];
+                }
+            }
+            
+            // Return combined result  
+            $success_count = count(array_filter($results, function($r) { return $r['success']; }));
+            $all_success = $success_count === count($results);
+            
+            bsp_debug_log("Multiple appointments processing complete", 'SHEETS_MULTI_COMPLETE', [
+                'total_appointments' => count($results),
+                'successful_sends' => $success_count,
+                'all_successful' => $all_success
+            ]);
+            
+            return $all_success;
+        }
+        
+        // Single appointment or no appointment data - use existing logic
+        $webhook_payload = $this->build_single_appointment_payload($sheet_data, $lead_data);
+        
+        bsp_debug_log("Sending single appointment/lead to Google Sheets", 'SHEETS_SINGLE_SEND', [
+            'lead_id' => $lead_id,
+            'has_company' => !empty($webhook_payload['company']),
+            'has_date' => !empty($webhook_payload['booking_date']),
+            'has_time' => !empty($webhook_payload['booking_time'])
         ]);
-
-        // Create a comprehensive payload matching all Google Sheets columns
-        $webhook_payload = [
-            // REQUIRED: Core identification
-            'session_id' => $sheet_data['session_id'] ?? $lead_data['session_id'] ?? ('session_' . time()),
-            'action' => 'incomplete_lead',
-            'timestamp' => current_time('mysql'),
-            
-            // Lead classification
-            'lead_type' => 'Incomplete Lead',
-            'lead_status' => 'In Progress', 
-            'status' => 'In Progress',
-            
-            // Customer information - use field mapper mappings
-            'customer_name' => $sheet_data['customer_name'] ?? $lead_data['customer_name'] ?? $lead_data['name'] ?? '',
-            'customer_email' => $sheet_data['customer_email'] ?? $lead_data['customer_email'] ?? $lead_data['email'] ?? '',
-            'customer_phone' => $sheet_data['customer_phone'] ?? $lead_data['customer_phone'] ?? $lead_data['phone'] ?? '',
-            'customer_address' => $sheet_data['customer_address'] ?? $lead_data['customer_address'] ?? $lead_data['address'] ?? '',
-            
-            // Location data
-            'city' => $sheet_data['city'] ?? $lead_data['city'] ?? '',
-            'state' => $sheet_data['state'] ?? $lead_data['state'] ?? '',
-            'zip_code' => $sheet_data['zip_code'] ?? $lead_data['zip_code'] ?? '',
-            
-            // Service information
-            'service' => $sheet_data['service'] ?? $lead_data['service'] ?? $this->extract_service_from_lead_data($lead_data) ?? '',
-            'specifications' => $sheet_data['service_details'] ?? $lead_data['service_details'] ?? $lead_data['specifications'] ?? '',
-            
-            // Company and booking info - FIXED: Allow appointment data for incomplete leads
-            'company' => $sheet_data['company'] ?? $lead_data['company'] ?? '',
-            'booking_id' => $sheet_data['booking_id'] ?? $lead_data['booking_id'] ?? '', 
-            'date' => $sheet_data['date'] ?? $sheet_data['formatted_date'] ?? $lead_data['booking_date'] ?? $lead_data['date'] ?? '',
-            'time' => $sheet_data['time'] ?? $sheet_data['formatted_time'] ?? $lead_data['booking_time'] ?? $lead_data['time'] ?? '',
-            
-            // Progress tracking
-            'form_step' => $lead_data['form_step'] ?? 0,
-            'completion_percentage' => $sheet_data['completion_percentage'] ?? $lead_data['completion_percentage'] ?? 0,
-            'lead_score' => $lead_data['lead_score'] ?? 0,
-            
-            // UTM/Marketing data - essential for tracking
-            'utm_source' => $sheet_data['utm_source'] ?? $lead_data['utm_source'] ?? '',
-            'utm_medium' => $sheet_data['utm_medium'] ?? $lead_data['utm_medium'] ?? '',
-            'utm_campaign' => $sheet_data['utm_campaign'] ?? $lead_data['utm_campaign'] ?? '',
-            'utm_term' => $sheet_data['utm_term'] ?? $lead_data['utm_term'] ?? '',
-            'utm_content' => $sheet_data['utm_content'] ?? $lead_data['utm_content'] ?? '',
-            'gclid' => $sheet_data['gclid'] ?? $lead_data['gclid'] ?? '',
-            'referrer' => $sheet_data['referrer'] ?? $lead_data['referrer'] ?? '',
-            
-            // Service-specific fields - ALL possible fields
-            'roof_action' => $lead_data['roof_action'] ?? '',
-            'roof_material' => $lead_data['roof_material'] ?? '',
-            'windows_action' => $lead_data['windows_action'] ?? '',
-            'windows_replace_qty' => $lead_data['windows_replace_qty'] ?? '',
-            'windows_repair_needed' => $lead_data['windows_repair_needed'] ?? '',
-            'bathroom_option' => $lead_data['bathroom_option'] ?? '',
-            'siding_option' => $lead_data['siding_option'] ?? '',
-            'siding_material' => $lead_data['siding_material'] ?? '',
-            'kitchen_action' => $lead_data['kitchen_action'] ?? '',
-            'kitchen_component' => $lead_data['kitchen_component'] ?? '',
-            'decks_action' => $lead_data['decks_action'] ?? '',
-            'decks_material' => $lead_data['decks_material'] ?? '',
-            'adu_action' => $lead_data['adu_action'] ?? '',
-            'adu_type' => $lead_data['adu_type'] ?? '',
-            
-            // Date tracking
-            'created_date' => date('m/d/Y'),
-            'last_updated' => current_time('mysql'),
-            'conversion_time' => '', // Empty for incomplete leads
-            'notes' => ''
-        ];
         
         // Send to webhook server
         $result = $this->send_webhook_data($webhook_payload);
         
         if ($result['success']) {
-            bsp_debug_log("Successfully sent real lead data to Google Sheets webhook", 'SHEETS_SUCCESS', [
+            bsp_debug_log("Google Sheets sync successful", 'SHEETS_SUCCESS', [
                 'lead_id' => $lead_id,
-                'session_id' => $lead_data['session_id'] ?? 'unknown',
-                'data_sent' => [
-                    'service' => $webhook_payload['service'] ?? '',
-                    'zip_code' => $webhook_payload['zip_code'] ?? '',
-                    'customer_name' => $webhook_payload['customer_name'] ?? '',
-                    'customer_email' => $webhook_payload['customer_email'] ?? '',
-                    'customer_phone' => $webhook_payload['customer_phone'] ?? ''
-                ]
+                'session_id' => $lead_data['session_id'] ?? 'unknown'
             ]);
             return true;
         } else {
-            bsp_debug_log("Failed to send real lead data to Google Sheets webhook", 'SHEETS_ERROR', [
+            bsp_debug_log("Google Sheets sync failed", 'SHEETS_ERROR', [
                 'lead_id' => $lead_id,
                 'error' => $result['error'] ?? 'Unknown error',
-                'data_attempted' => array_keys($webhook_payload)
+                'http_code' => $result['http_code'] ?? 'unknown'
             ]);
             return false;
         }
@@ -318,6 +298,202 @@ class BSP_Google_Sheets_Integration {
         }
         
         return null;
+    }
+
+    /**
+     * Build webhook payload for individual appointment
+     */
+    private function build_appointment_payload($sheet_data, $lead_data, $appointment, $index) {
+        bsp_debug_log("Building appointment payload - start", 'SHEETS_BUILD_START', [
+            'appointment_index' => $index,
+            'data_processor_exists' => isset($this->data_processor),
+            'data_processor_class' => get_class($this->data_processor ?? 'null')
+        ]);
+        
+        // Format the individual appointment data using the centralized data processor
+        $appointment_lead_data = array_merge($lead_data, [
+            'booking_date' => $appointment['date'] ?? '',
+            'booking_time' => $appointment['time'] ?? '',
+            'company' => $appointment['company'] ?? '',
+            'company_name' => $appointment['company'] ?? ''
+        ]);
+        
+        try {
+            bsp_debug_log("Processing appointment data through data processor", 'SHEETS_FORMAT_APPOINTMENT_START', [
+                'appointment_index' => $index,
+                'appointment_date' => $appointment['date'] ?? '',
+                'appointment_time' => $appointment['time'] ?? '',
+                'appointment_company' => $appointment['company'] ?? ''
+            ]);
+            
+            // Use the centralized data processor to format the appointment data
+            $processed_appointment_data = $this->data_processor->format_for_external_system($appointment_lead_data, 'google_sheets');
+            
+            bsp_debug_log("Appointment data processed successfully", 'SHEETS_FORMAT_APPOINTMENT_SUCCESS', [
+                'appointment_index' => $index,
+                'processed_keys' => array_keys($processed_appointment_data),
+                'formatted_date' => $processed_appointment_data['formatted_date'] ?? '',
+                'formatted_time' => $processed_appointment_data['formatted_time'] ?? ''
+            ]);
+            
+        } catch (Exception $e) {
+            bsp_debug_log("Error processing appointment data", 'SHEETS_FORMAT_ERROR', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            // Use original data as fallback
+            $processed_appointment_data = $appointment_lead_data;
+        }
+        
+        bsp_debug_log("Building final webhook payload", 'SHEETS_BUILD_PAYLOAD', [
+            'appointment_index' => $index,
+            'processed_date' => $processed_appointment_data['formatted_date'] ?? $appointment['date'] ?? '',
+            'processed_time' => $processed_appointment_data['formatted_time'] ?? $appointment['time'] ?? '',
+            'company' => $appointment['company'] ?? ''
+        ]);
+        
+        return [
+            // REQUIRED: Core identification - unique per appointment
+            'session_id' => ($lead_data['session_id'] ?? ('session_' . time())) . '_appointment_' . ($index + 1),
+            'action' => 'incomplete_lead',
+            'timestamp' => current_time('mysql'),
+            
+            // Lead classification
+            'lead_type' => 'Incomplete Lead',
+            'lead_status' => 'In Progress', 
+            'status' => 'In Progress',
+            
+            // Customer information - same for all appointments
+            'customer_name' => $sheet_data['customer_name'] ?? $lead_data['customer_name'] ?? $lead_data['name'] ?? '',
+            'customer_email' => $sheet_data['customer_email'] ?? $lead_data['customer_email'] ?? $lead_data['email'] ?? '',
+            'customer_phone' => $sheet_data['customer_phone'] ?? $lead_data['customer_phone'] ?? $lead_data['phone'] ?? '',
+            'customer_address' => $sheet_data['customer_address'] ?? $lead_data['customer_address'] ?? $lead_data['address'] ?? '',
+            
+            // Location data - same for all appointments
+            'city' => $sheet_data['city'] ?? $lead_data['city'] ?? '',
+            'state' => $sheet_data['state'] ?? $lead_data['state'] ?? '',
+            'zip_code' => $sheet_data['zip_code'] ?? $lead_data['zip_code'] ?? '',
+            
+            // Service information - same for all appointments
+            'service' => $sheet_data['service'] ?? $lead_data['service'] ?? $this->extract_service_from_lead_data($lead_data) ?? '',
+            'specifications' => $sheet_data['service_details'] ?? $lead_data['service_details'] ?? $lead_data['specifications'] ?? '',
+            
+            // Company and booking info - SPECIFIC to this appointment
+            'company' => $appointment['company'] ?? '',
+            'booking_id' => $appointment['companyId'] ?? $appointment['booking_id'] ?? '', 
+            'booking_date' => $processed_appointment_data['formatted_date'] ?? $appointment['date'] ?? '',
+            'booking_time' => $processed_appointment_data['formatted_time'] ?? $appointment['time'] ?? '',
+            
+            // Progress tracking - same for all appointments
+            'form_step' => $lead_data['form_step'] ?? 0,
+            'completion_percentage' => $sheet_data['completion_percentage'] ?? $lead_data['completion_percentage'] ?? 0,
+            'lead_score' => $lead_data['lead_score'] ?? 0,
+            
+            // UTM/Marketing data - same for all appointments
+            'utm_source' => $sheet_data['utm_source'] ?? $lead_data['utm_source'] ?? '',
+            'utm_medium' => $sheet_data['utm_medium'] ?? $lead_data['utm_medium'] ?? '',
+            'utm_campaign' => $sheet_data['utm_campaign'] ?? $lead_data['utm_campaign'] ?? '',
+            'utm_term' => $sheet_data['utm_term'] ?? $lead_data['utm_term'] ?? '',
+            'utm_content' => $sheet_data['utm_content'] ?? $lead_data['utm_content'] ?? '',
+            'gclid' => $sheet_data['gclid'] ?? $lead_data['gclid'] ?? '',
+            'referrer' => $sheet_data['referrer'] ?? $lead_data['referrer'] ?? '',
+            
+            // Service-specific fields - same for all appointments
+            'roof_action' => $lead_data['roof_action'] ?? '',
+            'roof_material' => $lead_data['roof_material'] ?? '',
+            'windows_action' => $lead_data['windows_action'] ?? '',
+            'windows_replace_qty' => $lead_data['windows_replace_qty'] ?? '',
+            'windows_repair_needed' => $lead_data['windows_repair_needed'] ?? '',
+            'bathroom_option' => $lead_data['bathroom_option'] ?? '',
+            'siding_option' => $lead_data['siding_option'] ?? '',
+            'siding_material' => $lead_data['siding_material'] ?? '',
+            'kitchen_action' => $lead_data['kitchen_action'] ?? '',
+            'kitchen_component' => $lead_data['kitchen_component'] ?? '',
+            'decks_action' => $lead_data['decks_action'] ?? '',
+            'decks_material' => $lead_data['decks_material'] ?? '',
+            'adu_action' => $lead_data['adu_action'] ?? '',
+            'adu_type' => $lead_data['adu_type'] ?? '',
+            
+            // Date tracking
+            'created_date' => date('m/d/Y'),
+            'last_updated' => current_time('mysql'),
+            'conversion_time' => '', // Empty for incomplete leads
+            'notes' => "Appointment " . ($index + 1) . " of multiple appointments"
+        ];
+    }
+
+    /**
+     * Build webhook payload for single appointment or fallback
+     */
+    private function build_single_appointment_payload($sheet_data, $lead_data) {
+        return [
+            // REQUIRED: Core identification
+            'session_id' => $sheet_data['session_id'] ?? $lead_data['session_id'] ?? ('session_' . time()),
+            'action' => 'incomplete_lead',
+            'timestamp' => current_time('mysql'),
+            
+            // Lead classification
+            'lead_type' => 'Incomplete Lead',
+            'lead_status' => 'In Progress', 
+            'status' => 'In Progress',
+            
+            // Customer information - use field mapper mappings
+            'customer_name' => $sheet_data['customer_name'] ?? $lead_data['customer_name'] ?? $lead_data['name'] ?? '',
+            'customer_email' => $sheet_data['customer_email'] ?? $lead_data['customer_email'] ?? $lead_data['email'] ?? '',
+            'customer_phone' => $sheet_data['customer_phone'] ?? $lead_data['customer_phone'] ?? $lead_data['phone'] ?? '',
+            'customer_address' => $sheet_data['customer_address'] ?? $lead_data['customer_address'] ?? $lead_data['address'] ?? '',
+            
+            // Location data
+            'city' => $sheet_data['city'] ?? $lead_data['city'] ?? '',
+            'state' => $sheet_data['state'] ?? $lead_data['state'] ?? '',
+            'zip_code' => $sheet_data['zip_code'] ?? $lead_data['zip_code'] ?? '',
+            
+            // Service information
+            'service' => $sheet_data['service'] ?? $lead_data['service'] ?? $this->extract_service_from_lead_data($lead_data) ?? '',
+            'specifications' => $sheet_data['service_details'] ?? $lead_data['service_details'] ?? $lead_data['specifications'] ?? '',
+            
+            // Company and booking info - fallback to concatenated values
+            'company' => $sheet_data['company'] ?? $lead_data['company'] ?? '',
+            'booking_id' => $sheet_data['booking_id'] ?? $lead_data['booking_id'] ?? '', 
+            'booking_date' => $sheet_data['date'] ?? $sheet_data['formatted_date'] ?? $lead_data['booking_date'] ?? $lead_data['date'] ?? '',
+            'booking_time' => $sheet_data['time'] ?? $sheet_data['formatted_time'] ?? $lead_data['booking_time'] ?? $lead_data['time'] ?? '',
+            
+            // Progress tracking
+            'form_step' => $lead_data['form_step'] ?? 0,
+            'completion_percentage' => $sheet_data['completion_percentage'] ?? $lead_data['completion_percentage'] ?? 0,
+            'lead_score' => $lead_data['lead_score'] ?? 0,
+            
+            // UTM/Marketing data - essential for tracking
+            'utm_source' => $sheet_data['utm_source'] ?? $lead_data['utm_source'] ?? '',
+            'utm_medium' => $sheet_data['utm_medium'] ?? $lead_data['utm_medium'] ?? '',
+            'utm_campaign' => $sheet_data['utm_campaign'] ?? $lead_data['utm_campaign'] ?? '',
+            'utm_term' => $sheet_data['utm_term'] ?? $lead_data['utm_term'] ?? '',
+            'utm_content' => $sheet_data['utm_content'] ?? $lead_data['utm_content'] ?? '',
+            'gclid' => $sheet_data['gclid'] ?? $lead_data['gclid'] ?? '',
+            'referrer' => $sheet_data['referrer'] ?? $lead_data['referrer'] ?? '',
+            
+            // Service-specific fields - ALL possible fields
+            'roof_action' => $lead_data['roof_action'] ?? '',
+            'roof_material' => $lead_data['roof_material'] ?? '',
+            'windows_action' => $lead_data['windows_action'] ?? '',
+            'windows_replace_qty' => $lead_data['windows_replace_qty'] ?? '',
+            'windows_repair_needed' => $lead_data['windows_repair_needed'] ?? '',
+            'bathroom_option' => $lead_data['bathroom_option'] ?? '',
+            'siding_option' => $lead_data['siding_option'] ?? '',
+            'siding_material' => $lead_data['siding_material'] ?? '',
+            'kitchen_action' => $lead_data['kitchen_action'] ?? '',
+            'kitchen_component' => $lead_data['kitchen_component'] ?? '',
+            'decks_action' => $lead_data['decks_action'] ?? '',
+            'decks_material' => $lead_data['decks_material'] ?? '',
+            'adu_action' => $lead_data['adu_action'] ?? '',
+            'adu_type' => $lead_data['adu_type'] ?? '',
+            
+            // Date tracking
+            'created_date' => date('m/d/Y'),
+            'last_updated' => current_time('mysql'),
+            'conversion_time' => '', // Empty for incomplete leads
+            'notes' => ''
+        ];
     }
 
     /**
@@ -413,21 +589,35 @@ class BSP_Google_Sheets_Integration {
         $response_code = wp_remote_retrieve_response_code($response);
         $response_body = wp_remote_retrieve_body($response);
         
-        bsp_debug_log("Webhook response received", 'WEBHOOK_RESPONSE', [
-            'response_code' => $response_code,
-            'response_body_preview' => substr($response_body, 0, 500),
-            'response_headers' => wp_remote_retrieve_headers($response)
-        ]);
-        
+        // Enhanced error logging for Google Sheets issues
         if ($response_code >= 200 && $response_code < 300) {
+            bsp_debug_log("Webhook sent successfully", 'WEBHOOK_SUCCESS', [
+                'response_code' => $response_code,
+                'body_length' => strlen($response_body)
+            ]);
             return [
                 'success' => true,
-                'response' => json_decode($response_body, true)
+                'response' => json_decode($response_body, true),
+                'http_code' => $response_code
             ];
         } else {
+            // Detailed error logging for troubleshooting
+            bsp_debug_log("WEBHOOK ERROR - Google Sheets returned error", 'WEBHOOK_ERROR', [
+                'http_code' => $response_code,
+                'response_body' => $response_body,
+                'payload_sample' => [
+                    'session_id' => $clean_payload['session_id'] ?? 'missing',
+                    'customer_name' => $clean_payload['customer_name'] ?? 'missing',
+                    'service' => $clean_payload['service'] ?? 'missing',
+                    'booking_date' => $clean_payload['booking_date'] ?? 'missing',
+                    'booking_time' => $clean_payload['booking_time'] ?? 'missing'
+                ]
+            ]);
+            
             return [
                 'success' => false,
-                'error' => "HTTP {$response_code}: {$response_body}"
+                'error' => "HTTP {$response_code}: {$response_body}",
+                'http_code' => $response_code
             ];
         }
     }
