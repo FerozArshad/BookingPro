@@ -118,59 +118,75 @@ class BSP_Google_Sheets_Integration {
             'has_address' => !empty($sheet_data['customer_address'])
         ]);
 
-        // Create payload with ALL essential data for Google Sheets
+        // Create a comprehensive payload matching all Google Sheets columns
         $webhook_payload = [
-            // CRITICAL: Session and identification
-            'session_id' => $sheet_data['session_id'] ?? $lead_data['session_id'] ?? '',
+            // REQUIRED: Core identification
+            'session_id' => $sheet_data['session_id'] ?? $lead_data['session_id'] ?? ('session_' . time()),
             'action' => 'incomplete_lead',
+            'timestamp' => current_time('mysql'),
             
-            // Customer data - use multiple fallback methods
-            'name' => $sheet_data['customer_name'] ?? $lead_data['full_name'] ?? $lead_data['customer_name'] ?? $lead_data['name'] ?? '',
-            'customer_name' => $sheet_data['customer_name'] ?? $lead_data['full_name'] ?? $lead_data['customer_name'] ?? $lead_data['name'] ?? '',
-            'customer_email' => $sheet_data['customer_email'] ?? $lead_data['email'] ?? $lead_data['customer_email'] ?? '',
-            'customer_phone' => $sheet_data['customer_phone'] ?? $lead_data['phone'] ?? $lead_data['customer_phone'] ?? '',
-            'customer_address' => $sheet_data['customer_address'] ?? $lead_data['address'] ?? $lead_data['customer_address'] ?? '',
+            // Lead classification
+            'lead_type' => 'Incomplete Lead',
+            'lead_status' => 'In Progress', 
+            'status' => 'In Progress',
+            
+            // Customer information - use field mapper mappings
+            'customer_name' => $sheet_data['customer_name'] ?? $lead_data['customer_name'] ?? $lead_data['name'] ?? '',
+            'customer_email' => $sheet_data['customer_email'] ?? $lead_data['customer_email'] ?? $lead_data['email'] ?? '',
+            'customer_phone' => $sheet_data['customer_phone'] ?? $lead_data['customer_phone'] ?? $lead_data['phone'] ?? '',
+            'customer_address' => $sheet_data['customer_address'] ?? $lead_data['customer_address'] ?? $lead_data['address'] ?? '',
             
             // Location data
             'city' => $sheet_data['city'] ?? $lead_data['city'] ?? '',
             'state' => $sheet_data['state'] ?? $lead_data['state'] ?? '',
             'zip_code' => $sheet_data['zip_code'] ?? $lead_data['zip_code'] ?? '',
             
-            // Service data - use multiple fallback methods
-            'service' => $sheet_data['service'] ?? $lead_data['service'] ?? $lead_data['service_type'] ?? $this->extract_service_from_lead_data($lead_data) ?? '',
-            'service_type' => $sheet_data['service'] ?? $lead_data['service'] ?? $lead_data['service_type'] ?? $this->extract_service_from_lead_data($lead_data) ?? '',
+            // Service information
+            'service' => $sheet_data['service'] ?? $lead_data['service'] ?? $this->extract_service_from_lead_data($lead_data) ?? '',
+            'specifications' => $sheet_data['service_details'] ?? $lead_data['service_details'] ?? $lead_data['specifications'] ?? '',
             
-            // Company and booking info
-            'company' => $sheet_data['company'] ?? $lead_data['company'] ?? $lead_data['company_name'] ?? '',
-            'booking_date' => $sheet_data['booking_date'] ?? $lead_data['booking_date'] ?? $lead_data['selected_date'] ?? '',
-            'booking_time' => $sheet_data['booking_time'] ?? $lead_data['booking_time'] ?? $lead_data['selected_time'] ?? '',
+            // Company and booking info (usually empty for incomplete)
+            'company' => $sheet_data['company'] ?? $lead_data['company'] ?? '',
+            'booking_id' => '', // Empty for incomplete leads
+            'date' => '', // Empty for incomplete leads
+            'time' => '', // Empty for incomplete leads
             
-            // UTM and tracking data
+            // Progress tracking
+            'form_step' => $lead_data['form_step'] ?? 0,
+            'completion_percentage' => $sheet_data['completion_percentage'] ?? $lead_data['completion_percentage'] ?? 0,
+            'lead_score' => $lead_data['lead_score'] ?? 0,
+            
+            // UTM/Marketing data - essential for tracking
             'utm_source' => $sheet_data['utm_source'] ?? $lead_data['utm_source'] ?? '',
             'utm_medium' => $sheet_data['utm_medium'] ?? $lead_data['utm_medium'] ?? '',
             'utm_campaign' => $sheet_data['utm_campaign'] ?? $lead_data['utm_campaign'] ?? '',
+            'utm_term' => $sheet_data['utm_term'] ?? $lead_data['utm_term'] ?? '',
+            'utm_content' => $sheet_data['utm_content'] ?? $lead_data['utm_content'] ?? '',
+            'gclid' => $sheet_data['gclid'] ?? $lead_data['gclid'] ?? '',
             'referrer' => $sheet_data['referrer'] ?? $lead_data['referrer'] ?? '',
             
-            // Status fields
-            'lead_status' => 'In Progress',
-            'completion_percentage' => $sheet_data['completion_percentage'] ?? 0,
-            
-            // Service-specific fields - only include if they have values
+            // Service-specific fields - ALL possible fields
+            'roof_action' => $lead_data['roof_action'] ?? '',
+            'roof_material' => $lead_data['roof_material'] ?? '',
             'windows_action' => $lead_data['windows_action'] ?? '',
             'windows_replace_qty' => $lead_data['windows_replace_qty'] ?? '',
-            'roof_action' => $lead_data['roof_action'] ?? '',
+            'windows_repair_needed' => $lead_data['windows_repair_needed'] ?? '',
             'bathroom_option' => $lead_data['bathroom_option'] ?? '',
-            'kitchen_action' => $lead_data['kitchen_action'] ?? '',
             'siding_option' => $lead_data['siding_option'] ?? '',
+            'siding_material' => $lead_data['siding_material'] ?? '',
+            'kitchen_action' => $lead_data['kitchen_action'] ?? '',
+            'kitchen_component' => $lead_data['kitchen_component'] ?? '',
             'decks_action' => $lead_data['decks_action'] ?? '',
-            'adu_action' => $lead_data['adu_action'] ?? ''
+            'decks_material' => $lead_data['decks_material'] ?? '',
+            'adu_action' => $lead_data['adu_action'] ?? '',
+            'adu_type' => $lead_data['adu_type'] ?? '',
+            
+            // Date tracking
+            'created_date' => date('m/d/Y'),
+            'last_updated' => current_time('mysql'),
+            'conversion_time' => '', // Empty for incomplete leads
+            'notes' => ''
         ];
-        
-        // Remove empty fields but keep essential ones
-        $essential_fields = ['session_id', 'action', 'lead_status'];
-        $webhook_payload = array_filter($webhook_payload, function($value, $key) use ($essential_fields) {
-            return in_array($key, $essential_fields) || ($value !== '' && $value !== null);
-        }, ARRAY_FILTER_USE_BOTH);
         
         // Send to webhook server
         $result = $this->send_webhook_data($webhook_payload);
@@ -202,7 +218,12 @@ class BSP_Google_Sheets_Integration {
      * Extract service from lead data using multiple fallback methods
      */
     private function extract_service_from_lead_data($lead_data) {
-        // Method 1: Check referrer URL for service parameter
+        // Method 1: Direct service field check
+        if (!empty($lead_data['service']) || !empty($lead_data['service_type'])) {
+            return ucfirst(strtolower($lead_data['service'] ?? $lead_data['service_type']));
+        }
+        
+        // Method 2: Check referrer URL for service parameter
         if (!empty($lead_data['referrer'])) {
             $parsed_url = parse_url($lead_data['referrer']);
             if (isset($parsed_url['query'])) {
@@ -212,7 +233,7 @@ class BSP_Google_Sheets_Integration {
                 }
             }
             
-            // Method 2: Check URL path for service names
+            // Method 3: Check URL path for service names
             if (isset($parsed_url['path'])) {
                 $path = strtolower($parsed_url['path']);
                 $services = ['roof', 'windows', 'bathroom', 'kitchen', 'siding', 'decks', 'adu'];
@@ -224,15 +245,20 @@ class BSP_Google_Sheets_Integration {
             }
         }
         
-        // Method 3: Check service-specific fields to determine service type
+        // Method 4: Check current page URL parameters if referrer doesn't have it
+        if (isset($_GET['service']) && !empty($_GET['service'])) {
+            return ucfirst(strtolower($_GET['service']));
+        }
+        
+        // Method 5: Check service-specific fields to determine service type
         $service_indicators = [
-            'Roof' => ['roof_action', 'roof_material'],
-            'Windows' => ['windows_action', 'windows_replace_qty'],
-            'Bathroom' => ['bathroom_option'],
-            'Kitchen' => ['kitchen_action', 'kitchen_component'],
-            'Siding' => ['siding_option', 'siding_material'],
-            'Decks' => ['decks_action', 'decks_material'],
-            'ADU' => ['adu_action', 'adu_type']
+            'Roof' => ['roof_action', 'roof_material', 'roof_zip'],
+            'Windows' => ['windows_action', 'windows_replace_qty', 'windows_repair_needed', 'windows_zip'],
+            'Bathroom' => ['bathroom_option', 'bathroom_zip'],
+            'Kitchen' => ['kitchen_action', 'kitchen_component', 'kitchen_zip'],
+            'Siding' => ['siding_option', 'siding_material', 'siding_zip'],
+            'Decks' => ['decks_action', 'decks_material', 'decks_zip'],
+            'ADU' => ['adu_action', 'adu_type', 'adu_zip']
         ];
         
         foreach ($service_indicators as $service => $fields) {
@@ -279,45 +305,71 @@ class BSP_Google_Sheets_Integration {
             'action_value' => $payload['action'] ?? 'missing'
         ]);
         
-        // Try form data format first (Google Apps Script prefers this)
-        $form_args = [
+        // Clean and validate payload for Google Apps Script
+        $clean_payload = $this->prepare_apps_script_payload($payload);
+        
+        // Try form-encoded data first (Google Apps Script prefers this for e.parameter access)
+        $args = [
             'method' => 'POST',
             'headers' => [
                 'User-Agent' => 'BookingPro-WordPress-Plugin/1.0'
             ],
-            'body' => $payload, // WordPress will convert array to form data
-            'timeout' => 30, // Increased timeout
-            'blocking' => true
+            'body' => $clean_payload, // WordPress will convert array to form data
+            'timeout' => 30,
+            'blocking' => true,
+            'sslverify' => true
         ];
         
-        // Send to webhook as form data
-        $response = wp_remote_post($this->webhook_url, $form_args);
+        bsp_debug_log("Sending form-encoded payload to Google Apps Script", 'WEBHOOK_SEND', [
+            'clean_payload_keys' => array_keys($clean_payload),
+            'payload_count' => count($clean_payload),
+            'url' => $this->webhook_url,
+            'method' => 'form_encoded'
+        ]);
+        
+        // Send to webhook - try form data first, JSON as fallback
+        $response = wp_remote_post($this->webhook_url, $args);
         
         if (is_wp_error($response)) {
             // If form data fails, try JSON format as fallback
+            bsp_debug_log("Form data failed, trying JSON fallback", 'WEBHOOK_FALLBACK', [
+                'error' => $response->get_error_message()
+            ]);
+            
             $json_args = [
                 'method' => 'POST',
                 'headers' => [
                     'Content-Type' => 'application/json',
                     'User-Agent' => 'BookingPro-WordPress-Plugin/1.0'
                 ],
-                'body' => json_encode($payload),
-                'timeout' => 15,
-                'blocking' => true
+                'body' => json_encode($clean_payload),
+                'timeout' => 30,
+                'blocking' => true,
+                'sslverify' => true
             ];
             
             $response = wp_remote_post($this->webhook_url, $json_args);
             
             if (is_wp_error($response)) {
+                bsp_debug_log("Both form and JSON requests failed", 'WEBHOOK_WP_ERROR', [
+                    'error' => $response->get_error_message(),
+                    'error_code' => $response->get_error_code()
+                ]);
                 return [
                     'success' => false,
                     'error' => $response->get_error_message()
                 ];
             }
         }
-        
+
         $response_code = wp_remote_retrieve_response_code($response);
         $response_body = wp_remote_retrieve_body($response);
+        
+        bsp_debug_log("Webhook response received", 'WEBHOOK_RESPONSE', [
+            'response_code' => $response_code,
+            'response_body_preview' => substr($response_body, 0, 500),
+            'response_headers' => wp_remote_retrieve_headers($response)
+        ]);
         
         if ($response_code >= 200 && $response_code < 300) {
             return [
@@ -330,6 +382,61 @@ class BSP_Google_Sheets_Integration {
                 'error' => "HTTP {$response_code}: {$response_body}"
             ];
         }
+    }
+
+    /**
+     * Prepare payload specifically for Google Apps Script expectations
+     */
+    private function prepare_apps_script_payload($payload) {
+        // Clean payload - remove any null values and ensure all values are strings or numbers
+        $clean_payload = [];
+        
+        foreach ($payload as $key => $value) {
+            // Skip null or empty keys
+            if ($key === '' || $key === null) {
+                continue;
+            }
+            
+            // Clean the key name
+            $clean_key = preg_replace('/[^a-zA-Z0-9_]/', '_', $key);
+            
+            // Handle the value
+            if ($value === null) {
+                $clean_payload[$clean_key] = '';
+            } elseif (is_bool($value)) {
+                $clean_payload[$clean_key] = $value ? '1' : '0';
+            } elseif (is_array($value) || is_object($value)) {
+                $clean_payload[$clean_key] = json_encode($value);
+            } else {
+                // Convert to string and clean
+                $string_value = (string) $value;
+                $clean_payload[$clean_key] = trim($string_value);
+            }
+        }
+        
+        // Ensure required fields exist for Google Apps Script
+        $required_defaults = [
+            'timestamp' => current_time('mysql'),
+            'session_id' => $clean_payload['session_id'] ?? ('session_' . time()),
+            'action' => $clean_payload['action'] ?? 'incomplete_lead',
+            'lead_status' => $clean_payload['lead_status'] ?? 'New'
+        ];
+        
+        foreach ($required_defaults as $key => $default) {
+            if (!isset($clean_payload[$key]) || $clean_payload[$key] === '') {
+                $clean_payload[$key] = $default;
+            }
+        }
+        
+        // Log the cleaning process
+        bsp_debug_log("Payload cleaned for Google Apps Script", 'WEBHOOK_CLEAN', [
+            'original_count' => count($payload),
+            'clean_count' => count($clean_payload),
+            'required_fields_added' => array_keys($required_defaults),
+            'final_keys' => array_keys($clean_payload)
+        ]);
+        
+        return $clean_payload;
     }
 
     /**
@@ -449,61 +556,91 @@ class BSP_Google_Sheets_Integration {
                 'lead_status' => $webhook_payload['lead_status']
             ]);
             
-            // Create streamlined payload for Google Sheets - match format
+            // Create comprehensive complete booking payload matching ALL Google Sheets columns
             $streamlined_payload = [
-                // Core identification
+                // REQUIRED: Core identification
                 'session_id' => $session_id,
                 'booking_id' => $booking_id, // WordPress post ID
                 'action' => 'complete_booking',
-                'lead_status' => 'Complete',
+                'timestamp' => current_time('mysql'),
                 
-                // Customer info - use both field names for compatibility
-                'name' => $webhook_payload['customer_name'] ?? '',
+                // Lead classification for complete booking
+                'lead_type' => 'Complete Booking',
+                'lead_status' => 'Complete',
+                'status' => 'Converted',
+                
+                // Customer information - comprehensive mapping
                 'customer_name' => $webhook_payload['customer_name'] ?? '',
                 'customer_email' => $webhook_payload['customer_email'] ?? '',
                 'customer_phone' => $webhook_payload['customer_phone'] ?? '',
                 'customer_address' => $webhook_payload['customer_address'] ?? '',
                 
-                // Location
+                // Location information
                 'zip_code' => $webhook_payload['zip_code'] ?? '',
                 'city' => $webhook_payload['city'] ?? '',
                 'state' => $webhook_payload['state'] ?? '',
                 
-                // Booking details
+                // Service and booking details
                 'service' => $webhook_payload['service'] ?? '',
-                'service_type' => $webhook_payload['service'] ?? '',
                 'company' => $webhook_payload['company'] ?? '',
-                'booking_date' => $webhook_payload['booking_date'] ?? '',
-                'booking_time' => $webhook_payload['booking_time'] ?? '',
+                'date' => $webhook_payload['booking_date'] ?? '', // Maps to "Date" column
+                'time' => $webhook_payload['booking_time'] ?? '', // Maps to "Time" column
+                'specifications' => $webhook_payload['service_details'] ?? $webhook_payload['specifications'] ?? '',
                 
-                // Status and conversion
+                // Conversion tracking
                 'converted_to_booking' => 1,
                 'completion_percentage' => 100,
-                'conversion_timestamp' => current_time('mysql'),
+                'conversion_time' => current_time('mysql'),
                 'created_date' => date('m/d/Y'),
+                'last_updated' => current_time('mysql'),
                 
-                // UTM data (essential marketing fields only)
+                // UTM/Marketing data - ALL fields
                 'utm_source' => $webhook_payload['utm_source'] ?? '',
                 'utm_medium' => $webhook_payload['utm_medium'] ?? '',
                 'utm_campaign' => $webhook_payload['utm_campaign'] ?? '',
+                'utm_term' => $webhook_payload['utm_term'] ?? '',
+                'utm_content' => $webhook_payload['utm_content'] ?? '',
                 'gclid' => $webhook_payload['gclid'] ?? '',
                 'referrer' => $webhook_payload['referrer'] ?? '',
                 
-                // Service-specific fields (only if not empty)
-                'bathroom_option' => $webhook_payload['bathroom_option'] ?? '',
+                // Progress tracking
+                'form_step' => $webhook_payload['form_step'] ?? 100, // Complete = step 100
+                'lead_score' => $webhook_payload['lead_score'] ?? 100, // Complete = score 100
+                
+                // Service-specific fields - ALL possible combinations
                 'roof_action' => $webhook_payload['roof_action'] ?? '',
                 'roof_material' => $webhook_payload['roof_material'] ?? '',
                 'windows_action' => $webhook_payload['windows_action'] ?? '',
-                'kitchen_action' => $webhook_payload['kitchen_action'] ?? '',
+                'windows_replace_qty' => $webhook_payload['windows_replace_qty'] ?? '',
+                'windows_repair_needed' => $webhook_payload['windows_repair_needed'] ?? '',
+                'bathroom_option' => $webhook_payload['bathroom_option'] ?? '',
                 'siding_option' => $webhook_payload['siding_option'] ?? '',
+                'siding_material' => $webhook_payload['siding_material'] ?? '',
+                'kitchen_action' => $webhook_payload['kitchen_action'] ?? '',
+                'kitchen_component' => $webhook_payload['kitchen_component'] ?? '',
                 'decks_action' => $webhook_payload['decks_action'] ?? '',
-                'adu_action' => $webhook_payload['adu_action'] ?? ''
+                'decks_material' => $webhook_payload['decks_material'] ?? '',
+                'adu_action' => $webhook_payload['adu_action'] ?? '',
+                'adu_type' => $webhook_payload['adu_type'] ?? '',
+                
+                // Additional tracking
+                'notes' => ''
             ];
             
-            // Remove empty service-specific fields to reduce payload size
-            $streamlined_payload = array_filter($streamlined_payload, function($value) {
-                return $value !== '' && $value !== null;
-            });
+            // Remove empty service-specific fields but keep ALL essential tracking fields
+            $essential_fields = [
+                'session_id', 'action', 'timestamp', 'lead_type', 'lead_status', 'status', 
+                'booking_id', 'completion_percentage', 'created_date', 'last_updated'
+            ];
+            
+            $streamlined_payload = array_filter($streamlined_payload, function($value, $key) use ($essential_fields) {
+                // Always keep essential fields even if empty
+                if (in_array($key, $essential_fields)) {
+                    return true;
+                }
+                // Remove empty non-essential fields to keep payload clean
+                return $value !== '' && $value !== null && $value !== 0;
+            }, ARRAY_FILTER_USE_BOTH);
             
             bsp_debug_log("Streamlined payload for Google Sheets", 'SHEETS_BOOKING_SYNC', [
                 'booking_id' => $booking_id,
