@@ -505,44 +505,35 @@ class BSP_Lead_Data_Collector {
     }
     
     /**
-     * Validate minimum data requirements for incomplete leads - RELAXED for early funnel capture
+     * Validate minimum data requirements for incomplete leads - ULTRA RELAXED for maximum capture
      */
     private function validate_minimum_data($lead_data) {
-        // For incomplete leads, we need less strict validation
-        // RELAXED: Allow service-only leads for early funnel capture
+        // Use field mapper for consistent validation
+        $mapped_data = BSP_Field_Mapper::map_form_data($lead_data);
         
-        if (!empty($lead_data['service'])) {
-            // Service selected - accept immediately (no additional data required)
-            bsp_debug_log("Lead validation - service present, accepting", 'VALIDATION_SUCCESS', [
-                'service' => $lead_data['service'],
-                'additional_data_present' => !empty($lead_data['full_name']) || !empty($lead_data['email']) || !empty($lead_data['phone']) || !empty($lead_data['zip_code']),
-                'validation_type' => 'service_only_relaxed'
+        // Use field mapper's validation logic
+        $is_valid = BSP_Field_Mapper::is_valid_lead_data($mapped_data);
+        
+        if ($is_valid) {
+            $completion_percentage = BSP_Field_Mapper::calculate_completion_percentage($mapped_data);
+            bsp_debug_log("Lead validation successful via field mapper", 'VALIDATION_SUCCESS', [
+                'completion_percentage' => $completion_percentage,
+                'has_contact_info' => !empty($mapped_data['customer_email']) || !empty($mapped_data['customer_phone']),
+                'has_service' => !empty($mapped_data['service_type']),
+                'has_location' => !empty($mapped_data['zip_code']),
+                'has_utm' => !empty($mapped_data['utm_source']),
+                'validation_type' => 'field_mapper_validation'
             ]);
             return true;
         }
         
-        // No service selected - require at least 2 contact fields
-        // Include city/state as valuable fields when detected from ZIP
-        $contact_fields = ['full_name', 'email', 'phone', 'address', 'zip_code', 'city', 'state'];
-        $contact_count = 0;
-        
-        foreach ($contact_fields as $field) {
-            if (!empty($lead_data[$field])) {
-                $contact_count++;
-            }
-        }
-        
-        $is_valid = $contact_count >= 2;
-        
-        bsp_debug_log("Lead validation - no service, checking contact fields", $is_valid ? 'VALIDATION_SUCCESS' : 'VALIDATION_FAILED', [
-            'contact_count' => $contact_count,
-            'required' => 2,
-            'is_valid' => $is_valid,
-            'available_data' => array_keys(array_filter($lead_data)),
-            'validation_type' => 'contact_fields_fallback'
+        // Log rejection details for debugging
+        bsp_debug_log("Lead validation failed via field mapper", 'VALIDATION_FAILED', [
+            'mapped_fields' => array_keys(array_filter($mapped_data)),
+            'validation_type' => 'field_mapper_rejection'
         ]);
         
-        return $is_valid;
+        return false;
     }
     
     /**
@@ -675,29 +666,39 @@ class BSP_Lead_Data_Collector {
     private function save_incomplete_lead($lead_data) {
         global $wpdb;
         
+        // Use field mapper for consistent data handling
+        $mapped_data = BSP_Field_Mapper::map_form_data($lead_data);
+        
         $table_name = BSP_Database_Unified::$tables['incomplete_leads'];
+        
+        // Calculate completion percentage using field mapper
+        $service_type = $mapped_data['service_type'] ?? null;
+        $completion_percentage = BSP_Field_Mapper::calculate_completion_percentage($mapped_data, $service_type);
         
         // Prepare data for database insertion - mapped to actual table columns
         $db_data = [
-            'session_id' => $lead_data['session_id'] ?? wp_generate_uuid4(),
-            'service' => $lead_data['service'] ?? '', // Matches 'service' column
-            'zip_code' => $lead_data['zip_code'] ?? '',
-            'customer_name' => $lead_data['full_name'] ?? '',
-            'customer_email' => $lead_data['email'] ?? '',
-            'customer_phone' => $lead_data['phone'] ?? '',
-            'completion_percentage' => $lead_data['completion_percentage'] ?? 0,
-            'lead_type' => $this->determine_lead_type($lead_data),
-            'utm_source' => $lead_data['utm_source'] ?? '',
-            'utm_medium' => $lead_data['utm_medium'] ?? '',
-            'utm_campaign' => $lead_data['utm_campaign'] ?? '',
-            'utm_term' => $lead_data['utm_term'] ?? '',
-            'utm_content' => $lead_data['utm_content'] ?? '',
-            'gclid' => $lead_data['gclid'] ?? '',
-            'referrer' => $lead_data['referrer'] ?? '',
-            'form_data' => json_encode($this->compile_form_data($lead_data)),
+            'session_id' => $mapped_data['session_id'] ?? wp_generate_uuid4(),
+            'service' => $mapped_data['service_type'] ?? '', // Matches 'service' column
+            'zip_code' => $mapped_data['zip_code'] ?? '',
+            'customer_name' => $mapped_data['customer_name'] ?? '',
+            'customer_email' => $mapped_data['customer_email'] ?? '',
+            'customer_phone' => $mapped_data['customer_phone'] ?? '',
+            'city' => $mapped_data['city'] ?? '',
+            'state' => $mapped_data['state'] ?? '',
+            'customer_address' => $mapped_data['customer_address'] ?? '',
+            'completion_percentage' => $completion_percentage,
+            'lead_type' => $this->determine_lead_type($mapped_data),
+            'utm_source' => $mapped_data['utm_source'] ?? '',
+            'utm_medium' => $mapped_data['utm_medium'] ?? '',
+            'utm_campaign' => $mapped_data['utm_campaign'] ?? '',
+            'utm_term' => $mapped_data['utm_term'] ?? '',
+            'utm_content' => $mapped_data['utm_content'] ?? '',
+            'gclid' => $mapped_data['gclid'] ?? '',
+            'referrer' => $mapped_data['referrer'] ?? '',
+            'form_data' => json_encode($mapped_data), // Store complete mapped data
             'created_at' => current_time('mysql'),
             'last_updated' => current_time('mysql'),
-            'send_trigger' => $lead_data['trigger'] ?? 'form_interaction'
+            'send_trigger' => $mapped_data['trigger'] ?? 'form_interaction'
         ];
         
         // Use UPSERT logic based on session_id
@@ -728,12 +729,13 @@ class BSP_Lead_Data_Collector {
             }
             
             if ($result !== false) {
-                // Trigger action for Google Sheets sync
+                // Trigger action for Google Sheets sync with mapped data
                 bsp_debug_log("Triggering Google Sheets sync action for updated lead", 'SHEETS_TRIGGER', [
                     'lead_id' => $existing_lead,
-                    'session_id' => $db_data['session_id']
+                    'session_id' => $db_data['session_id'],
+                    'completion_percentage' => $completion_percentage
                 ]);
-                do_action('bsp_incomplete_lead_captured', $existing_lead, $db_data);
+                do_action('bsp_incomplete_lead_captured', $existing_lead, $mapped_data);
             }
             
             return $result !== false ? $existing_lead : false;
@@ -756,7 +758,7 @@ class BSP_Lead_Data_Collector {
             
             if ($result) {
                 $lead_id = $wpdb->insert_id;
-                // Trigger action for Google Sheets sync
+                // Trigger action for Google Sheets sync with mapped data
                 bsp_debug_log("Triggering Google Sheets sync action for new lead", 'SHEETS_TRIGGER', [
                     'lead_id' => $lead_id,
                     'session_id' => $db_data['session_id']

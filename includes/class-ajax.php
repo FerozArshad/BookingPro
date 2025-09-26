@@ -234,44 +234,66 @@ class BSP_Ajax {
         
         bsp_debug_log("Required field validation passed", 'BOOKING');
         
-        // Sanitize data
-        bsp_debug_log("Starting data sanitization", 'BOOKING');
+        // Sanitize data with field mapper integration
+        bsp_debug_log("Starting data sanitization with field mapper", 'BOOKING');
+        
+        // Use field mapper to normalize field names before processing
+        $normalized_data = BSP_Field_Mapper::map_form_data($_POST);
         
         // Capture session ID for lead continuity
-        $session_id = isset($_POST['session_id']) ? sanitize_text_field($_POST['session_id']) : '';
+        $session_id = $normalized_data['session_id'] ?? '';
         bsp_debug_log("Session ID captured for lead continuity", 'BOOKING', [
             'session_id' => $session_id,
             'session_id_length' => strlen($session_id),
             'session_id_empty' => empty($session_id)
         ]);
         
-        // Log city/state data capture
-        $city_received = isset($_POST['city']) ? sanitize_text_field($_POST['city']) : '';
-        $state_received = isset($_POST['state']) ? sanitize_text_field($_POST['state']) : '';
-        bsp_debug_log("City/State data capture", 'BOOKING', [
+        // Enhanced city/state data with ZIP lookup using mapped data
+        $city_received = $normalized_data['city'] ?? '';
+        $state_received = $normalized_data['state'] ?? '';
+        $zip_code = $normalized_data['zip_code'] ?? '';
+        
+        // If city/state are empty but ZIP is provided, try to get from ZIP lookup cache
+        if (empty($city_received) && !empty($zip_code)) {
+            $cached_location = get_transient('bsp_zip_' . $zip_code);
+            if ($cached_location && is_array($cached_location)) {
+                $city_received = $cached_location['city'] ?? '';
+                $state_received = $cached_location['state'] ?? '';
+                bsp_debug_log("City/State retrieved from ZIP cache via field mapper", 'BOOKING', [
+                    'zip_code' => $zip_code,
+                    'cached_city' => $city_received,
+                    'cached_state' => $state_received
+                ]);
+            }
+        }
+        
+        bsp_debug_log("Enhanced City/State data capture via field mapper", 'BOOKING', [
             'city_received' => $city_received,
             'state_received' => $state_received,
+            'zip_code' => $zip_code,
             'city_empty' => empty($city_received),
-            'state_empty' => empty($state_received)
+            'state_empty' => empty($state_received),
+            'zip_lookup_attempted' => !empty($zip_code) && empty($city_received)
         ]);
         
+        // Use mapped data for booking creation
         $booking_data = [
-            'service' => sanitize_text_field($_POST['service']),
-            'full_name' => sanitize_text_field($_POST['full_name']),
-            'email' => sanitize_email($_POST['email']),
-            'phone' => sanitize_text_field($_POST['phone']),
-            'address' => sanitize_textarea_field($_POST['address']),
-            'zip_code' => sanitize_text_field($_POST['zip_code']),
-            'city' => isset($_POST['city']) ? sanitize_text_field($_POST['city']) : '',
-            'state' => isset($_POST['state']) ? sanitize_text_field($_POST['state']) : '',
-            'company' => sanitize_text_field($_POST['company']),
-            'selected_date' => sanitize_text_field($_POST['selected_date']),
-            'selected_time' => sanitize_text_field($_POST['selected_time']),
-            'appointments' => sanitize_text_field($_POST['appointments'] ?? ''),
-            'service_details' => sanitize_textarea_field($_POST['service_details'] ?? '')
+            'service' => $normalized_data['service_type'] ?? '',
+            'full_name' => $normalized_data['customer_name'] ?? '',
+            'email' => $normalized_data['customer_email'] ?? '',
+            'phone' => $normalized_data['customer_phone'] ?? '',
+            'address' => $normalized_data['customer_address'] ?? '',
+            'zip_code' => $zip_code,
+            'city' => $city_received,
+            'state' => $state_received,
+            'company' => $normalized_data['company_name'] ?? '',
+            'selected_date' => $normalized_data['booking_date'] ?? '',
+            'selected_time' => $normalized_data['booking_time'] ?? '',
+            'appointments' => $normalized_data['appointments'] ?? '',
+            'service_details' => $normalized_data['service_details'] ?? ''
         ];
         
-        bsp_debug_log("Core data sanitized", 'BOOKING', $booking_data);
+        bsp_debug_log("Core data mapped and sanitized", 'BOOKING', $booking_data);
         
         // Add service-specific fields from frontend
         $service_fields = [

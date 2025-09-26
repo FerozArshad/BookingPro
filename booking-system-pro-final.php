@@ -238,6 +238,7 @@ final class Booking_System_Pro_Final {
         $includes = [
             'includes/class-utilities.php',
             'includes/class-database-unified.php',
+            'includes/class-field-mapper.php', // Centralized field naming - must be loaded early
             // Lead Capture System - Phase 1 components (order matters)
             'includes/class-safe-variable-integration.php',
             'includes/class-lead-data-collector.php', // Must be loaded before data processor

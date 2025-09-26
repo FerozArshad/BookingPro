@@ -62,11 +62,11 @@ class BSP_Google_Sheets_Integration {
     }
     
     /**
-     * Sync incomplete lead to Google Sheets via webhook using real data
+     * Sync incomplete lead to Google Sheets via webhook using CONSISTENT data formatting
      */
     public function sync_incomplete_lead($lead_id, $lead_data) {
         $session_id = $lead_data['session_id'] ?? 'unknown';
-        $cache_key = 'incomplete_' . $session_id . '_' . ($lead_data['form_step'] ?? 'unknown');
+        $cache_key = 'incomplete_' . $session_id . '_' . ($lead_data['form_step'] ?? 'unknown') . '_' . time(); // Add timestamp to prevent collision
         
         // Check if we've already sent this lead data recently (within 30 seconds)
         if (isset(self::$webhook_cache[$cache_key])) {
@@ -77,7 +77,7 @@ class BSP_Google_Sheets_Integration {
                     'cache_key' => $cache_key,
                     'time_since_last' => $time_diff
                 ]);
-                return true; // Return success to avoid retries
+                return true;
             }
         }
         
@@ -95,8 +95,19 @@ class BSP_Google_Sheets_Integration {
             'cache_key' => $cache_key
         ]);
         
+        // Use field mapper for consistent data formatting
+        if (class_exists('BSP_Field_Mapper')) {
+            $mapped_data = BSP_Field_Mapper::map_form_data($lead_data);
+            bsp_debug_log("Field mapper applied to lead data", 'SHEETS_MAPPING', [
+                'original_keys' => array_keys($lead_data),
+                'mapped_keys' => array_keys($mapped_data)
+            ]);
+        } else {
+            $mapped_data = $lead_data; // Fallback if mapper not available
+        }
+        
         // Use centralized data processor to format real lead data
-        $sheet_data = $this->data_processor->format_for_external_system($lead_data, 'google_sheets');
+        $sheet_data = $this->data_processor->format_for_external_system($mapped_data, 'google_sheets');
         
         // Log what the data processor returned
         bsp_debug_log("Data processor output for Google Sheets", 'SHEETS_DATA_PROCESSED', [
@@ -107,12 +118,10 @@ class BSP_Google_Sheets_Integration {
             'has_address' => !empty($sheet_data['customer_address'])
         ]);
 
-        // Create comprehensive payload with all required fields for Google Apps Script
+        // Create simplified payload matching Google Apps Script expectations exactly
         $webhook_payload = [
-            'spreadsheet_id' => $this->spreadsheet_id,
-            'timestamp' => $sheet_data['timestamp'] ?? date('Y-m-d H:i:s'),
+            // Core fields expected by Google Apps Script
             'session_id' => $sheet_data['session_id'] ?? $lead_data['session_id'] ?? '',
-            'booking_id' => '', // Empty for incomplete leads
             'customer_name' => $sheet_data['customer_name'] ?? $lead_data['full_name'] ?? $lead_data['customer_name'] ?? '',
             'customer_email' => $sheet_data['customer_email'] ?? $lead_data['email'] ?? $lead_data['customer_email'] ?? '',
             'customer_phone' => $sheet_data['customer_phone'] ?? $lead_data['phone'] ?? $lead_data['customer_phone'] ?? '',
@@ -120,40 +129,32 @@ class BSP_Google_Sheets_Integration {
             'city' => $sheet_data['city'] ?? $lead_data['city'] ?? '',
             'state' => $sheet_data['state'] ?? $lead_data['state'] ?? '',
             'zip_code' => $sheet_data['zip_code'] ?? $lead_data['zip_code'] ?? '',
-            'company' => $sheet_data['company'] ?? $lead_data['company'] ?? $lead_data['company_name'] ?? '',
             'service' => $sheet_data['service'] ?? $lead_data['service'] ?? $lead_data['service_type'] ?? '',
-            'service_type' => $sheet_data['service'] ?? $lead_data['service'] ?? $lead_data['service_type'] ?? '', // Add this for Google Sheets script compatibility
-            'service_details' => $sheet_data['service_details'] ?? '',
+            'company' => $sheet_data['company'] ?? $lead_data['company'] ?? $lead_data['company_name'] ?? '',
             'booking_date' => $sheet_data['booking_date'] ?? $lead_data['booking_date'] ?? $lead_data['selected_date'] ?? '',
             'booking_time' => $sheet_data['booking_time'] ?? $lead_data['booking_time'] ?? $lead_data['selected_time'] ?? '',
             'utm_source' => $sheet_data['utm_source'] ?? $lead_data['utm_source'] ?? '',
             'utm_medium' => $sheet_data['utm_medium'] ?? $lead_data['utm_medium'] ?? '',
             'utm_campaign' => $sheet_data['utm_campaign'] ?? $lead_data['utm_campaign'] ?? '',
-            'utm_term' => $sheet_data['utm_term'] ?? $lead_data['utm_term'] ?? '',
-            'utm_content' => $sheet_data['utm_content'] ?? $lead_data['utm_content'] ?? '',
-            'gclid' => $sheet_data['gclid'] ?? $lead_data['gclid'] ?? '',
             'referrer' => $sheet_data['referrer'] ?? $lead_data['referrer'] ?? '',
             'lead_status' => 'In Progress',
             'completion_percentage' => $sheet_data['completion_percentage'] ?? 0,
-            'created_date' => date('m/d/Y'),
             'action' => 'incomplete_lead',
-            // Service-specific fields for better Google Sheets mapping
-            'kitchen_action' => $lead_data['kitchen_action'] ?? '',
-            'kitchen_component' => $lead_data['kitchen_component'] ?? '',
-            'bathroom_option' => $lead_data['bathroom_option'] ?? '',
-            'roof_action' => $lead_data['roof_action'] ?? '',
-            'roof_material' => $lead_data['roof_material'] ?? '',
+            // Service-specific fields - only include if they have values
             'windows_action' => $lead_data['windows_action'] ?? '',
             'windows_replace_qty' => $lead_data['windows_replace_qty'] ?? '',
-            'windows_repair_needed' => $lead_data['windows_repair_needed'] ?? '',
+            'roof_action' => $lead_data['roof_action'] ?? '',
+            'bathroom_option' => $lead_data['bathroom_option'] ?? '',
+            'kitchen_action' => $lead_data['kitchen_action'] ?? '',
             'siding_option' => $lead_data['siding_option'] ?? '',
-            'siding_material' => $lead_data['siding_material'] ?? '',
             'decks_action' => $lead_data['decks_action'] ?? '',
-            'decks_material' => $lead_data['decks_material'] ?? '',
-            'adu_action' => $lead_data['adu_action'] ?? '',
-            'adu_type' => $lead_data['adu_type'] ?? '',
-            'adu_zip' => $lead_data['adu_zip'] ?? ''
+            'adu_action' => $lead_data['adu_action'] ?? ''
         ];
+        
+        // Remove empty fields to avoid payload bloat
+        $webhook_payload = array_filter($webhook_payload, function($value) {
+            return $value !== '' && $value !== null;
+        });
         
         // Send to webhook server
         $result = $this->send_webhook_data($webhook_payload);
