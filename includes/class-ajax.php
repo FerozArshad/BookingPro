@@ -530,30 +530,30 @@ class BSP_Ajax {
         
         $primary_booking_id = $created_booking_ids[0];
         
-        // CRITICAL: Mark lead as converted IMMEDIATELY - BEFORE background jobs
-        if ($session_id && class_exists('BSP_Lead_Conversion_Tracker')) {
-            $conversion_tracker = BSP_Lead_Conversion_Tracker::get_instance();
-            if ($conversion_tracker && method_exists($conversion_tracker, 'track_lead_conversion')) {
-                $conversion_tracker->track_lead_conversion($session_id, $primary_booking_id, $booking_data);
-                bsp_debug_log("=== LEAD MARKED AS CONVERTED IMMEDIATELY ===", 'CONVERSION', [
-                    'booking_id' => $primary_booking_id,
-                    'session_id' => $session_id,
-                    'timing' => 'BEFORE_BACKGROUND_JOBS'
-                ]);
-            }
-        }
-        
-        // CRITICAL: Update incomplete lead to complete status for session continuity
-        if ($session_id) {
-            $this->update_incomplete_lead_to_complete($session_id, $primary_booking_id, $booking_data);
-        }
-        
         // CRITICAL: Schedule all background jobs AFTER the response is sent using shutdown hook
         add_action('shutdown', function() use ($primary_booking_id, $booking_data, $session_id) {
             bsp_debug_log("=== SCHEDULING BACKGROUND JOBS AFTER RESPONSE ===", 'INTEGRATION', [
                 'primary_booking_id' => $primary_booking_id,
                 'session_id' => $session_id
             ]);
+            
+            // CRITICAL: Mark lead as converted IMMEDIATELY - MOVED TO BACKGROUND FOR SPEED
+            if ($session_id && class_exists('BSP_Lead_Conversion_Tracker')) {
+                $conversion_tracker = BSP_Lead_Conversion_Tracker::get_instance();
+                if ($conversion_tracker && method_exists($conversion_tracker, 'track_lead_conversion')) {
+                    $conversion_tracker->track_lead_conversion($session_id, $primary_booking_id, $booking_data);
+                    bsp_debug_log("=== LEAD MARKED AS CONVERTED IN BACKGROUND ===", 'CONVERSION', [
+                        'booking_id' => $primary_booking_id,
+                        'session_id' => $session_id,
+                        'timing' => 'BACKGROUND_AFTER_RESPONSE'
+                    ]);
+                }
+            }
+            
+            // CRITICAL: Update incomplete lead to complete status for session continuity - MOVED TO BACKGROUND
+            if ($session_id) {
+                $this->update_incomplete_lead_to_complete($session_id, $primary_booking_id, $booking_data);
+            }
             
             // FIXED: Single Google Sheets sync with proper deduplication - FASTER TIMING
             if (function_exists('wp_schedule_single_event')) {
@@ -716,7 +716,7 @@ class BSP_Ajax {
         ));
         
         if ($incomplete_lead) {
-            // Update the incomplete lead to complete status
+            // Update the incomplete lead to complete status - ONLY USE EXISTING COLUMNS
             $update_data = [
                 'lead_type' => 'Complete',
                 'booking_post_id' => $booking_id,
@@ -724,7 +724,7 @@ class BSP_Ajax {
                 'completion_percentage' => 100,
                 'conversion_timestamp' => current_time('mysql'),
                 'last_updated' => current_time('mysql'),
-                // Update customer data from final form submission
+                // Update customer data from final form submission - ONLY EXISTING COLUMNS
                 'customer_name' => $booking_data['full_name'] ?? '',
                 'customer_email' => $booking_data['email'] ?? '',
                 'customer_phone' => $booking_data['phone'] ?? '',
@@ -732,12 +732,15 @@ class BSP_Ajax {
                 'city' => $booking_data['city'] ?? '',
                 'state' => $booking_data['state'] ?? '',
                 'zip_code' => $booking_data['zip_code'] ?? '',
-                'service_type' => $booking_data['service'] ?? '',
-                'service_details' => $booking_data['service_details'] ?? '',
-                'company_name' => $booking_data['company'] ?? '',
-                'booking_date' => $booking_data['selected_date'] ?? '',
-                'booking_time' => $booking_data['selected_time'] ?? '',
-                'appointments' => $booking_data['appointments'] ?? ''
+                'service' => $booking_data['service'] ?? '', // Use 'service' not 'service_type'
+                // Store additional data in form_data field as JSON
+                'final_form_data' => json_encode([
+                    'service_details' => $booking_data['service_details'] ?? '',
+                    'company_name' => $booking_data['company'] ?? '',
+                    'booking_date' => $booking_data['selected_date'] ?? '',
+                    'booking_time' => $booking_data['selected_time'] ?? '',
+                    'appointments' => $booking_data['appointments'] ?? ''
+                ])
             ];
             
             $result = $wpdb->update(
@@ -747,7 +750,7 @@ class BSP_Ajax {
                 [
                     '%s', '%d', '%d', '%d', '%s', '%s', // lead_type, booking_post_id, converted_to_booking, completion_percentage, conversion_timestamp, last_updated  
                     '%s', '%s', '%s', '%s', '%s', '%s', '%s', // customer data
-                    '%s', '%s', '%s', '%s', '%s', '%s'      // service and booking data
+                    '%s', '%s'                                 // service and final_form_data
                 ],
                 ['%d']
             );
@@ -775,7 +778,7 @@ class BSP_Ajax {
                 'booking_id' => $booking_id
             ]);
             
-            // Create a complete lead record for session continuity
+            // Create a complete lead record for session continuity - ONLY USE EXISTING COLUMNS
             $lead_data = [
                 'session_id' => $session_id,
                 'lead_type' => 'Complete',
@@ -789,12 +792,15 @@ class BSP_Ajax {
                 'city' => $booking_data['city'] ?? '',
                 'state' => $booking_data['state'] ?? '',
                 'zip_code' => $booking_data['zip_code'] ?? '',
-                'service_type' => $booking_data['service'] ?? '',
-                'service_details' => $booking_data['service_details'] ?? '',
-                'company_name' => $booking_data['company'] ?? '',
-                'booking_date' => $booking_data['selected_date'] ?? '',
-                'booking_time' => $booking_data['selected_time'] ?? '',
-                'appointments' => $booking_data['appointments'] ?? '',
+                'service' => $booking_data['service'] ?? '', // Use 'service' not 'service_type'
+                // Store additional data in form_data field as JSON
+                'final_form_data' => json_encode([
+                    'service_details' => $booking_data['service_details'] ?? '',
+                    'company_name' => $booking_data['company'] ?? '',
+                    'booking_date' => $booking_data['selected_date'] ?? '',
+                    'booking_time' => $booking_data['selected_time'] ?? '',
+                    'appointments' => $booking_data['appointments'] ?? ''
+                ]),
                 'created_at' => current_time('mysql'),
                 'conversion_timestamp' => current_time('mysql'),
                 'last_updated' => current_time('mysql')
@@ -806,7 +812,7 @@ class BSP_Ajax {
                 [
                     '%s', '%s', '%d', '%d', '%d', // session_id, lead_type, booking_post_id, converted_to_booking, completion_percentage
                     '%s', '%s', '%s', '%s', '%s', '%s', '%s', // customer data
-                    '%s', '%s', '%s', '%s', '%s', '%s', // service and booking data
+                    '%s', '%s', // service and final_form_data
                     '%s', '%s', '%s' // timestamps
                 ]
             );

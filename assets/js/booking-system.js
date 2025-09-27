@@ -2805,7 +2805,7 @@ jQuery(document).ready(function($) {
                 url: BSP_Ajax.ajaxUrl,
                 type: 'POST',
                 data: bookingData,
-                timeout: 10000, // 10 second timeout
+                timeout: 60000, // 60 second timeout (increased for backend processing)
                 cache: false,
                 success: function(response) {
                     console.group('✅ AJAX Success Response');
@@ -2843,7 +2843,11 @@ jQuery(document).ready(function($) {
                     
                     // Provide more specific error messages based on status
                     if (xhr.status === 0) {
-                        errorMessage = 'Network error. Please check your internet connection.';
+                        if (status === 'timeout') {
+                            errorMessage = 'Request timed out. Your booking may have been processed - please wait a moment and check your email, or contact us to confirm.';
+                        } else {
+                            errorMessage = 'Network error. Please check your internet connection.';
+                        }
                     } else if (xhr.status === 403) {
                         errorMessage = 'Permission denied. Please refresh the page and try again.';
                     } else if (xhr.status === 404) {
@@ -2917,17 +2921,29 @@ jQuery(document).ready(function($) {
         // Remove any existing error messages
         $('.error-message').remove();
         
+        // Special handling for timeout messages
+        let displayMessage = message;
+        if (message.includes('timed out') || message.includes('timeout')) {
+            displayMessage = `
+                <strong>Processing Takes Time</strong><br>
+                Your booking may have been successful even though this message appeared. 
+                Please wait a moment and check your email for confirmation, or contact us to verify your booking status.
+                <br><br>
+                <small>Original message: ${message}</small>
+            `;
+        }
+        
         // Show error message
         const $error = $(`
             <div class="error-message" style="
                 margin: 15px 0; 
                 padding: 15px; 
-                background: #ff6b6b; 
+                background: ${message.includes('timed out') ? '#ff9800' : '#ff6b6b'}; 
                 color: white; 
                 border-radius: 8px; 
                 font-weight: 500;
                 text-align: center;
-            ">${message}</div>
+            ">${displayMessage}</div>
         `);
         $('.booking-step.active .form-navigation').before($error);
         
