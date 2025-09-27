@@ -31,10 +31,6 @@ class BSP_Lead_Data_Collector {
         add_action('wp_ajax_bsp_capture_incomplete_lead', [$this, 'capture_incomplete_lead']);
         add_action('wp_ajax_nopriv_bsp_capture_incomplete_lead', [$this, 'capture_incomplete_lead']);
         
-        // TEST ACTION - Remove after debugging
-        add_action('wp_ajax_bsp_test_incomplete_lead', [$this, 'test_incomplete_lead_processing']);
-        add_action('wp_ajax_nopriv_bsp_test_incomplete_lead', [$this, 'test_incomplete_lead_processing']);
-        
         // Initialize database table if needed
         add_action('init', [$this, 'ensure_database_table']);
         
@@ -97,64 +93,48 @@ class BSP_Lead_Data_Collector {
     public function enqueue_scripts() {
         // Only load on booking pages
         if (!$this->is_booking_page()) {
-            bsp_debug_log("Lead capture scripts NOT enqueued - not a booking page", 'LEAD_CAPTURE_ENQUEUE');
             return;
         }
-        
-        bsp_debug_log("Enqueuing lead capture scripts", 'LEAD_CAPTURE_ENQUEUE');
         
         // Enqueue lead capture script after safe integration
         wp_enqueue_script(
             'bsp-lead-capture',
             plugin_dir_url(__DIR__) . 'assets/js/lead-capture.js',
-            ['bsp-safe-integration', 'bsp-utm-manager'], // Depend on both safe integration and UTM manager
+            ['bsp-safe-integration', 'bsp-utm-manager'],
             '1.0.0',
-            true // Load in footer after form initialization
+            true
         );
 
         // Pass configuration to JavaScript
         wp_localize_script('bsp-lead-capture', 'bspLeadConfig', [
             'ajaxUrl' => admin_url('admin-ajax.php'),
             'nonce' => wp_create_nonce('bsp_lead_capture_nonce'),
-            'debug' => true, // Enable debug for testing
-            'captureDelay' => 1000, // Shorter delay for testing
-            'minFieldsRequired' => 0, // Temporarily set to 0 for testing
+            'debug' => defined('WP_DEBUG') && WP_DEBUG,
+            'captureDelay' => 1000,
+            'minFieldsRequired' => 0,
             'storageKey' => 'bsp_incomplete_lead_' . get_current_blog_id(),
             'sessionExpiry' => 24 * 60 * 60 * 1000, // 24 hours in milliseconds
             'utmParams' => $this->get_utm_parameters_enhanced()
         ]);
-        
-        bsp_debug_log("Lead capture scripts enqueued successfully", 'LEAD_CAPTURE_ENQUEUE');
     }    /**
      * Check if current page has booking forms
      */
     private function is_booking_page() {
         // Don't load on admin pages
         if (is_admin()) {
-            bsp_debug_log("Not a booking page - is admin", 'BOOKING_PAGE_CHECK');
             return false;
         }
 
         global $post;
         
-        bsp_debug_log("Checking if booking page", 'BOOKING_PAGE_CHECK', [
-            'post_exists' => $post ? 'yes' : 'no',
-            'post_content_length' => $post ? strlen($post->post_content) : 0
-        ]);
-        
         // Check for shortcode in post content
         if ($post && (has_shortcode($post->post_content, 'booking_form') ||
                       has_shortcode($post->post_content, 'booking_system_form') ||
                       has_shortcode($post->post_content, 'booking_system_pro'))) {
-            bsp_debug_log("Is booking page - shortcode found", 'BOOKING_PAGE_CHECK', [
-                'has_booking_form' => has_shortcode($post->post_content, 'booking_form') ? 'yes' : 'no',
-                'has_booking_system_form' => has_shortcode($post->post_content, 'booking_system_form') ? 'yes' : 'no',
-                'has_booking_system_pro' => has_shortcode($post->post_content, 'booking_system_pro') ? 'yes' : 'no'
-            ]);
             return true;
         }
         
-        // Check for booking-related content patterns (more comprehensive)
+        // Check for booking-related content patterns
         if ($this->has_booking_content()) {
             return true;
         }
@@ -306,13 +286,11 @@ class BSP_Lead_Data_Collector {
         // Set processing flag for this session
         set_transient($request_key, $current_time, 10); // 10 second timeout
         
-        // Log all incoming requests for debugging
-        bsp_debug_log("AJAX capture request received", 'AJAX_CAPTURE', [
+        // Log incoming request (simplified)
+        bsp_debug_log("Lead capture request", 'AJAX_CAPTURE', [
             'session_id' => $session_id,
             'trigger' => $trigger_type,
-            'post_data' => $_POST,
-            'has_nonce' => isset($_POST['nonce']),
-            'action' => $_POST['action'] ?? 'missing'
+            'has_nonce' => isset($_POST['nonce'])
         ]);
         
         // Verify nonce - accept both lead capture nonce and general frontend nonce
@@ -327,32 +305,6 @@ class BSP_Lead_Data_Collector {
         
         // Sanitize and validate data
         $lead_data = $this->sanitize_lead_data($_POST);
-        
-        // Log raw and sanitized data to debug missing fields
-        bsp_debug_log("Lead capture data analysis", 'LEAD_DATA_DEBUG', [
-            'raw_post_keys' => array_keys($_POST),
-            'sanitized_keys' => array_keys($lead_data),
-            'service' => $_POST['service'] ?? 'not_in_post',
-            'service_sanitized' => $lead_data['service'] ?? 'not_sanitized',
-            'adu_fields_raw' => [
-                'adu_action' => $_POST['adu_action'] ?? 'not_in_post',
-                'adu_type' => $_POST['adu_type'] ?? 'not_in_post'
-            ],
-            'adu_fields_sanitized' => [
-                'adu_action' => $lead_data['adu_action'] ?? 'not_sanitized',
-                'adu_type' => $lead_data['adu_type'] ?? 'not_sanitized'
-            ],
-            'location_fields_raw' => [
-                'city' => $_POST['city'] ?? 'not_in_post',
-                'state' => $_POST['state'] ?? 'not_in_post',
-                'company' => $_POST['company'] ?? 'not_in_post'
-            ],
-            'location_fields_sanitized' => [
-                'city' => $lead_data['city'] ?? 'not_sanitized',
-                'state' => $lead_data['state'] ?? 'not_sanitized', 
-                'company' => $lead_data['company'] ?? 'not_sanitized'
-            ]
-        ]);
         
         // Validate minimum required data
         if (!$this->validate_minimum_data($lead_data)) {
@@ -481,37 +433,13 @@ class BSP_Lead_Data_Collector {
             }
         }
         
-        // CRITICAL FIX: Handle appointment data for incomplete leads on confirmation page
-        bsp_debug_log("Processing appointment data in sanitize_lead_data", 'APPOINTMENTS_DEBUG', [
-            'has_appointments_key' => isset($raw_data['appointments']),
-            'appointments_value' => $raw_data['appointments'] ?? 'NOT_SET',
-            'appointments_type' => gettype($raw_data['appointments'] ?? null),
-            'appointments_empty' => empty($raw_data['appointments']),
-            'all_raw_keys' => array_keys($raw_data),
-            'appointment_related_keys' => array_intersect_key($raw_data, array_flip([
-                'appointments', 'company', 'booking_date', 'booking_time', 
-                'selected_date', 'selected_time', 'date', 'time'
-            ]))
-        ]);
-        
+        // Handle appointment data for incomplete leads
         if (isset($raw_data['appointments']) && !empty($raw_data['appointments'])) {
-            bsp_debug_log("Found appointments data", 'APPOINTMENTS_FOUND', [
-                'appointments_raw' => $raw_data['appointments']
-            ]);
-            
             // Handle both JSON string and array formats
             if (is_string($raw_data['appointments'])) {
                 $appointments = json_decode(stripslashes($raw_data['appointments']), true);
-                bsp_debug_log("Decoded appointments from JSON string", 'APPOINTMENTS_DECODED', [
-                    'json_string' => $raw_data['appointments'],
-                    'decoded_result' => $appointments,
-                    'json_error' => json_last_error_msg()
-                ]);
             } else {
                 $appointments = $raw_data['appointments'];
-                bsp_debug_log("Using appointments as array", 'APPOINTMENTS_ARRAY', [
-                    'appointments' => $appointments
-                ]);
             }
             
             if (is_array($appointments) && !empty($appointments)) {
@@ -534,43 +462,20 @@ class BSP_Lead_Data_Collector {
                 }
                 if (!empty($dates)) {
                     $sanitized['booking_date'] = implode(', ', array_unique($dates));
-                    $sanitized['selected_date'] = $dates[0]; // Primary date for compatibility
-                    $sanitized['date'] = $dates[0]; // CRITICAL: Also set 'date' field for Google Sheets
+                    $sanitized['selected_date'] = $dates[0];
+                    $sanitized['date'] = $dates[0];
                 }
                 if (!empty($times)) {
                     $sanitized['booking_time'] = implode(', ', array_unique($times));
-                    $sanitized['selected_time'] = $times[0]; // Primary time for compatibility
-                    $sanitized['time'] = $times[0]; // CRITICAL: Also set 'time' field for Google Sheets
+                    $sanitized['selected_time'] = $times[0];
+                    $sanitized['time'] = $times[0];
                 }
                 
-                bsp_debug_log("Appointment data extracted for incomplete lead", 'LEAD_APPOINTMENTS', [
-                    'appointments_count' => count($appointments),
-                    'companies' => $companies,
-                    'dates' => $dates,
-                    'times' => $times,
-                    'sanitized_fields_set' => [
-                        'company' => $sanitized['company'] ?? 'NOT_SET',
-                        'booking_date' => $sanitized['booking_date'] ?? 'NOT_SET',
-                        'booking_time' => $sanitized['booking_time'] ?? 'NOT_SET',
-                        'selected_date' => $sanitized['selected_date'] ?? 'NOT_SET',
-                        'selected_time' => $sanitized['selected_time'] ?? 'NOT_SET',
-                        'date' => $sanitized['date'] ?? 'NOT_SET',
-                        'time' => $sanitized['time'] ?? 'NOT_SET'
-                    ]
-                ]);
-            } else {
-                bsp_debug_log("Appointments data is not valid array", 'APPOINTMENTS_INVALID', [
-                    'appointments' => $appointments,
-                    'is_array' => is_array($appointments),
-                    'is_empty' => empty($appointments)
+                bsp_debug_log("Appointments processed", 'APPOINTMENTS', [
+                    'count' => count($appointments),
+                    'companies' => implode(', ', $companies)
                 ]);
             }
-        } else {
-            bsp_debug_log("No appointments data found in raw data", 'APPOINTMENTS_MISSING', [
-                'has_appointments_key' => isset($raw_data['appointments']),
-                'appointments_value' => $raw_data['appointments'] ?? 'KEY_NOT_SET',
-                'is_empty' => isset($raw_data['appointments']) ? empty($raw_data['appointments']) : 'KEY_NOT_SET'
-            ]);
         }
         
         // Handle individual appointment data (fallback and direct field mapping)
@@ -721,13 +626,7 @@ class BSP_Lead_Data_Collector {
         
         $table_name = BSP_Database_Unified::$tables['incomplete_leads'];
         
-        bsp_debug_log("Attempting fast save to database", 'DATABASE_SAVE_ATTEMPT', [
-            'table_name' => $table_name,
-            'session_id' => $lead_data['session_id'] ?? 'unknown',
-            'service' => $lead_data['service'] ?? 'unknown'
-        ]);
-        
-        // Minimal data for fast save - INCLUDE APPOINTMENT DATA
+        // Minimal data for fast save - include appointment data
         $db_data = [
             'session_id' => $lead_data['session_id'] ?? wp_generate_uuid4(),
             'service' => $lead_data['service'] ?? '',
@@ -741,23 +640,8 @@ class BSP_Lead_Data_Collector {
             'lead_type' => 'Processing',
             'created_at' => current_time('mysql'),
             'last_updated' => current_time('mysql'),
-            // CRITICAL FIX: Include appointment data in fast save
-            'form_data' => json_encode($lead_data) // This preserves ALL sanitized data including appointments
+            'form_data' => json_encode($lead_data) // Preserves ALL sanitized data including appointments
         ];
-        
-        bsp_debug_log("Database data prepared", 'DATABASE_DATA_PREPARED', [
-            'db_data' => $db_data,
-            'appointment_data_included' => [
-                'has_form_data' => isset($db_data['form_data']),
-                'form_data_length' => isset($db_data['form_data']) ? strlen($db_data['form_data']) : 0,
-                'original_appointment_fields' => [
-                    'appointments' => isset($lead_data['appointments']),
-                    'company' => isset($lead_data['company']),
-                    'date' => isset($lead_data['date']),
-                    'time' => isset($lead_data['time'])
-                ]
-            ]
-        ]);
         
         // Quick insert/update without heavy processing
         $existing_lead = $wpdb->get_var($wpdb->prepare(
@@ -766,20 +650,16 @@ class BSP_Lead_Data_Collector {
         ));
         
         if ($existing_lead) {
-            bsp_debug_log("Updating existing lead", 'DATABASE_UPDATE', ['existing_lead_id' => $existing_lead]);
             unset($db_data['created_at']);
             $result = $wpdb->update($table_name, $db_data, ['id' => $existing_lead]);
             $lead_id = $result !== false ? $existing_lead : false;
         } else {
-            bsp_debug_log("Inserting new lead", 'DATABASE_INSERT');
             $result = $wpdb->insert($table_name, $db_data);
             $lead_id = $result ? $wpdb->insert_id : false;
         }
         
-        if ($lead_id) {
-            bsp_debug_log("Database save successful", 'DATABASE_SAVE_SUCCESS', ['lead_id' => $lead_id]);
-        } else {
-            bsp_debug_log("Database save failed", 'DATABASE_SAVE_FAILED', ['error' => $wpdb->last_error]);
+        if (!$lead_id) {
+            bsp_log_error("Database save failed", ['error' => $wpdb->last_error]);
         }
         
         return $lead_id;
@@ -830,31 +710,10 @@ class BSP_Lead_Data_Collector {
         $stored_form_data = [];
         if ($existing_lead && !empty($existing_lead->form_data)) {
             $stored_form_data = json_decode($existing_lead->form_data, true) ?? [];
-            bsp_debug_log("Retrieved stored form data from database", 'BACKGROUND_FORM_DATA', [
-                'lead_id' => $lead_id,
-                'stored_keys' => array_keys($stored_form_data),
-                'has_appointments' => isset($stored_form_data['appointments']),
-                'has_date' => isset($stored_form_data['date']),
-                'has_time' => isset($stored_form_data['time'])
-            ]);
         }
         
-        // Merge the stored appointment data with current lead data
+        // Merge stored data with current lead data
         $complete_lead_data = array_merge($lead_data, $stored_form_data);
-        
-        bsp_debug_log("Merged lead data for background processing", 'BACKGROUND_MERGE', [
-            'original_lead_keys' => array_keys($lead_data),
-            'stored_form_keys' => array_keys($stored_form_data),
-            'merged_keys' => array_keys($complete_lead_data),
-            'appointment_fields_present' => [
-                'appointments' => isset($complete_lead_data['appointments']),
-                'company' => isset($complete_lead_data['company']),
-                'date' => isset($complete_lead_data['date']),
-                'time' => isset($complete_lead_data['time']),
-                'booking_date' => isset($complete_lead_data['booking_date']),
-                'booking_time' => isset($complete_lead_data['booking_time'])
-            ]
-        ]);
         
         // Full data update with all fields and processing - USE MERGED DATA
         $full_db_data = [
@@ -1021,13 +880,15 @@ class BSP_Lead_Data_Collector {
             }
             
             if ($result !== false) {
-                // Trigger action for Google Sheets sync with mapped data
-                bsp_debug_log("Triggering Google Sheets sync action for updated lead", 'SHEETS_TRIGGER', [
-                    'lead_id' => $existing_lead,
-                    'session_id' => $db_data['session_id'],
-                    'completion_percentage' => $completion_percentage
-                ]);
-                do_action('bsp_incomplete_lead_captured', $existing_lead, $mapped_data);
+                // Only trigger Google Sheets sync for significant updates (not every minor change)
+                $should_sync = $this->should_sync_to_sheets($mapped_data, $existing_lead);
+                if ($should_sync) {
+                    bsp_log_info("Triggering Google Sheets sync for updated lead", [
+                        'lead_id' => $existing_lead,
+                        'session_id' => $db_data['session_id']
+                    ]);
+                    do_action('bsp_incomplete_lead_captured', $existing_lead, $mapped_data);
+                }
             }
             
             return $result !== false ? $existing_lead : false;
@@ -1050,12 +911,14 @@ class BSP_Lead_Data_Collector {
             
             if ($result) {
                 $lead_id = $wpdb->insert_id;
-                // Trigger action for Google Sheets sync with mapped data
-                bsp_debug_log("Triggering Google Sheets sync action for new lead", 'SHEETS_TRIGGER', [
-                    'lead_id' => $lead_id,
-                    'session_id' => $db_data['session_id']
-                ]);
-                do_action('bsp_incomplete_lead_captured', $lead_id, $db_data);
+                // Only trigger Google Sheets sync for new complete leads (prevent partial data)
+                if ($this->is_lead_ready_for_sync($db_data)) {
+                    bsp_log_info("Triggering Google Sheets sync for new lead", [
+                        'lead_id' => $lead_id,
+                        'session_id' => $db_data['session_id']
+                    ]);
+                    do_action('bsp_incomplete_lead_captured', $lead_id, $db_data);
+                }
                 return $lead_id;
             }
             
@@ -1204,53 +1067,95 @@ class BSP_Lead_Data_Collector {
 
         return $form_data;
     }
+
+    /**
+     * Determine if lead should sync to Google Sheets (prevent excessive syncing while keeping all triggers)
+     */
+    private function should_sync_to_sheets($lead_data, $lead_id) {
+        // Check if this session has been synced recently
+        $session_id = $lead_data['session_id'] ?? '';
+        if (empty($session_id)) return false;
+        
+        $sync_key = "bsp_sheets_sync_{$session_id}";
+        $last_sync_data = get_transient($sync_key);
+        
+        // If never synced, check if ready
+        if (!$last_sync_data) {
+            $should_sync = $this->is_sync_worthy_update($lead_data);
+            if ($should_sync) {
+                // Store sync data to prevent duplicates
+                set_transient($sync_key, [
+                    'last_sync' => time(),
+                    'completion' => $lead_data['completion_percentage'] ?? 0,
+                    'has_appointments' => !empty($lead_data['appointments']),
+                    'has_customer_data' => !empty($lead_data['customer_name']) || !empty($lead_data['customer_email'])
+                ], 300); // 5 minutes
+                return true;
+            }
+            return false;
+        }
+        
+        // If already synced, only sync again for significant updates
+        $current_completion = $lead_data['completion_percentage'] ?? 0;
+        $last_completion = $last_sync_data['completion'] ?? 0;
+        $completion_increased = $current_completion > $last_completion;
+        
+        $now_has_appointments = !empty($lead_data['appointments']);
+        $had_appointments = $last_sync_data['has_appointments'] ?? false;
+        $appointments_added = $now_has_appointments && !$had_appointments;
+        
+        $now_has_customer = !empty($lead_data['customer_name']) || !empty($lead_data['customer_email']);
+        $had_customer = $last_sync_data['has_customer_data'] ?? false;
+        $customer_data_added = $now_has_customer && !$had_customer;
+        
+        // Sync if there's a significant improvement
+        if ($completion_increased || $appointments_added || $customer_data_added) {
+            // Update sync tracking
+            set_transient($sync_key, [
+                'last_sync' => time(),
+                'completion' => $current_completion,
+                'has_appointments' => $now_has_appointments,
+                'has_customer_data' => $now_has_customer
+            ], 300);
+            
+            bsp_log_info("Google Sheets sync triggered by significant update", [
+                'session_id' => $session_id,
+                'completion_increased' => $completion_increased,
+                'appointments_added' => $appointments_added,
+                'customer_data_added' => $customer_data_added
+            ]);
+            
+            return true;
+        }
+        
+        return false; // No significant changes
+    }
     
     /**
-     * TEST FUNCTION: Manually trigger incomplete lead processing for debugging
-     * Remove this function after debugging is complete
+     * Check if this update is worthy of syncing (initial quality check)
      */
-    public function test_incomplete_lead_processing() {
-        if (!current_user_can('manage_options')) {
-            return;
-        }
+    private function is_sync_worthy_update($lead_data) {
+        // Must have basic lead data
+        $has_service = !empty($lead_data['service']) || !empty($lead_data['service_type']);
+        $has_customer_data = !empty($lead_data['customer_name']) || !empty($lead_data['customer_email']);
+        $has_appointment_data = !empty($lead_data['appointments']) || !empty($lead_data['company']);
+        $completion_threshold = ($lead_data['completion_percentage'] ?? 0) >= 25; // At least 25% complete
         
-        // Create test lead data
-        $test_lead_data = [
-            'session_id' => 'test_' . time(),
-            'service' => 'Kitchen',
-            'full_name' => 'Test User Debug',
-            'email' => 'test@debug.local',
-            'phone' => '555-123-4567',
-            'zip_code' => '90210',
-            'city' => 'Beverly Hills',
-            'state' => 'CA',
-            'company' => 'Debug Testing Co',
-            'kitchen_action' => 'Remodel',
-            'kitchen_component' => 'Cabinets',
-            'utm_source' => 'debug_test',
-            'utm_medium' => 'manual',
-            'utm_campaign' => 'background_testing',
-            'completion_percentage' => 35,
-            'form_step' => 2,
-            'trigger' => 'manual_test'
-        ];
+        // Sync if we have service + (customer data OR appointments OR good completion)
+        return $has_service && ($has_customer_data || $has_appointment_data || $completion_threshold);
+    }
+    
+    /**
+     * Check if new lead is ready for Google Sheets sync
+     */
+    private function is_lead_ready_for_sync($lead_data) {
+        // For new leads, be more restrictive to prevent spam
+        $has_customer_data = !empty($lead_data['customer_name']) || !empty($lead_data['customer_email']);
+        $has_service_data = !empty($lead_data['service']);
+        $has_location_data = !empty($lead_data['zip_code']) || !empty($lead_data['city']);
         
-        // Test the fast save
-        $lead_id = $this->save_incomplete_lead_fast($test_lead_data);
-        
-        if ($lead_id) {
-            $this->safe_lead_log("TEST: Fast save successful", [
-                'lead_id' => $lead_id,
-                'session_id' => $test_lead_data['session_id']
-            ], 'TEST_DEBUG');
-            
-            // Test background processing
-            $this->process_lead_background($lead_id, $test_lead_data);
-            
-            echo "Test lead created with ID: " . $lead_id . " - Check debug logs for processing details.";
-        } else {
-            echo "Failed to create test lead - check database connection.";
-        }
+        // New leads need customer data + service + location
+        return $has_customer_data && $has_service_data && $has_location_data;
     }
 }
 

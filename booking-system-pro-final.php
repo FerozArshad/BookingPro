@@ -25,46 +25,59 @@ define('BSP_DEBUG_LOG_FILE', BSP_PLUGIN_DIR . 'debug.log');
 
 /**
  * Enhanced debug logging function for Lead Capture System
- * Logs only to plugin directory, not WordPress core logs
+ * Now uses centralized BSP_Logger when available
  */
 function bsp_debug_log($message, $type = 'INFO', $context = []) {
-    // Always log during development - we'll filter later
+    // Use centralized logger if available
+    if (class_exists('BSP_Logger')) {
+        $logger = BSP_Logger::get_instance();
+        
+        switch (strtoupper($type)) {
+            case 'ERROR':
+            case 'FATAL':
+            case 'CRITICAL':
+            case 'DATABASE_ERROR':
+            case 'SECURITY_ERROR':
+                $logger->error($message, $context);
+                break;
+            case 'WARN':
+            case 'WARNING':
+                $logger->warn($message, $context);
+                break;
+            case 'DEBUG':
+            case 'TRACE':
+            case 'APPOINTMENTS_DEBUG':
+            case 'LEAD_DATA_DEBUG':
+                $logger->debug($message, $context);
+                break;
+            default:
+                $logger->info($message, $context);
+        }
+        return;
+    }
+    
+    // Fallback to original implementation if logger not loaded yet
     $log_file = BSP_PLUGIN_DIR . 'bsp-debug.log';
     $timestamp = date('Y-m-d H:i:s');
     $memory_usage = round(memory_get_usage() / 1024 / 1024, 2) . 'MB';
     
-    // Format context data
+    // Format context data (simplified for fallback)
     $context_str = '';
     if (!empty($context)) {
-        if (is_array($context) || is_object($context)) {
-            $context_str = ' | DATA: ' . wp_json_encode($context, JSON_UNESCAPED_UNICODE | JSON_PARTIAL_OUTPUT_ON_ERROR);
-        } else {
-            $context_str = ' | DATA: ' . $context;
-        }
+        $context_str = ' | ' . json_encode($context);
     }
     
-    // Add request context for better debugging
-    $request_id = isset($_SERVER['REQUEST_URI']) ? md5($_SERVER['REQUEST_URI'] . microtime()) : 'CLI';
-    $request_id = substr($request_id, 0, 8);
-    
     $log_message = sprintf(
-        "[%s] [%s] [%s] [%s] %s%s%s",
+        "[%s] [%s] [%s] %s%s%s",
         $timestamp,
         $type,
         $memory_usage,
-        $request_id,
         $message,
         $context_str,
         PHP_EOL
     );
     
-    // Write to plugin log file
     error_log($log_message, 3, $log_file);
-    
-    // Also log critical errors to PHP error log for immediate attention
-    if (in_array($type, ['ERROR', 'FATAL', 'CRITICAL'])) {
-        error_log("BSP Plugin [$type]: $message");
-    }
 }
 
 /**
@@ -236,9 +249,12 @@ final class Booking_System_Pro_Final {
     
     private function include_files() {
         $includes = [
+            'includes/class-constants.php', // System constants - must be loaded first
+            'includes/class-logger.php', // Centralized logging
             'includes/class-utilities.php',
             'includes/class-database-unified.php',
             'includes/class-field-mapper.php', // Centralized field naming - must be loaded early
+            'includes/class-lead-manager.php', // Centralized lead management
             // Lead Capture System - Phase 1 components (order matters)
             'includes/class-safe-variable-integration.php',
             'includes/class-lead-data-collector.php', // Must be loaded before data processor
@@ -251,6 +267,7 @@ final class Booking_System_Pro_Final {
             'includes/class-admin-bookings.php',
             'includes/class-admin-companies.php',
             'includes/class-admin-settings.php',
+            'includes/class-system-status.php', // System monitoring and status
             'includes/class-ajax.php',
             'includes/class-email.php',
             'includes/class-data-manager.php',

@@ -543,6 +543,11 @@ class BSP_Ajax {
             }
         }
         
+        // CRITICAL: Update incomplete lead to complete status for session continuity
+        if ($session_id) {
+            $this->update_incomplete_lead_to_complete($session_id, $primary_booking_id, $booking_data);
+        }
+        
         // CRITICAL: Schedule all background jobs AFTER the response is sent using shutdown hook
         add_action('shutdown', function() use ($primary_booking_id, $booking_data, $session_id) {
             bsp_debug_log("=== SCHEDULING BACKGROUND JOBS AFTER RESPONSE ===", 'INTEGRATION', [
@@ -691,6 +696,140 @@ class BSP_Ajax {
     }
     
     /**
+     * Update incomplete lead to complete status for session continuity
+     * CRITICAL for session-based Google Sheets approach
+     */
+    private function update_incomplete_lead_to_complete($session_id, $booking_id, $booking_data) {
+        if (empty($session_id)) {
+            bsp_debug_log("No session ID provided for incomplete lead update", 'CONVERSION_WARNING');
+            return false;
+        }
+        
+        global $wpdb;
+        BSP_Database_Unified::init_tables();
+        $table_name = BSP_Database_Unified::$tables['incomplete_leads'];
+        
+        // Find the incomplete lead for this session
+        $incomplete_lead = $wpdb->get_row($wpdb->prepare(
+            "SELECT * FROM $table_name WHERE session_id = %s ORDER BY id DESC LIMIT 1",
+            $session_id
+        ));
+        
+        if ($incomplete_lead) {
+            // Update the incomplete lead to complete status
+            $update_data = [
+                'lead_type' => 'Complete',
+                'booking_post_id' => $booking_id,
+                'converted_to_booking' => 1,
+                'completion_percentage' => 100,
+                'conversion_timestamp' => current_time('mysql'),
+                'last_updated' => current_time('mysql'),
+                // Update customer data from final form submission
+                'customer_name' => $booking_data['full_name'] ?? '',
+                'customer_email' => $booking_data['email'] ?? '',
+                'customer_phone' => $booking_data['phone'] ?? '',
+                'customer_address' => $booking_data['address'] ?? '',
+                'city' => $booking_data['city'] ?? '',
+                'state' => $booking_data['state'] ?? '',
+                'zip_code' => $booking_data['zip_code'] ?? '',
+                'service_type' => $booking_data['service'] ?? '',
+                'service_details' => $booking_data['service_details'] ?? '',
+                'company_name' => $booking_data['company'] ?? '',
+                'booking_date' => $booking_data['selected_date'] ?? '',
+                'booking_time' => $booking_data['selected_time'] ?? '',
+                'appointments' => $booking_data['appointments'] ?? ''
+            ];
+            
+            $result = $wpdb->update(
+                $table_name,
+                $update_data,
+                ['id' => $incomplete_lead->id],
+                [
+                    '%s', '%d', '%d', '%d', '%s', '%s', // lead_type, booking_post_id, converted_to_booking, completion_percentage, conversion_timestamp, last_updated  
+                    '%s', '%s', '%s', '%s', '%s', '%s', '%s', // customer data
+                    '%s', '%s', '%s', '%s', '%s', '%s'      // service and booking data
+                ],
+                ['%d']
+            );
+            
+            if ($result !== false) {
+                bsp_debug_log("Incomplete lead updated to complete for session continuity", 'CONVERSION_SUCCESS', [
+                    'session_id' => $session_id,
+                    'booking_id' => $booking_id,
+                    'lead_id' => $incomplete_lead->id,
+                    'updated_fields' => array_keys($update_data)
+                ]);
+                return true;
+            } else {
+                bsp_debug_log("Failed to update incomplete lead to complete", 'CONVERSION_ERROR', [
+                    'session_id' => $session_id,
+                    'booking_id' => $booking_id,
+                    'lead_id' => $incomplete_lead->id,
+                    'db_error' => $wpdb->last_error
+                ]);
+                return false;
+            }
+        } else {
+            bsp_debug_log("No incomplete lead found for session - creating lead continuity record", 'CONVERSION_INFO', [
+                'session_id' => $session_id,
+                'booking_id' => $booking_id
+            ]);
+            
+            // Create a complete lead record for session continuity
+            $lead_data = [
+                'session_id' => $session_id,
+                'lead_type' => 'Complete',
+                'booking_post_id' => $booking_id,
+                'converted_to_booking' => 1,
+                'completion_percentage' => 100,
+                'customer_name' => $booking_data['full_name'] ?? '',
+                'customer_email' => $booking_data['email'] ?? '',
+                'customer_phone' => $booking_data['phone'] ?? '',
+                'customer_address' => $booking_data['address'] ?? '',
+                'city' => $booking_data['city'] ?? '',
+                'state' => $booking_data['state'] ?? '',
+                'zip_code' => $booking_data['zip_code'] ?? '',
+                'service_type' => $booking_data['service'] ?? '',
+                'service_details' => $booking_data['service_details'] ?? '',
+                'company_name' => $booking_data['company'] ?? '',
+                'booking_date' => $booking_data['selected_date'] ?? '',
+                'booking_time' => $booking_data['selected_time'] ?? '',
+                'appointments' => $booking_data['appointments'] ?? '',
+                'created_at' => current_time('mysql'),
+                'conversion_timestamp' => current_time('mysql'),
+                'last_updated' => current_time('mysql')
+            ];
+            
+            $insert_result = $wpdb->insert(
+                $table_name,
+                $lead_data,
+                [
+                    '%s', '%s', '%d', '%d', '%d', // session_id, lead_type, booking_post_id, converted_to_booking, completion_percentage
+                    '%s', '%s', '%s', '%s', '%s', '%s', '%s', // customer data
+                    '%s', '%s', '%s', '%s', '%s', '%s', // service and booking data
+                    '%s', '%s', '%s' // timestamps
+                ]
+            );
+            
+            if ($insert_result) {
+                bsp_debug_log("Created complete lead record for session continuity", 'CONVERSION_SUCCESS', [
+                    'session_id' => $session_id,
+                    'booking_id' => $booking_id,
+                    'new_lead_id' => $wpdb->insert_id
+                ]);
+                return true;
+            } else {
+                bsp_debug_log("Failed to create complete lead record", 'CONVERSION_ERROR', [
+                    'session_id' => $session_id,
+                    'booking_id' => $booking_id,
+                    'db_error' => $wpdb->last_error
+                ]);
+                return false;
+            }
+        }
+    }
+    
+    /**
      * Background job: Send customer notification email
      */
     public function handle_customer_notification($booking_id, $booking_data) {
@@ -737,13 +876,17 @@ class BSP_Ajax {
      */
     public function handle_booking_extras($booking_id, $booking_data) {
         try {
-            // Process toast notifications
-            do_action('bsp_booking_created', $booking_id, $booking_data);
-            
-            // Any other non-critical processing
+            // Process toast notifications ONLY - Google Sheets handled separately
             do_action('bsp_booking_extras', $booking_id, $booking_data);
+            
+            bsp_debug_log("Booking extras processed (without duplicate Google Sheets sync)", 'INTEGRATION', [
+                'booking_id' => $booking_id
+            ]);
         } catch (Exception $e) {
-            // Silent error handling for non-critical processing
+            bsp_debug_log("Error in booking extras processing", 'ERROR', [
+                'booking_id' => $booking_id,
+                'error' => $e->getMessage()
+            ]);
         }
     }
     
