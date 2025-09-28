@@ -355,7 +355,7 @@
             // Update ZIP step content with service
             const questionEl = zipStep.querySelector('.step-question, h2, .question-text');
             if (questionEl) {
-                questionEl.innerHTML = `Start Your ${service} Remodel Today.<br>Connect With Trusted Local Pros Now`;
+                questionEl.innerHTML = `Start Your ${service} Remodel Today!<br>Connect With Trusted Local Pros Now`;
             }
             
             // Focus on input for better UX

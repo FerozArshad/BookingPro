@@ -134,7 +134,7 @@
             // Set title immediately with new copy
             const title = zipStep.querySelector('.step-title, .step-question, h2, .question-text');
             if (title) {
-                title.innerHTML = `Start Your ${service} Remodel Today.<br>Connect With Trusted Local Pros Now`;
+                title.innerHTML = `Start Your ${service} Remodel Today!<br>Connect With Trusted Local Pros Now`;
             }
             
             // Configure for text input

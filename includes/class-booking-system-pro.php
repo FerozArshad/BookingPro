@@ -48,28 +48,28 @@ class Booking_System_Pro {
         ['id'=>'adu_zip','depends_on'=>['service','ADU'],'type'=>'text','question'=>'ADU<br>Replacement','label'=>'Enter the location of your project'],
         
         // Roof
-        ['id'=>'roof_action','depends_on'=>['service','Roof'],'type'=>'single-choice','question'=>'Are you looking to replace or repair your roof?','options'=>['Replace','Repair']],
-        ['id'=>'roof_material','depends_on'=>['service','Roof'],'type'=>'single-choice','question'=>'What kind of roof material?','options'=>['Asphalt','Metal','Tile','Flat']],
+        ['id'=>'roof_action','depends_on'=>['service','Roof'],'type'=>'single-choice','question'=>'Are you looking to Replace or Repair your Roof?','options'=>['Replace','Repair']],
+        ['id'=>'roof_material','depends_on'=>['service','Roof'],'type'=>'single-choice','question'=>'What kind of Roof Material?','options'=>['Asphalt','Metal','Tile','Flat']],
         
         // Windows
-        ['id'=>'windows_action','depends_on'=>['service','Windows'],'type'=>'single-choice','question'=>'Are you replacing or repairing your windows?','options'=>['Replace','Repair']],
-        ['id'=>'windows_replace_qty','depends_on'=>['windows_action','Replace'],'type'=>'single-choice','question'=>'How many windows?','options'=>['3–5','6–9','10+']],
+        ['id'=>'windows_action','depends_on'=>['service','Windows'],'type'=>'single-choice','question'=>'Are you Replacing or Repairing your Windows?','options'=>['Replace','Repair']],
+        ['id'=>'windows_replace_qty','depends_on'=>['windows_action','Replace'],'type'=>'single-choice','question'=>'How many Windows?','options'=>['3–5','6–9','10+']],
         ['id'=>'windows_repair_needed','depends_on'=>['windows_action','Repair'],'type'=>'single-choice','question'=>'We don\'t have any window pros who service window repair projects.\nWould you want pricing to fully replace 3 or more window openings?','options'=>['Yes','No']],
         
         // Bathroom
         ['id'=>'bathroom_option','depends_on'=>['service','Bathroom'],'type'=>'single-choice','question'=>'Which bathroom service do you need?','options'=>['Replace bath/shower','Remove & install new bathroom','New walk-in tub']],
         
         // Siding
-        ['id'=>'siding_option','depends_on'=>['service','Siding'],'type'=>'single-choice','question'=>'What type of siding work?','options'=>['Replace existing siding','Remove & replace siding','Add siding for a new addition','Install siding on a new home']],
-        ['id'=>'siding_material','depends_on'=>['service','Siding'],'type'=>'single-choice','question'=>'What siding material?','options'=>['Wood composite','Aluminum','Fiber cement']],
+        ['id'=>'siding_option','depends_on'=>['service','Siding'],'type'=>'single-choice','question'=>'What type of Siding Work?','options'=>['Replace existing siding','Remove & replace siding','Add siding for a new addition','Install siding on a new home']],
+        ['id'=>'siding_material','depends_on'=>['service','Siding'],'type'=>'single-choice','question'=>'What Siding Material?','options'=>['Wood Composite','Aluminum','Fiber Cement']],
         
         // Kitchen
-        ['id'=>'kitchen_action','depends_on'=>['service','Kitchen'],'type'=>'single-choice','question'=>'Are you upgrading or repairing your kitchen?','options'=>['Upgrade','Repair']],
-        ['id'=>'kitchen_component','depends_on'=>['service','Kitchen'],'type'=>'single-choice','question'=>'Which part of the kitchen?','options'=>['Countertops','Cabinets','Appliances','Islands']],
+        ['id'=>'kitchen_action','depends_on'=>['service','Kitchen'],'type'=>'single-choice','question'=>'Are you Upgrading or Repairing your Kitchen?','options'=>['Upgrade','Repair']],
+        ['id'=>'kitchen_component','depends_on'=>['service','Kitchen'],'type'=>'single-choice','question'=>'Which part of the Kitchen?','options'=>['Countertops','Cabinets','Appliances','Islands']],
         
         // Decks
-        ['id'=>'decks_action','depends_on'=>['service','Decks'],'type'=>'single-choice','question'=>'Are you looking to replace or repair your decks?','options'=>['Replace','Repair']],
-        ['id'=>'decks_material','depends_on'=>['service','Decks'],'type'=>'single-choice','question'=>'What material?','options'=>['Cedar','Redwood']],
+        ['id'=>'decks_action','depends_on'=>['service','Decks'],'type'=>'single-choice','question'=>'Are you looking to Replace or Repair your Decks?','options'=>['Replace','Repair']],
+        ['id'=>'decks_material','depends_on'=>['service','Decks'],'type'=>'single-choice','question'=>'What Material?','options'=>['Cedar','Redwood']],
         
         // ADU
         ['id'=>'adu_type','depends_on'=>['service','ADU'],'type'=>'single-choice','question'=>'What type of ADU project?','options'=>['New Build','Addition','Garage Conversion']],

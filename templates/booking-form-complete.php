@@ -393,7 +393,7 @@ window.BOOKING_DIRECT_ZIP_MODE = true;
         <div class="step-card">
             <h2 class="step-title" id="step2-title"><?php 
                 if ($has_preselected_service) {
-                    echo 'Start Your ' . $detected_service . ' Remodel Today.<br>Connect With Trusted Local Pros Now';
+                    echo 'Start Your ' . $detected_service . ' Remodel Today!<br>Connect With Trusted Local Pros Now';
                 } else {
                     echo 'Service Details';
                 }
@@ -453,9 +453,10 @@ window.BOOKING_DIRECT_ZIP_MODE = true;
     <!-- Step 5: Full Name -->
     <div class="booking-step" data-step="5">
         <div class="step-card">
-            <h2 class="step-title">Please enter your full name</h2>
+            <h2 class="step-title">Please enter your <br>Full Name</h2>
+            <h4 class="step-title">Your matches are almost ready!</h4>
             <div class="form-group">
-                <input type="text" class="form-input" id="name-input" name="full_name" placeholder="Enter your full name" required>
+                <input type="text" class="form-input" id="name-input" name="full_name" placeholder="John Doe" required>
             </div>
             <div class="form-navigation">
                 <button class="btn btn-secondary btn-back">Back</button>
@@ -467,9 +468,9 @@ window.BOOKING_DIRECT_ZIP_MODE = true;
     <!-- Step 6: Address -->
     <div class="booking-step" data-step="6">
         <div class="step-card">
-            <h2 class="step-title">What is your street address?</h2>
+            <h2 class="step-title">What is your Street Address?</h2>
             <div class="form-group">
-                <input type="text" class="form-input" id="address-input" name="street_address" placeholder="Enter your street address" required>
+                <input type="text" class="form-input" id="address-input" name="street_address" placeholder="e.g. Street 13th High W" required>
             </div>
             <div class="form-navigation">
                 <button class="btn btn-secondary btn-back">Back</button>
@@ -481,14 +482,14 @@ window.BOOKING_DIRECT_ZIP_MODE = true;
     <!-- Step 7: Contact Information -->
     <div class="booking-step" data-step="7">
         <div class="step-card">
-            <h2 class="step-title">We have matching Pros in <span id="city-name">[City]</span></h2>
-            <div class="form-group">
-                <label class="form-label">Cell Number</label>
-                <input type="tel" class="form-input" id="phone-input" name="phone_number" placeholder="(555) 123-4567" required>
-            </div>
+            <h2 class="step-title">We have matching Pros in <br><span id="city-name">[City]</span></h2>
             <div class="form-group">
                 <label class="form-label">Email Address</label>
-                <input type="email" class="form-input" id="email-input" name="email_address" placeholder="your@email.com" required>
+                <input type="email" class="form-input" id="email-input" name="email_address" placeholder="your.email@mail.com" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Cell Number</label>
+                <input type="tel" class="form-input" id="phone-input" name="phone_number" placeholder="(623) 623 6458" required>
             </div>
             <div class="form-navigation">
                 <button class="btn btn-secondary btn-back">Back</button>
@@ -500,10 +501,10 @@ window.BOOKING_DIRECT_ZIP_MODE = true;
     <!-- Step 8: Schedule Appointments -->
     <div class="booking-step" data-step="8">
         <div class="step-card">
-            <h2 class="step-title">Select a date and time</h2>
+            <!-- <h2 class="step-title">Select a date and time</h2>
             <p class="step-instructions" style="text-align: center; margin-bottom: 20px; color: rgba(255,255,255,0.9); font-size: 14px;">
                 Choose your preferred dates and times from the companies below. You can select up to 3 appointments.
-            </p>
+            </p> -->
             <div class="calendar-container">
                 <?php
                 // Get companies from database for dynamic rendering

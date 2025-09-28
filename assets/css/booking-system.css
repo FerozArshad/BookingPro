@@ -447,7 +447,7 @@ body .booking-system-form .option-btn,
     color: #fff !important;
     border: 2px solid rgba(255, 255, 255, 0.8) !important;
     border-radius: 12px;
-    padding: 30px 25px;
+    padding: 26px 22px;
     font-size: 20px !important;
     font-weight: 600 !important;
     cursor: pointer;
@@ -459,8 +459,8 @@ body .booking-system-form .option-btn,
     justify-content: flex-start;
     gap: 20px;
     flex: 1;
-    min-width: 250px;
-    max-width: 45%;
+    width: 200px;
+    max-width: 250px;
     font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
     word-wrap: break-word;
     overflow-wrap: break-word;
@@ -490,11 +490,23 @@ body .booking-system-form .option-btn.selected,
 /* ─── OPTION ICON & TEXT LAYOUT ──────────────────────────── */
 body .booking-system-form .option-icon,
 .booking-system-form .option-icon {
-    width: 72px;
-    height: 72px;
+    width: 62px;
+    height: 62px;
     flex-shrink: 0;
+    margin-left: 10px;
     object-fit: contain;
     filter: brightness(0) invert(1); /* Make SVG white */
+}
+
+/* Placeholder for services without icons yet */
+body .booking-system-form .option-placeholder,
+.booking-system-form .option-placeholder {
+    width: 62px;
+    height: 62px;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 8px;
+    flex-shrink: 0;
+    margin-left: 10px;
 }
 
 body .booking-system-form .option-text,
@@ -503,6 +515,13 @@ body .booking-system-form .option-text,
     font-size: 20px !important;
     font-weight: 600 !important;
     line-height: 1.4;
+}
+
+/* Text-only buttons (no icons) - center text */
+body .booking-system-form .option-btn:not(:has(.option-icon)):not(:has(.option-placeholder)),
+.booking-system-form .option-btn:not(:has(.option-icon)):not(:has(.option-placeholder)) {
+    justify-content: center !important;
+    text-align: center !important;
 }
 
 /* Responsive option button layouts */
@@ -522,6 +541,15 @@ body .booking-system-form .option-text,
     .booking-system-form .option-icon {
         width: 56px !important;
         height: 56px !important;
+        margin-left:12px;
+    }
+    
+    html body .booking-system-form .option-placeholder,
+    body .booking-system-form .option-placeholder,
+    .booking-system-form .option-placeholder {
+        width: 56px !important;
+        height: 56px !important;
+        margin-left: 12px;
     }
     
     html body .booking-system-form .option-btn,
@@ -575,6 +603,7 @@ body .booking-system-form .option-text,
     .booking-system-form .option-icon {
         width: 48px !important;
         height: 48px !important;
+        margin-left: 8px;
     }
     
     html body .booking-system-form .option-placeholder,
@@ -582,6 +611,7 @@ body .booking-system-form .option-text,
     .booking-system-form .option-placeholder {
         width: 48px !important;
         height: 48px !important;
+        margin-left: 8px;
     }
     
     html body .booking-system-form .option-btn,
@@ -777,7 +807,7 @@ body .booking-system-form .calendar-container,
 .booking-system-form .calendar-container,
 .calendar-container {
     padding: 50px 30px;
-    background: rgba(255, 255, 255, 0.95);
+    /* background: rgba(255, 255, 255, 0.95); */
     border-radius: 12px;
     margin-bottom: 20px;
     /* Step 8 specific: flex layout for company cards */
@@ -831,8 +861,8 @@ body .booking-system-form .calendar-grid,
 body .booking-system-form .calendar-day,
 .booking-system-form .calendar-day,
 .calendar-day {
-    min-width: 60px;
-    height: 70px;
+    min-width: 50px;
+    height: 60px;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -984,12 +1014,12 @@ body .booking-system-form .time-slot,
 .booking-system-form .time-slot,
 .time-slot {
     padding: 6px;
-    border: 2px solid #79B62F;
+    border: 2px solid transparent;
     border-radius: 6px;
     text-align: center;
     cursor: pointer;
-    font-size: 18px;
-    font-weight: 600;
+    font-size: 15px;
+    font-weight: 500;
     transition: all 0.3s ease;
     background: #fff;
     color: #79B62F;
@@ -2676,8 +2706,6 @@ body .booking-system-form .rs-step-1 .service-option[data-service="ADU"] .servic
 /* Featured Badge - Centered Tab Above Card */
 body .booking-system-form .featured-badge,
 .booking-system-form .featured-badge {
-    background: #79B62F !important;
-    color: white !important;
     font-size: 22px !important;
     min-width: 90%;
     font-weight: 600 !important;
@@ -2704,6 +2732,22 @@ body .booking-system-form .featured-badge,
     box-sizing: border-box;
 }
 
+/* Default styling - 1st and 3rd children: White background, green text */
+body .booking-system-form .featured-badge:nth-child(1),
+.booking-system-form .featured-badge:nth-child(1),
+body .booking-system-form .featured-badge:nth-child(3),
+.booking-system-form .featured-badge:nth-child(3) {
+    background: white !important;
+    color: #79B62F !important;
+}
+
+/* 2nd child: Green background, white text */
+body .booking-system-form .featured-badge:nth-child(2),
+.booking-system-form .featured-badge:nth-child(2) {
+    background: #79B62F !important;
+    color: white !important;
+}
+
 /* Badge Icon Styling */
 body .booking-system-form .featured-badge .badge-icon,
 .booking-system-form .featured-badge .badge-icon {
@@ -2711,7 +2755,20 @@ body .booking-system-form .featured-badge .badge-icon,
     width: auto !important;
     object-fit: contain !important;
     flex-shrink: 0 !important;
-    filter: brightness(0) invert(1) !important; /* Make icon white to match text */
+}
+
+/* Icon color for 1st and 3rd children (white background) - make icon green */
+body .booking-system-form .featured-badge:nth-child(1) .badge-icon,
+.booking-system-form .featured-badge:nth-child(1) .badge-icon,
+body .booking-system-form .featured-badge:nth-child(3) .badge-icon,
+.booking-system-form .featured-badge:nth-child(3) .badge-icon {
+    filter: brightness(0) saturate(100%) invert(43%) sepia(51%) saturate(1573%) hue-rotate(75deg) brightness(94%) contrast(88%) !important; /* Green color */
+}
+
+/* Icon color for 2nd child (green background) - make icon white */
+body .booking-system-form .featured-badge:nth-child(2) .badge-icon,
+.booking-system-form .featured-badge:nth-child(2) .badge-icon {
+    filter: brightness(0) invert(1) !important; /* White color */
 }
 
 /* Badge Text Styling */
@@ -2866,7 +2923,7 @@ body .booking-system-form .company-service,
 body .booking-system-form .company-card,
 .booking-system-form .company-card {
     background: rgba(255, 255, 255, 0.98);
-    border: 2px solid #79B62F !important;
+    border: 3px solid #79B62F !important;
     border-radius: 12px;
     padding: 20px;
     color: #333 !important;

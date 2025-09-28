@@ -15,33 +15,33 @@ jQuery(document).ready(function($) {
                 id: 'zip_code', 
                 type: 'text', 
                 depends_on: ['service'], // Depends on 'service' key being present in formState
-                question_template: 'Start Your {service} Remodel Today.<br>Connect With Trusted Local Pros Now', 
+                question_template: 'Start Your {service} Remodel Today!<br>Connect With Trusted Local Pros Now', 
                 label: 'Enter Zip Code to check eligibility for free estimate'
             },
             
             // Roof questions
-            { id: 'roof_action', depends_on: ['service', 'Roof'], type: 'single-choice', question: 'Are you looking to replace or repair your roof?', options: ['Replace', 'Repair'] },
-            { id: 'roof_material', depends_on: ['service', 'Roof'], type: 'single-choice', question: 'What kind of roof material?', options: ['Asphalt', 'Metal', 'Tile', 'Flat'] },
+            { id: 'roof_action', depends_on: ['service', 'Roof'], type: 'single-choice', question: 'Are you looking to Replace or Repair your Roof?', options: ['Replace', 'Repair'] },
+            { id: 'roof_material', depends_on: ['service', 'Roof'], type: 'single-choice', question: 'What kind of Roof Material?', options: ['Asphalt', 'Metal', 'Tile', 'Flat'] },
             
             // Windows questions
-            { id: 'windows_action', depends_on: ['service', 'Windows'], type: 'single-choice', question: 'Are you replacing or repairing your windows?', options: ['Replace', 'Repair'] },
-            { id: 'windows_replace_qty', depends_on: ['windows_action', 'Replace'], type: 'single-choice', question: 'How many windows?', options: ['3–5', '6–9', '10+'] },
+            { id: 'windows_action', depends_on: ['service', 'Windows'], type: 'single-choice', question: 'Are you Replacing or Repairing your Windows?', options: ['Replace', 'Repair'] },
+            { id: 'windows_replace_qty', depends_on: ['windows_action', 'Replace'], type: 'single-choice', question: 'How many Windows?', options: ['3–5', '6–9', '10+'] },
             { id: 'windows_repair_needed', depends_on: ['windows_action', 'Repair'], type: 'single-choice', question: 'We don\'t have any window pros who service window repair projects.\nWould you want pricing to fully replace 3 or more window openings?', options: ['Yes', 'No'] },
             
             // Bathroom questions
-            { id: 'bathroom_option', depends_on: ['service', 'Bathroom'], type: 'single-choice', question: 'Which bathroom service do you need?', options: ['Replace bath/shower', 'Remove & install new bathroom', 'New walk-in tub'] },
+            { id: 'bathroom_option', depends_on: ['service', 'Bathroom'], type: 'single-choice', question: 'Which Bathroom Service do you need?', options: ['Replace bath/shower', 'Remove & install new bathroom', 'New walk-in tub'] },
             
             // Siding questions
-            { id: 'siding_option', depends_on: ['service', 'Siding'], type: 'single-choice', question: 'What type of siding work?', options: ['Replace existing siding', 'Remove & replace siding', 'Add siding for a new addition', 'Install siding on a new home'] },
-            { id: 'siding_material', depends_on: ['service', 'Siding'], type: 'single-choice', question: 'What siding material?', options: ['Wood composite', 'Aluminum', 'Fiber cement'] },
+            { id: 'siding_option', depends_on: ['service', 'Siding'], type: 'single-choice', question: 'What type of Siding Work?', options: ['Replace existing siding', 'Remove & replace siding', 'Add siding for a new addition', 'Install siding on a new home'] },
+            { id: 'siding_material', depends_on: ['service', 'Siding'], type: 'single-choice', question: 'What Siding Material?', options: ['Wood Composite', 'Aluminum', 'Fiber Cement'] },
             
             // Kitchen questions
-            { id: 'kitchen_action', depends_on: ['service', 'Kitchen'], type: 'single-choice', question: 'Are you upgrading or repairing your kitchen?', options: ['Upgrade', 'Repair'] },
-            { id: 'kitchen_component', depends_on: ['service', 'Kitchen'], type: 'single-choice', question: 'Which part of the kitchen?', options: ['Countertops', 'Cabinets', 'Appliances', 'Islands'] },
+            { id: 'kitchen_action', depends_on: ['service', 'Kitchen'], type: 'single-choice', question: 'Are you Upgrading or Repairing your Kitchen?', options: ['Upgrade', 'Repair'] },
+            { id: 'kitchen_component', depends_on: ['service', 'Kitchen'], type: 'single-choice', question: 'Which Part of the Kitchen?', options: ['Countertops', 'Cabinets', 'Appliances', 'Islands'] },
             
             // Decks questions
-            { id: 'decks_action', depends_on: ['service', 'Decks'], type: 'single-choice', question: 'Are you looking to replace or repair your decks?', options: ['Replace', 'Repair'] },
-            { id: 'decks_material', depends_on: ['service', 'Decks'], type: 'single-choice', question: 'What material?', options: ['Cedar', 'Redwood'] },
+            { id: 'decks_action', depends_on: ['service', 'Decks'], type: 'single-choice', question: 'Are you looking to Replace or Repair your Decks?', options: ['Replace', 'Repair'] },
+            { id: 'decks_material', depends_on: ['service', 'Decks'], type: 'single-choice', question: 'What Material?', options: ['Cedar', 'Redwood'] },
             
             // ADU questions
             { id: 'adu_type', depends_on: ['service', 'ADU'], type: 'single-choice', question: 'What type of ADU project?', options: ['New Build', 'Addition', 'Garage Conversion'] },
@@ -3027,6 +3027,103 @@ jQuery(document).ready(function($) {
                 return `<img src="${baseUrl}material-flat-roof.svg" class="option-icon" alt="Flat Roof">`;
             }
         }
+        // Kitchen service icons
+        else if (stepId === 'kitchen_action') {
+            if (option === 'Upgrade') {
+                return `<img src="${baseUrl}kitchen-upgrade.svg" class="option-icon" alt="Kitchen Upgrade">`;
+            } else if (option === 'Repair') {
+                return `<img src="${baseUrl}kitchen-repair.svg" class="option-icon" alt="Kitchen Repair">`;
+            }
+        } else if (stepId === 'kitchen_component') {
+            if (option === 'Countertops') {
+                return `<img src="${baseUrl}part-countertops-kitchen.svg" class="option-icon" alt="Kitchen Countertops">`;
+            } else if (option === 'Cabinets') {
+                return `<img src="${baseUrl}part-cabinets-kitchen.svg" class="option-icon" alt="Kitchen Cabinets">`;
+            } else if (option === 'Appliances') {
+                return `<img src="${baseUrl}part-appliances-kitchen.svg" class="option-icon" alt="Kitchen Appliances">`;
+            } else if (option === 'Islands') {
+                return `<img src="${baseUrl}part-islands-kitchen.svg" class="option-icon" alt="Kitchen Islands">`;
+            }
+        }
+        // Windows service icons
+        else if (stepId === 'windows_action') {
+            if (option === 'Replace') {
+                return `<img src="${baseUrl}replacing-windows.svg" class="option-icon" alt="Replace Windows">`;
+            } else if (option === 'Repair') {
+                return `<img src="${baseUrl}repairing-windows.svg" class="option-icon" alt="Repair Windows">`;
+            }
+        } else if (stepId === 'windows_replace_qty') {
+            // All quantity options use the same replacing windows icon
+            return `<img src="${baseUrl}replacing-windows.svg" class="option-icon" alt="Replace Windows">`;
+        } else if (stepId === 'windows_repair_needed') {
+            // No icon - return empty string to keep text centered
+            return '';
+        }
+        // Bathroom service icons
+        else if (stepId === 'bathroom_option') {
+            if (option === 'Replace bath/shower') {
+                return `<img src="${baseUrl}replace-bathroom.svg" class="option-icon" alt="Replace Bathroom">`;
+            } else if (option === 'Remove & install new bathroom') {
+                return `<img src="${baseUrl}new-bathroom.svg" class="option-icon" alt="New Bathroom">`;
+            } else if (option === 'New walk-in tub') {
+                return `<img src="${baseUrl}remodel-bathroom.svg" class="option-icon" alt="Remodel Bathroom">`;
+            }
+        }
+        // Deck service icons
+        else if (stepId === 'decks_action') {
+            if (option === 'Replace') {
+                return `<img src="${baseUrl}replace-decks.svg" class="option-icon" alt="Replace Decks">`;
+            } else if (option === 'Repair') {
+                return `<img src="${baseUrl}new-decks.svg" class="option-icon" alt="New Decks">`;
+            }
+        }
+        else if (stepId === 'decks_material') {
+            if (option === 'Cedar') {
+                return `<img src="${baseUrl}cedar-decks.svg" class="option-icon" alt="Cedar Decks">`;
+            } else if (option === 'Redwood') {
+                return `<img src="${baseUrl}redwood-decks.svg" class="option-icon" alt="Redwood Decks">`;
+            }
+        }
+        // Siding service icons
+        else if (stepId === 'siding_option') {
+            if (option === 'Replace existing siding') {
+                return `<img src="${baseUrl}replace-siding.svg" class="option-icon" alt="Replace Siding">`;
+            } else if (option === 'Remove & replace siding') {
+                return `<img src="${baseUrl}remove-siding.svg" class="option-icon" alt="Remove & Replace Siding">`;
+            } else if (option === 'Add siding for a new addition') {
+                return `<img src="${baseUrl}add-siding.svg" class="option-icon" alt="Add Siding">`;
+            } else if (option === 'Install siding on a new home') {
+                return `<img src="${baseUrl}install-siding.svg" class="option-icon" alt="Install Siding">`;
+            }
+        }
+        else if (stepId === 'siding_material') {
+            if (option === 'Wood composite') {
+                return `<img src="${baseUrl}wood-material-siding.svg" class="option-icon" alt="Wood Composite Siding">`;
+            } else if (option === 'Aluminum') {
+                return `<img src="${baseUrl}aluminium-material-siding.svg" class="option-icon" alt="Aluminum Siding">`;
+            } else if (option === 'Fiber cement') {
+                return `<img src="${baseUrl}fiber-material-siding.svg" class="option-icon" alt="Fiber Cement Siding">`;
+            }
+        }
+        // ADU service icons
+        else if (stepId === 'adu_type') {
+            // For now, using cedar icon for New Build and redwood for Addition
+            // Garage Conversion will use placeholder until specific icon is provided
+            if (option === 'New Build') {
+                return `<img src="${baseUrl}cedar-adu.svg" class="option-icon" alt="New ADU Build">`;
+            } else if (option === 'Addition') {
+                return `<img src="${baseUrl}redwood-adu.svg" class="option-icon" alt="ADU Addition">`;
+            }
+            // Garage Conversion will use placeholder
+        }
+        // ADU material step (if it exists or gets added later)
+        else if (stepId === 'adu_material') {
+            if (option === 'Cedar') {
+                return `<img src="${baseUrl}cedar-adu.svg" class="option-icon" alt="Cedar ADU">`;
+            } else if (option === 'Redwood') {
+                return `<img src="${baseUrl}redwood-adu.svg" class="option-icon" alt="Redwood ADU">`;
+            }
+        }
         
         // Placeholder for other services - will be replaced when icons are provided
         return `<div class="option-icon option-placeholder"></div>`;
@@ -3057,31 +3154,31 @@ jQuery(document).ready(function($) {
     }
     
     function updateAppointmentSummary() {
-        const $stepEl = $('.booking-step[data-step="8"]');
-        let $summary = $stepEl.find('.appointment-summary');
+        // const $stepEl = $('.booking-step[data-step="8"]');
+        // let $summary = $stepEl.find('.appointment-summary');
         
-        if ($summary.length === 0) {
-            $summary = $('<div class="appointment-summary" style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 8px; margin-top: 20px; margin-bottom: 20px; color: white;"></div>');
-            // Append to the end of step-card instead of prepending to the top
-            $stepEl.find('.step-card').append($summary);
-        }
+        // if ($summary.length === 0) {
+        //     $summary = $('<div class="appointment-summary" style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 8px; margin-top: 20px; margin-bottom: 20px; color: white;"></div>');
+        //     // Append to the end of step-card instead of prepending to the top
+        //     $stepEl.find('.step-card').append($summary);
+        // }
         
-        if (selectedAppointments.length === 0) {
-            $summary.hide();
-        } else {
-            const summaryHtml = `
-                <h4 style="margin: 0 0 10px 0; color: #79B62F;">Selected Appointments (${selectedAppointments.length})</h4>
-                ${selectedAppointments.map(apt => `
-                    <div style="margin: 5px 0; padding: 8px; background: rgba(255,255,255,0.1); border-radius: 4px;">
-                        <strong>${apt.company}</strong> - ${formatDate(apt.date)} at ${formatTime(apt.time)}
-                    </div>
-                `).join('')}
-                <p style="margin: 10px 0 0 0; font-size: 12px; opacity: 0.8;">
-                    You can select up to 3 appointments with different companies
-                </p>
-            `;
-            $summary.html(summaryHtml).show();
-        }
+        // if (selectedAppointments.length === 0) {
+        //     $summary.hide();
+        // } else {
+        //     const summaryHtml = `
+        //         <h4 style="margin: 0 0 10px 0; color: #79B62F;">Selected Appointments (${selectedAppointments.length})</h4>
+        //         ${selectedAppointments.map(apt => `
+        //             <div style="margin: 5px 0; padding: 8px; background: rgba(255,255,255,0.1); border-radius: 4px;">
+        //                 <strong>${apt.company}</strong> - ${formatDate(apt.date)} at ${formatTime(apt.time)}
+        //             </div>
+        //         `).join('')}
+        //         <p style="margin: 10px 0 0 0; font-size: 12px; opacity: 0.8;">
+        //             You can select up to 3 appointments with different companies
+        //         </p>
+        //     `;
+        //     $summary.html(summaryHtml).show();
+        // }
         
         // Update company card visual states
         updateCompanyCardStates();
