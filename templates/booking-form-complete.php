@@ -607,22 +607,22 @@ window.BOOKING_DIRECT_ZIP_MODE = true;
                 <button class="btn btn-secondary btn-back">Back</button>
                 <button class="btn btn-primary btn-submit">Confirm Booking</button>
             </div>
-            <div class="summary-container">
-                <div class="summary-left">
-                    <div class="schedule-summary-container">
-                        <div class="schedule-summary-inner">
-                            <h3 class="schedule-summary-title" id="service-schedule-title">Service Estimate Schedule</h3>
-                            <div id="schedule-items">
-                                <!-- Schedule items populated by JavaScript -->
-                            </div>
-                            <div class="done-booking-link">
-                                I'm done booking estimates
-                            </div>
+            
+            <!-- Updated Layout Structure -->
+            <div class="summary-container-new">
+                <!-- Top: Schedule Summary Bar (Green Background) - Companies & Appointments -->
+                <div class="schedule-summary-bar">
+                    <div class="schedule-summary-inner">
+                        <h3 class="schedule-summary-title" id="service-schedule-title">Service Estimate Schedule</h3>
+                        <div id="schedule-items">
+                            <!-- Schedule items populated by JavaScript -->
                         </div>
                     </div>
                 </div>
                 
-                <div class="summary-right">
+                <!-- Bottom: Two Column Layout -->
+                <div class="summary-bottom">
+                    <!-- Left: Project Details -->
                     <div class="summary-card">
                         <div class="summary-card-inner">
                             <h3 class="summary-title">Project Details</h3>
@@ -632,13 +632,11 @@ window.BOOKING_DIRECT_ZIP_MODE = true;
                         </div>
                     </div>
                     
+                    <!-- Right: Next Steps -->
                     <div class="next-steps">
                         <div class="next-steps-inner">
                             <h3 class="next-steps-title">
-                                <svg class="next-steps-title-icon" fill="currentColor" viewBox="0 0 20 20">
-                                    <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z"/>
-                                </svg>
-                                <span>Next Steps:<br>Phone Call</span>
+                                <span>Next Steps:</span>
                             </h3>
                             <ul class="next-steps-list">
                                 <li>Their service team will need a call to confirm this slot</li>
@@ -648,7 +646,6 @@ window.BOOKING_DIRECT_ZIP_MODE = true;
                     </div>
                 </div>
             </div>
-
         </div>
     </div>
     

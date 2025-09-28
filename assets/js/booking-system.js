@@ -2933,35 +2933,18 @@ jQuery(document).ready(function($) {
         // Update URL hash for booking confirmation
         updateURLHash('booking-confirmed');
         
-        const appointmentsList = selectedAppointments.map(apt => 
-            `<li style="margin: 5px 0; padding: 8px; background: #e8f5e8; border-radius: 4px; font-size: 29px !important;">
-                <strong>${apt.company}</strong><br>
-                ${formatDate(apt.date)} at ${formatTime(apt.time)}
-            </li>`
-        ).join('');
-        
         const $form = $('#booking-form');
         $form.html(`
             <div class="success-message" style="position: relative; z-index: 2; text-align: center; padding: 120px 20px 50px; color: white;">
-                <div style="background: rgba(255, 255, 255, 0.95); color: #333; padding: 40px; border-radius: 15px; max-width: 600px; margin: 0 auto; box-shadow: 0 10px 30px rgba(0,0,0,0.2);">
+                <div style="background: rgba(255, 255, 255, 0.3); border: 2px solid white; color: #333; padding: 40px; border-radius: 25px; max-width: 600px; margin: 0 auto; box-shadow: 0 10px 30px rgba(0,0,0,0.2);">
                     <div style="color: #79B62F; font-size: 72px; margin-bottom: 20px;">✅</div>
                     <h2 style="color: #79B62F; margin-bottom: 20px; font-weight: 700; font-size: 52px !important;">Booking${selectedAppointments.length > 1 ? 's' : ''} Confirmed!</h2>
-                    <p style="margin-bottom: 20px; line-height: 1.6; font-size: 29px !important;">Thank you for your booking${selectedAppointments.length > 1 ? 's' : ''}. You will receive confirmation emails for each appointment shortly.</p>
-                    
-                    <div style="background: #e8f5e8; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #79B62F; text-align: left;">
-                        <h4 style="color: #79B62F; margin: 0 0 15px 0; font-size: 37.7px !important;">Your Scheduled Appointments:</h4>
-                        <ul style="list-style: none; padding: 0; margin: 0;">
-                            ${appointmentsList}
-                        </ul>
-                    </div>
+                    <p style="margin-bottom: 20px; line-height: 1.6; font-size: 29px !important; color: white;">Thank you for your booking${selectedAppointments.length > 1 ? 's' : ''}. You will receive confirmation emails for each appointment shortly.</p>
                     
                     <div style="background: #e8f5e8; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #79B62F;">
                         <strong style="color: #79B62F; font-size: 29px !important;">Next Steps:</strong><br>
                         <span style="color: #333; font-size: 29px !important;">Each company's team will call you within 24 hours to confirm their respective appointment details.</span>
                     </div>
-                    <p style="font-size: 29px !important; color: #666; margin-top: 20px;">
-                        Booking ID: #${data.booking_id || 'Generated'}
-                    </p>
                 </div>
             </div>
         `);

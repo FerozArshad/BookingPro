@@ -1199,7 +1199,7 @@ body .booking-system-form .btn-secondary:hover,
 /* Summary Step - Complete White Background Design */
 html body .booking-system-form .booking-step[data-step="9"],
 .booking-step[data-step="9"] {
-    background: #ffffff !important;
+    background: transparent !important;
     min-height: 600px !important;
     padding: 2rem !important;
     padding-top: 120px !important; /* Match other steps with 120px top padding */
@@ -1227,80 +1227,70 @@ body .booking-system-form .booking-step[data-step="9"] .step-title,
     display: none !important; /* Hide the default step title */
 }
 
-/* Main Summary Container - Grid Layout with Equal Height Columns */
-html body .booking-system-form .summary-container,
-.summary-container {
-    display: grid !important;
-    grid-template-columns: 1fr 1fr !important;
-    grid-template-rows: 1fr !important;
-    gap: 2rem !important;
+/* Summary Container - Vertical Layout with Schedule at Top */
+html body .booking-system-form .summary-container-new,
+.summary-container-new {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 1.5rem !important;
     max-width: 1200px !important;
     margin: 0 auto !important;
     padding: 0 !important;
-    min-height: 500px !important;
 }
 
-html body .booking-system-form .summary-left,
-.summary-left {
+/* Top: Schedule Summary Bar (White Semi-transparent Background) */
+html body .booking-system-form .schedule-summary-bar,
+.schedule-summary-bar {
+    padding: 1rem !important;
+    width: 100% !important;
+}
+
+/* Schedule Summary Title */
+html body .booking-system-form .schedule-summary-title,
+.schedule-summary-title {
+    color: white !important;
+    font-size: 24px !important;
+    font-weight: 600 !important;
+    text-align: center !important;
+    margin-bottom: 1.5rem !important;
+    font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+}
+
+html body .booking-system-form .schedule-summary-bar #schedule-items,
+.schedule-summary-bar #schedule-items {
     display: flex !important;
     flex-direction: column !important;
-}
-
-html body .booking-system-form .summary-right,
-.summary-right {
-    display: grid !important;
-    grid-template-rows: auto 1fr !important;
     gap: 1rem !important;
 }
 
-/* Left Column - Schedule Summary with Green Background and White Border Inner Container */
-html body .booking-system-form .schedule-summary-container,
-.schedule-summary-container {
-    background: #79B62F !important;
+/* Bottom: Two Column Layout Parent Container */
+html body .booking-system-form .summary-bottom,
+.summary-bottom {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 1.5rem !important;
+    background: rgba(255, 255, 255, 0.3) !important;
+    border: 2px solid white !important;
     border-radius: 25px !important;
-    padding: 3.2rem 2.2rem !important;
-    height: 100% !important;
-    display: flex !important;
-    flex-direction: column !important;
-    -webkit-border-radius: 25px !important;
-    -moz-border-radius: 25px !important;
-    -ms-border-radius: 25px !important;
-    -o-border-radius: 25px !important;
+    padding: 0.2rem 1rem !important;
 }
 
-html body .booking-system-form .schedule-summary-inner,
-.schedule-summary-inner {
-    background: transparent !important;
-    border: 1px solid #ffffff !important;
-    border-radius: 25px !important;
-    padding: 3rem 2.4rem !important;
-    flex: 1 !important;
+/* Left: Project Details Section */
+html body .booking-system-form .summary-left-details,
+.summary-left-details {
     display: flex !important;
     flex-direction: column !important;
-    -webkit-border-radius: 25px !important;
-    -moz-border-radius: 25px !important;
-    -ms-border-radius: 25px !important;
-    -o-border-radius: 25px !important;
-}
-
-html body .booking-system-form .schedule-summary-title,
-.schedule-summary-title {
-    font-family: 'SF Pro Display', sans-serif !important;
-    font-size: 1.95rem !important; /* 30% increase from 1.5rem */
-    font-weight: 600 !important;
-    color: #ffffff !important;
-    margin-bottom: 1.5rem !important;
-    text-align: left !important;
 }
 
 html body .booking-system-form .schedule-item,
 .schedule-item {
-    background: transparent !important;
-    border: 1px solid #ffffff !important;
-    border-radius: 8px !important; /* Reduced to match reference image exactly */
+    background: rgba(255, 255, 255, 0.3) !important;
+    border: 2px solid white !important;
+    border-radius: 25px !important;
+    padding: 1.3rem !important;
     padding: 0.875rem !important; /* Adjusted for reference proportions */
-    margin-bottom: 0.875rem !important; /* Tighter spacing to match reference */
-    /*Betterspacingbetweenitems*/color: #ffffff !important;
+    margin-bottom: 0.675rem !important; /* Tighter spacing to match reference */
+    color: #ffffff !important;
     width: 100% !important;
     box-sizing: border-box !important;
     display: flex !important;
@@ -1335,8 +1325,9 @@ html body .booking-system-form .schedule-item-content,
     flex: 1 !important;
     min-width: 0 !important; /* Prevent flex item from overflowing */
     display: flex !important;
-    flex-direction: column !important;
-    gap: 0.25rem !important; /* Tight spacing between company and date */
+    flex-direction: row !important;
+    justify-content: center;
+    gap: 1.45rem !important; /* Tight spacing between company and date */
 }
 
 html body .booking-system-form .schedule-company,
@@ -1363,7 +1354,7 @@ html body .booking-system-form .schedule-company-icon,
 html body .booking-system-form .schedule-company-text,
 .schedule-company-text {
     font-family: 'SF Pro Display', sans-serif !important;
-    font-weight: 600 !important;
+    font-weight: 400 !important;
     font-size: 1.45rem !important; /* 45% increase from 1rem */
     color: #ffffff !important;
     line-height: 1.2 !important;
@@ -1414,12 +1405,13 @@ html body .booking-system-form .done-booking-link,
     opacity: 0.9 !important;
 }
 
-/* Right Column Top - Project Details with Green Background and White Inner Container */
+/* Right Column Top - Project Details with Transparent Background */
 html body .booking-system-form .summary-card,
 .summary-card {
-    background: #79B62F !important;
+    background: transparent !important;
+    border: none !important;
     border-radius: 25px !important;
-    padding: 3rem 2.2rem !important;
+    padding: 1rem !important;
     color: #333333 !important;
     display: flex !important;
     flex-direction: column !important;
@@ -1431,16 +1423,16 @@ html body .booking-system-form .summary-card,
 
 html body .booking-system-form .summary-card-inner,
 .summary-card-inner {
-    background: #ffffff !important;
-    border-radius: 25px !important;
-    padding: 3rem 2.2rem !important;
+    background: transparent !important;
+    border-radius: 20px !important;
+    padding: 1rem !important;
     flex: 1 !important;
     display: flex !important;
     flex-direction: column !important;
-    -webkit-border-radius: 25px !important;
-    -moz-border-radius: 25px !important;
-    -ms-border-radius: 25px !important;
-    -o-border-radius: 25px !important;
+    -webkit-border-radius: 20px !important;
+    -moz-border-radius: 20px !important;
+    -ms-border-radius: 20px !important;
+    -o-border-radius: 20px !important;
 }
 
 html body .booking-system-form .summary-title,
@@ -1448,7 +1440,7 @@ html body .booking-system-form .summary-title,
     font-family: 'SF Pro Display', sans-serif !important;
     font-size: 1.69rem !important; /* 30% increase from 1.3rem */
     font-weight: 600 !important;
-    color: #79B62F !important;
+    color: #ffffff !important; /* White text for better visibility on transparent background */
     margin-bottom: 1.5rem !important;
     text-align: left !important;
 }
@@ -1456,40 +1448,36 @@ html body .booking-system-form .summary-title,
 html body .booking-system-form .summary-row,
 .summary-row {
     display: flex !important;
-    justify-content: space-between !important;
+    justify-content: start !important;
     align-items: center !important;
-    padding: 0.75rem 0 !important;
-    border-bottom: 1px solid #e0e0e0 !important;
-}
-
-html body .booking-system-form .summary-row:last-child,
-.summary-row:last-child {
-    border-bottom: none !important;
+    padding: 0.22rem 0 !important;
+    gap:1.15rem;
 }
 
 html body .booking-system-form .summary-label,
 .summary-label {
     font-family: 'SF Pro Display', sans-serif !important;
     font-weight: 400 !important;
-    color: #333333 !important;
-    font-size: 1.1rem !important;
+    color: #ffffff !important;
+    font-size: 18px !important;
 }
 
 html body .booking-system-form .summary-value,
 .summary-value {
     font-family: 'SF Pro Display', sans-serif !important;
     font-weight: 500 !important;
-    color: #79B62F !important;
-    font-size: 1.2rem !important; 
-    text-align: right !important;
+    color: #ffffff !important;
+    font-size: 18px !important; 
+    text-align: left !important;
 }
 
-/* Right Column Bottom - Next Steps with Green Background and White Border Inner Container */
+/* Right Column Bottom - Next Steps with Transparent Background */
 html body .booking-system-form .next-steps,
 .next-steps {
-    background: #79B62F !important;
+    background: transparent !important;
+    border: none !important;
     border-radius: 25px !important;
-    padding: 3rem 2rem !important;
+    padding: 1rem !important;
     display: flex !important;
     flex-direction: column !important;
     -webkit-border-radius: 25px !important;
@@ -1501,40 +1489,32 @@ html body .booking-system-form .next-steps,
 html body .booking-system-form .next-steps-inner,
 .next-steps-inner {
     background: transparent !important;
-    border: 1px solid #ffffff !important;
-    border-radius: 25px !important;
-    padding: 2rem !important;
+    border: none !important;
+    border-radius: 20px !important;
+    padding: 1rem !important;
     flex: 1 !important;
     display: flex !important;
     flex-direction: column !important;
-    -webkit-border-radius: 25px !important;
-    -moz-border-radius: 25px !important;
-    -ms-border-radius: 25px !important;
-    -o-border-radius: 25px !important;
+    -webkit-border-radius: 20px !important;
+    -moz-border-radius: 20px !important;
+    -ms-border-radius: 20px !important;
+    -o-border-radius: 20px !important;
 }
 
 html body .booking-system-form .next-steps-title,
 .next-steps-title {
     font-family: 'SF Pro Display', sans-serif !important;
-    font-size: 3.25rem !important; /* 30% increase from 2.5rem */
-    font-weight: 700 !important; /* Bolder weight for better visibility */
+    font-size: 26px !important;
+    font-weight: 600 !important;
+    text-align: left !important;
     margin-bottom: 1.5rem !important;
     color: #ffffff !important;
-    display: flex !important;
-    align-items: center !important;
-    gap: 0.75rem !important; /* Increased gap for better icon spacing */
-    line-height: 1.2 !important; /* Better line height for multi-line text */
-}
-
-html body .booking-system-form .next-steps-title-icon,
-.next-steps-title-icon {
-    color: #ffffff !important;
-    flex-shrink: 0 !important; /* Prevent icon from shrinking */
+    line-height: 1.2 !important;
 }
 
 html body .booking-system-form .next-steps-list,
 .next-steps-list {
-    list-style: none !important;
+
     padding: 0 !important;
     margin: 0 !important;
     color: #ffffff !important;
@@ -1555,7 +1535,7 @@ html body .booking-system-form .next-steps-list li,
     font-weight: 500 !important;
 }
 
-html body .booking-system-form .next-steps-list li::before,
+/* html body .booking-system-form .next-steps-list li::before,
 .next-steps-list li::before {
     content: counter(step-counter) !important;
     counter-increment: step-counter !important;
@@ -1569,10 +1549,10 @@ html body .booking-system-form .next-steps-list li::before,
     justify-content: center !important;
     font-family: 'SF Pro Display', sans-serif !important;
     font-weight: 700 !important;
-    font-size: 1rem !important; /* Increased number text size */
+    font-size: 1rem !important; 
     flex-shrink: 0 !important;
-    margin-top: 0.125rem !important; /* Adjusted for larger icon alignment */
-}
+    margin-top: 0.125rem !important; 
+} */
 
 /* Summary Step Specific Buttons - Updated Design */
 html body .booking-system-form .booking-step[data-step="9"] .form-navigation,
@@ -1586,6 +1566,7 @@ html body .booking-system-form .booking-step[data-step="9"] .btn-primary,
 .booking-step[data-step="9"] .btn-primary {
     background: #1E773B !important;
     color: #ffffff !important;
+    max-width: 180px;
     border: 2px solid #1E773B !important;
     padding: 0.75rem 2rem !important;
     font-weight: 600 !important;
@@ -1602,9 +1583,9 @@ html body .booking-system-form .booking-step[data-step="9"] .btn-primary:hover,
 html body .booking-system-form .booking-step[data-step="9"] .btn-secondary,
 .booking-step[data-step="9"] .btn-secondary {
     background: transparent !important;
-    color: #333333 !important;
-    border: none !important;
-    text-decoration: underline !important;
+    color: white !important;
+    border: white 1px solid !important;
+    text-decoration: none !important;
     padding: 0.75rem 2rem !important;
     font-weight: 400 !important;
 }
@@ -1625,27 +1606,28 @@ html body .booking-system-form .booking-step[data-step="9"] .btn-secondary:hover
         padding-top: 120px !important; /* Maintain 120px top padding on tablet */
     }
     
-    html body .booking-system-form .summary-container,
-    body .booking-system-form .summary-container,
-    .booking-system-form .summary-container {
-        grid-template-columns: 1fr !important;
-        grid-template-rows: auto auto !important;
-        gap: 1.5rem !important;
-    }
-    
-    html body .booking-system-form .summary-right,
-    body .booking-system-form .summary-right,
-    .booking-system-form .summary-right {
-        grid-template-rows: auto auto !important;
+    html body .booking-system-form .summary-container-new,
+    body .booking-system-form .summary-container-new,
+    .booking-system-form .summary-container-new {
         gap: 1rem !important;
     }
     
-    html body .booking-system-form .schedule-summary-container,
-    body .booking-system-form .schedule-summary-container,
-    .booking-system-form .schedule-summary-container,
-    html body .booking-system-form .next-steps,
-    body .booking-system-form .next-steps,
-    .booking-system-form .next-steps {
+    html body .booking-system-form .summary-bottom,
+    body .booking-system-form .summary-bottom,
+    .booking-system-form .summary-bottom {
+        grid-template-columns: 1fr !important;
+        gap: 1rem !important;
+    }
+    
+    html body .booking-system-form .schedule-summary-bar,
+    body .booking-system-form .schedule-summary-bar,
+    .booking-system-form .schedule-summary-bar {
+        padding: 1.5rem !important;
+    }
+    
+    html body .booking-system-form .schedule-summary-bar .schedule-summary-inner,
+    body .booking-system-form .schedule-summary-bar .schedule-summary-inner,
+    .booking-system-form .schedule-summary-bar .schedule-summary-inner {
         padding: 1.5rem !important;
     }
     
@@ -1669,17 +1651,11 @@ html body .booking-system-form .booking-step[data-step="9"] .btn-secondary:hover
         margin-bottom: 1.25rem !important;
     }
     
-    html body .booking-system-form .next-steps-title-icon,
-    body .booking-system-form .next-steps-title-icon,
-    .booking-system-form .next-steps-title-icon {
-        width: 1.9rem !important; /* Scale icon to match text */
-        height: 1.9rem !important;
-    }
     
     html body .booking-system-form .schedule-item,
     body .booking-system-form .schedule-item,
     .booking-system-form .schedule-item {
-        padding: 0.875rem !important;
+        padding: 1.2rem !important;
         gap: 0.625rem !important;
     }
     
@@ -1790,13 +1766,13 @@ html body .booking-system-form .booking-step[data-step="9"] .btn-secondary:hover
         font-size: 1.8rem !important; /* Updated for mobile to 1.8rem */
     }
     
-    html body .booking-system-form .next-steps-title-icon,
+    /* html body .booking-system-form .next-steps-title-icon,
     body .booking-system-form .next-steps-title-icon,
     .booking-system-form .next-steps-title-icon {
-        width: 1.8rem !important; /* Scale icon to match text */
+        width: 1.8rem !important;
         height: 1.8rem !important;
     }
-    
+     */
     html body .booking-system-form .schedule-item,
     body .booking-system-form .schedule-item,
     .booking-system-form .schedule-item {
@@ -2998,12 +2974,12 @@ html body .booking-system-form .next-steps-inner .next-steps-title {
     font-weight: 700 !important;
 }
 
-html body .booking-system-form .booking-step[data-step="9"] .next-steps-title-icon,
+/* html body .booking-system-form .booking-step[data-step="9"] .next-steps-title-icon,
 html body .booking-system-form .next-steps .next-steps-title-icon,
 html body .booking-system-form .next-steps-inner .next-steps-title-icon {
-    width: 4.2rem !important; /* Updated to match new text size */
+    width: 4.2rem !important; 
     height: 4.2rem !important;
-}
+} */
 
 html body .booking-system-form .booking-step[data-step="9"] .next-steps-list li,
 html body .booking-system-form .next-steps .next-steps-list li,
@@ -3030,12 +3006,12 @@ html body .booking-system-form .next-steps-inner .next-steps-list li::before {
         line-height: 1.2 !important;
     }
 
-    html body .booking-system-form .booking-step[data-step="9"] .next-steps-title-icon,
+    /* html body .booking-system-form .booking-step[data-step="9"] .next-steps-title-icon,
     body .booking-system-form .booking-step[data-step="9"] .next-steps-title-icon,
     .booking-system-form .booking-step[data-step="9"] .next-steps-title-icon {
         width: 1.9rem !important;
         height: 1.9rem !important;
-    }
+    } */
 
     html body .booking-system-form .booking-step[data-step="9"] .next-steps-list li,
     body .booking-system-form .booking-step[data-step="9"] .next-steps-list li,
@@ -3052,12 +3028,12 @@ html body .booking-system-form .next-steps-inner .next-steps-list li::before {
         line-height: 1.2 !important;
     }
 
-    html body .booking-system-form .booking-step[data-step="9"] .next-steps-title-icon,
+    /* html body .booking-system-form .booking-step[data-step="9"] .next-steps-title-icon,
     body .booking-system-form .booking-step[data-step="9"] .next-steps-title-icon,
     .booking-system-form .booking-step[data-step="9"] .next-steps-title-icon {
         width: 1.8rem !important;
         height: 1.8rem !important;
-    }
+    } */
 
     html body .booking-system-form .booking-step[data-step="9"] .next-steps-list li,
     body .booking-system-form .booking-step[data-step="9"] .next-steps-list li,
