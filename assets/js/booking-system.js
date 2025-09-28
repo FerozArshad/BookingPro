@@ -63,6 +63,8 @@ jQuery(document).ready(function($) {
     let currentStepIndex = 0;
     let formState = {};
     let selectedAppointments = []; // Array to store multiple company/date/time selections
+    let isSessionCompleted = false; // Track if session is completed to prevent duplicate submissions
+    let isSubmissionInProgress = false; // Track if form submission is in progress to prevent multiple submissions
     
     // Make selectedAppointments accessible globally for lead capture system (non-destructive approach)
     window.getSelectedAppointments = function() {
@@ -73,6 +75,22 @@ jQuery(document).ready(function($) {
     Object.defineProperty(window, 'selectedAppointments', {
         get: function() { return selectedAppointments; },
         set: function(value) { selectedAppointments = value; },
+        enumerable: true,
+        configurable: true
+    });
+
+    // Expose session completion status globally
+    Object.defineProperty(window, 'isSessionCompleted', {
+        get: function() { return isSessionCompleted; },
+        set: function(value) { isSessionCompleted = value; },
+        enumerable: true,
+        configurable: true
+    });
+
+    // Expose submission progress status globally
+    Object.defineProperty(window, 'isSubmissionInProgress', {
+        get: function() { return isSubmissionInProgress; },
+        set: function(value) { isSubmissionInProgress = value; },
         enumerable: true,
         configurable: true
     });
@@ -125,6 +143,12 @@ jQuery(document).ready(function($) {
 
         // Track when user is about to leave the page
         window.addEventListener('beforeunload', function(event) {
+            // CRITICAL SESSION MANAGEMENT: Don't capture if session is completed
+            if (isSessionCompleted) {
+                console.log('🚫 BLOCKED: beforeunload capture - session completed');
+                return;
+            }
+            
             console.group('🚪 User Leaving Page');
             console.log('Current Step:', currentStepIndex);
             console.log('Form State:', formState);
@@ -170,6 +194,12 @@ jQuery(document).ready(function($) {
             // Debounced lead capture (only after 2 seconds of no activity)
             clearTimeout(window.leadCaptureTimeout);
             window.leadCaptureTimeout = setTimeout(function() {
+                // CRITICAL SESSION MANAGEMENT: Don't capture if session is completed
+                if (isSessionCompleted) {
+                    console.log('🚫 BLOCKED: form interaction capture - session completed');
+                    return;
+                }
+                
                 console.log('📊 Form State before lead capture:', formState);
                 captureIncompleteLeadData('form_interaction');
             }, 2000);
@@ -184,6 +214,12 @@ jQuery(document).ready(function($) {
             // Capture lead data on significant button clicks
             if (buttonClass.includes('service-option') || buttonClass.includes('option-btn') || 
                 buttonClass.includes('btn-request-estimate') || buttonClass.includes('btn-next')) {
+                // CRITICAL SESSION MANAGEMENT: Don't capture if session is completed
+                if (isSessionCompleted) {
+                    console.log('🚫 BLOCKED: button click capture - session completed');
+                    return;
+                }
+                
                 captureIncompleteLeadData('button_click', {button_action: buttonText});
             }
         });
@@ -3264,6 +3300,25 @@ jQuery(document).ready(function($) {
             clearInterval(window.leadCaptureInterval);
             window.leadCaptureInterval = null;
             console.log('⏰ Cleared leadCaptureInterval');
+        }
+        
+        // COMPREHENSIVE CLEANUP: Clear all non-essential intervals and timeouts
+        // Store the highest setTimeout/setInterval ID to clear all booking-related timers
+        const highestTimeoutId = setTimeout(() => {}, 0);
+        for (let i = 1; i < highestTimeoutId; i++) {
+            // Only clear timeouts that are likely from booking system (not toast notifications)
+            // Toast notifications use specific naming/tracking, so generic cleanup is safer
+            if (window.leadCaptureTimeout === i || 
+                (window.bookingSystemTimeouts && window.bookingSystemTimeouts.includes(i))) {
+                clearTimeout(i);
+            }
+        }
+        clearTimeout(highestTimeoutId);
+        
+        // Clean up lead capture system if available
+        if (window.bspLeadCapture && window.bspLeadCapture.LeadCapture && window.bspLeadCapture.LeadCapture.cleanup) {
+            window.bspLeadCapture.LeadCapture.cleanup();
+            console.log('🧹 Lead capture system cleaned up');
         }
         
         // Remove beforeunload listener that captures incomplete leads

@@ -533,6 +533,9 @@ final class Booking_System_Pro_Final {
     }
     
     public function admin_init() {
+        // Handle manual admin functions
+        $this->manual_cron_trigger();
+        
         do_action('bsp_admin_init');
     }
     
@@ -1026,6 +1029,51 @@ final class Booking_System_Pro_Final {
     public function handle_incomplete_lead_processing($lead_id, $lead_data) {
         bsp_debug_log("Background processing started for incomplete lead ID: $lead_id", 'LEAD_PROCESSING');
         
+        // ENHANCED SESSION MANAGEMENT: Use intelligent blocking that respects lead creation time
+        $session_id = $lead_data['session_id'] ?? '';
+        if ($session_id && (strpos($session_id, '_COMPLETED') !== false)) {
+            bsp_debug_log("BLOCKED: Background processing for completed session", 'SESSION_RACE_PREVENTION', [
+                'lead_id' => $lead_id,
+                'session_id' => $session_id,
+                'reason' => 'Session already completed - blocking incomplete lead processing'
+            ]);
+            return; // Stop processing
+        }
+
+        // Use intelligent session blocking from Google Sheets integration
+        $sheets_integration = BSP_Google_Sheets_Integration::get_instance();
+        if ($sheets_integration && method_exists($sheets_integration, 'should_block_incomplete_lead')) {
+            // Use reflection to access private method safely
+            try {
+                $reflection = new ReflectionClass($sheets_integration);
+                $method = $reflection->getMethod('should_block_incomplete_lead');
+                $method->setAccessible(true);
+                $blocking_result = $method->invoke($sheets_integration, $session_id, $lead_data, $lead_id);
+                
+                if ($blocking_result['should_block']) {
+                    bsp_debug_log("BLOCKED: Background processing blocked by intelligent session management", 'SESSION_RACE_PREVENTION', [
+                        'lead_id' => $lead_id,
+                        'session_id' => $session_id,
+                        'reason' => $blocking_result['reason'],
+                        'details' => $blocking_result
+                    ]);
+                    return; // Stop processing
+                } else {
+                    bsp_debug_log("ALLOWING: Background processing approved by intelligent session management", 'SESSION_MANAGEMENT', [
+                        'lead_id' => $lead_id,
+                        'session_id' => $session_id,
+                        'reason' => $blocking_result['reason'],
+                        'details' => $blocking_result
+                    ]);
+                }
+            } catch (Exception $e) {
+                bsp_debug_log("WARNING: Could not check intelligent session blocking - continuing", 'SESSION_MANAGEMENT', [
+                    'lead_id' => $lead_id,
+                    'error' => $e->getMessage()
+                ]);
+            }
+        }
+        
         // Get the Lead Data Collector instance
         $lead_collector = BSP_Lead_Data_Collector::get_instance();
         
@@ -1044,6 +1092,42 @@ final class Booking_System_Pro_Final {
         $lead_collector->complete_lead_processing($lead_id, $lead_data);
         
         bsp_debug_log("Background processing completed for incomplete lead ID: $lead_id", 'LEAD_PROCESSING');
+    }
+
+    /**
+     * Clear stuck incomplete leads from background processing queue
+     */
+    public function clear_stuck_incomplete_leads() {
+        if (!current_user_can('manage_options')) {
+            return;
+        }
+
+        // Clear any stuck WordPress cron events
+        $cleared_events = 0;
+        $cron_jobs = wp_get_scheduled_events();
+        
+        foreach ($cron_jobs as $timestamp => $cron) {
+            foreach ($cron as $hook => $events) {
+                if ($hook === 'bsp_process_incomplete_lead_background') {
+                    foreach ($events as $event) {
+                        wp_unschedule_event($timestamp, $hook, $event['args']);
+                        $cleared_events++;
+                    }
+                }
+            }
+        }
+
+        bsp_debug_log("Cleared stuck incomplete lead processing events", 'MAINTENANCE', [
+            'events_cleared' => $cleared_events,
+            'cleared_by' => get_current_user_id()
+        ]);
+
+        if (isset($_GET['clear_stuck_leads'])) {
+            wp_redirect(admin_url('admin.php?page=booking-system&stuck_leads_cleared=' . $cleared_events));
+            exit;
+        }
+
+        return $cleared_events;
     }
 
     /**

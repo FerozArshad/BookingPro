@@ -101,16 +101,9 @@ function toAmPm(timeStr) {
  * Helper: Pad array to target length or repeat single value
  */
 function padOrRepeat(arr, targetLength) {
-  if (arr.length === 0) {
-    return new Array(targetLength).fill('');
-  }
-  if (arr.length === 1) {
-    return new Array(targetLength).fill(arr[0]);
-  }
-  if (arr.length >= targetLength) {
-    return arr.slice(0, targetLength);
-  }
-  // Pad with empty strings
+  if (arr.length === 0) return new Array(targetLength).fill('');
+  if (arr.length === 1) return new Array(targetLength).fill(arr[0]);
+  if (arr.length >= targetLength) return arr.slice(0, targetLength);
   return arr.concat(new Array(targetLength - arr.length).fill(''));
 }
 
@@ -120,65 +113,83 @@ function padOrRepeat(arr, targetLength) {
 function extractMultipleCompanies(data) {
   const companies = [];
   
-  // Check for direct company fields - handle comma-separated values
+  console.log('🏢 COMPANY EXTRACTION DEBUG:', JSON.stringify(data));
+  
   if (data.company_name) {
-    const companyValues = String(data.company_name).split(',');
-    companyValues.forEach(companyValue => {
-      const cleanCompany = companyValue.trim();
-      if (cleanCompany && !companies.includes(cleanCompany)) {
-        companies.push(cleanCompany);
+    console.log(`Found company_name: "${data.company_name}"`);
+    splitCSV(data.company_name).forEach(company => {
+      if (company && !companies.includes(company)) {
+        companies.push(company);
+        console.log(`Added company: "${company}"`);
       }
     });
   }
   
   if (data.company && data.company !== data.company_name) {
-    const companyValues = String(data.company).split(',');
-    companyValues.forEach(companyValue => {
-      const cleanCompany = companyValue.trim();
-      if (cleanCompany && !companies.includes(cleanCompany)) {
-        companies.push(cleanCompany);
+    console.log(`Found company: "${data.company}"`);
+    splitCSV(data.company).forEach(company => {
+      if (company && !companies.includes(company)) {
+        companies.push(company);
+        console.log(`Added company: "${company}"`);
       }
     });
   }
   
-  // Check for multiple company fields (company1, company2, company3) - handle comma-separated values
   for (let i = 1; i <= 5; i++) {
     const companyField = data[`company${i}`] || data[`company_${i}`] || data[`company_name_${i}`];
     if (companyField) {
-      const companyValues = String(companyField).split(',');
-      companyValues.forEach(companyValue => {
-        const cleanCompany = companyValue.trim();
-        if (cleanCompany && !companies.includes(cleanCompany)) {
-          companies.push(cleanCompany);
+      console.log(`Found company${i}: "${companyField}"`);
+      splitCSV(companyField).forEach(company => {
+        if (company && !companies.includes(company)) {
+          companies.push(company);
+          console.log(`Added company: "${company}"`);
         }
       });
     }
   }
   
-  // Check for array-style company data
   if (data.companies && Array.isArray(data.companies)) {
+    console.log('Found companies array:', data.companies);
     data.companies.forEach(comp => {
       const name = comp.name || comp.company_name || comp;
       if (name) {
         splitCSV(name).forEach(company => {
           if (company && !companies.includes(company)) {
             companies.push(company);
+            console.log(`Added company from array: "${company}"`);
           }
         });
       }
     });
   }
   
+  if (data.appointments && Array.isArray(data.appointments)) {
+    console.log('Found appointments array:', data.appointments);
+    data.appointments.forEach(apt => {
+      const companyValue = apt.company || apt.company_name;
+      if (companyValue) {
+        splitCSV(companyValue).forEach(company => {
+          if (company && !companies.includes(company)) {
+            companies.push(company);
+            console.log(`Added company from appointments: "${company}"`);
+          }
+        });
+      }
+    });
+  }
+  
+  console.log('🏢 Final extracted companies:', companies);
   return companies;
 }
 
 /**
- * Helper: Extract multiple dates from payload - handles comma-separated values without short-circuiting
+ * Helper: Extract multiple dates from payload
  */
 function extractMultipleDates(data) {
   const dates = [];
   
-  // Collect from all date-related keys without short-circuiting
+  console.log('📅 DATE EXTRACTION DEBUG:', JSON.stringify(data));
+  
   const dateKeys = [
     'selected_date', 'booking_date', 'date',
     'date1', 'date2', 'date3', 'date4', 'date5',
@@ -190,38 +201,56 @@ function extractMultipleDates(data) {
   dateKeys.forEach(key => {
     const value = data[key];
     if (value) {
+      console.log(`Found date key "${key}": "${value}"`);
       splitCSV(value).forEach(date => {
         if (date && !dates.includes(date)) {
           dates.push(date);
+          console.log(`Added date: "${date}"`);
         }
       });
     }
   });
   
-  // Check for array-style date data
   if (data.dates && Array.isArray(data.dates)) {
+    console.log('Found dates array:', data.dates);
     data.dates.forEach(dateItem => {
       const dateValue = dateItem.date || dateItem.booking_date || dateItem;
       if (dateValue) {
         splitCSV(dateValue).forEach(date => {
           if (date && !dates.includes(date)) {
             dates.push(date);
+            console.log(`Added date from array: "${date}"`);
           }
         });
       }
     });
   }
   
+  if (data.appointments && Array.isArray(data.appointments)) {
+    console.log('Found appointments array:', data.appointments);
+    data.appointments.forEach(apt => {
+      const dateValue = apt.date || apt.selected_date || apt.booking_date;
+      if (dateValue) {
+        splitCSV(dateValue).forEach(date => {
+          if (date && !dates.includes(date)) {
+            dates.push(date);
+            console.log(`Added date from appointments: "${date}"`);
+          }
+        });
+      }
+    });
+  }
+  
+  console.log('📅 Final extracted dates:', dates);
   return dates;
 }
 
 /**
- * Helper: Extract multiple times from payload - handles comma-separated values without short-circuiting
+ * Helper: Extract multiple times from payload
  */
 function extractMultipleTimes(data) {
   const times = [];
   
-  // Collect from all time-related keys without short-circuiting
   const timeKeys = [
     'selected_time', 'booking_time', 'time',
     'time1', 'time2', 'time3', 'time4', 'time5',
@@ -230,31 +259,52 @@ function extractMultipleTimes(data) {
     'selected_time_1', 'selected_time_2', 'selected_time_3', 'selected_time_4', 'selected_time_5'
   ];
   
+  console.log('🕐 TIME EXTRACTION DEBUG:', JSON.stringify(data));
+  
   timeKeys.forEach(key => {
     const value = data[key];
     if (value) {
+      console.log(`Found time key "${key}": "${value}"`);
       splitCSV(value).forEach(time => {
         if (time && !times.includes(time)) {
           times.push(time);
+          console.log(`Added time: "${time}"`);
         }
       });
     }
   });
   
-  // Check for array-style time data
   if (data.times && Array.isArray(data.times)) {
+    console.log('Found times array:', data.times);
     data.times.forEach(timeItem => {
       const timeValue = timeItem.time || timeItem.booking_time || timeItem;
       if (timeValue) {
         splitCSV(timeValue).forEach(time => {
           if (time && !times.includes(time)) {
             times.push(time);
+            console.log(`Added time from array: "${time}"`);
           }
         });
       }
     });
   }
   
+  if (data.appointments && Array.isArray(data.appointments)) {
+    console.log('Found appointments array:', data.appointments);
+    data.appointments.forEach(apt => {
+      const timeValue = apt.time || apt.selected_time || apt.booking_time;
+      if (timeValue) {
+        splitCSV(timeValue).forEach(time => {
+          if (time && !times.includes(time)) {
+            times.push(time);
+            console.log(`Added time from appointments: "${time}"`);
+          }
+        });
+      }
+    });
+  }
+  
+  console.log('🕐 Final extracted times:', times);
   return times;
 }
 
@@ -262,19 +312,20 @@ function extractMultipleTimes(data) {
  * Helper: Build aligned company, date, and time data
  */
 function buildCompanyDateTime(data) {
-  // Collect all companies, dates, and times from all relevant keys
   const companies = extractMultipleCompanies(data);
   const dates = extractMultipleDates(data);
-  const times = extractMultipleTimes(data); // Use raw time values as received from form
+  const times = extractMultipleTimes(data);
   
-  // Compute n = min(3, max(companies.length, dates.length, times.length))
+  console.log(`Extracted data - Companies: [${companies.join(', ')}], Dates: [${dates.join(', ')}], Times: [${times.join(', ')}]`);
+  
   const maxLength = Math.max(companies.length, dates.length, times.length);
-  const n = Math.min(3, maxLength);
+  const n = Math.min(3, Math.max(1, maxLength));
   
-  // Pad or repeat each list to match n
   const alignedCompanies = padOrRepeat(companies, n);
   const alignedDates = padOrRepeat(dates, n);
   const alignedTimes = padOrRepeat(times, n);
+  
+  console.log(`Aligned data (n=${n}) - Companies: [${alignedCompanies.join(', ')}], Dates: [${alignedDates.join(', ')}], Times: [${alignedTimes.join(', ')}]`);
   
   return {
     companiesStr: alignedCompanies.join('; '),
@@ -438,45 +489,39 @@ function parseUrlEncodedSafe(dataString) {
 }
 
 /**
- * Build or update header→column mapping from actual sheet with caching for performance
+ * Build header mapping with performance caching
  */
 function buildHeaderColumnMap(sheet) {
-  // Performance optimization: Cache header mapping to reduce API calls
   const cacheKey = 'headerMap_' + sheet.getSheetName();
   let headerMap = PropertiesService.getScriptProperties().getProperty(cacheKey);
   
   if (headerMap) {
     try {
       headerMap = JSON.parse(headerMap);
-      // Validate cache against current sheet structure
       const currentLastCol = sheet.getLastColumn();
       if (Object.keys(headerMap).length === currentLastCol) {
-        return headerMap; // Use cached version for performance
+        return headerMap;
       }
     } catch (e) {
       console.log('Cache invalid, rebuilding header map');
     }
   }
   
-  // Build fresh header map
   headerMap = {};
   let needsUpdate = false;
   
-  // Get existing headers from row 1
   let existingHeaders = [];
   if (sheet.getLastRow() >= 1) {
     const headerRange = sheet.getRange(1, 1, 1, sheet.getLastColumn());
     existingHeaders = headerRange.getValues()[0];
   }
   
-  // Build map of existing headers
   for (let i = 0; i < existingHeaders.length; i++) {
     if (existingHeaders[i]) {
-      headerMap[existingHeaders[i]] = i + 1; // 1-indexed
+      headerMap[existingHeaders[i]] = i + 1;
     }
   }
   
-  // Check for missing expected headers
   const missingHeaders = [];
   for (const expectedHeader of BOOKING_HEADERS) {
     if (!headerMap[expectedHeader]) {
@@ -485,18 +530,15 @@ function buildHeaderColumnMap(sheet) {
     }
   }
   
-  // Auto-append missing headers
   if (needsUpdate && missingHeaders.length > 0) {
     const startCol = existingHeaders.length + 1;
     const headerRange = sheet.getRange(1, startCol, 1, missingHeaders.length);
     headerRange.setValues([missingHeaders]);
     
-    // Update map with new headers
     for (let i = 0; i < missingHeaders.length; i++) {
       headerMap[missingHeaders[i]] = startCol + i;
     }
     
-    // Format new headers
     headerRange.setFontWeight("bold");
     headerRange.setBackground("#4285f4");
     headerRange.setFontColor("#ffffff");
@@ -504,7 +546,6 @@ function buildHeaderColumnMap(sheet) {
     console.log(`Auto-appended missing headers: ${missingHeaders.join(', ')}`);
   }
   
-  // Cache the header mapping for performance
   try {
     PropertiesService.getScriptProperties().setProperty(cacheKey, JSON.stringify(headerMap));
   } catch (e) {

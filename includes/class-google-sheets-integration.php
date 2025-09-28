@@ -64,13 +64,16 @@ class BSP_Google_Sheets_Integration {
     public function sync_incomplete_lead($lead_id, $lead_data) {
         $session_id = $lead_data['session_id'] ?? 'unknown';
         
-        // CRITICAL SESSION MANAGEMENT: Check if session is terminated (complete booking already processed)
-        if ($this->is_session_terminated($session_id)) {
-            bsp_debug_log("BLOCKING: Incomplete lead webhook blocked - session already completed", 'SESSION_RACE_PREVENTION', [
+        // ENHANCED SESSION MANAGEMENT: Check if incomplete lead should be blocked
+        $termination_check = $this->should_block_incomplete_lead($session_id, $lead_data, $lead_id);
+        if ($termination_check['should_block']) {
+            bsp_debug_log("BLOCKING: Incomplete lead webhook blocked", 'SESSION_RACE_PREVENTION', [
                 'session_id' => $session_id,
                 'lead_id' => $lead_id,
                 'blocked_at' => current_time('mysql'),
-                'reason' => 'Session terminated by complete_booking'
+                'reason' => $termination_check['reason'],
+                'termination_time' => $termination_check['termination_time'] ?? 'unknown',
+                'lead_created_time' => $termination_check['lead_created_time'] ?? 'unknown'
             ]);
             return false; // Prevent webhook sending
         }
@@ -1698,6 +1701,70 @@ class BSP_Google_Sheets_Integration {
         
         return isset($terminated_sessions[$session_id]);
     }
+
+    /**
+     * Enhanced session management: Determine if incomplete lead should be blocked
+     * Allows processing of leads created before session termination
+     */
+    private function should_block_incomplete_lead($session_id, $lead_data, $lead_id) {
+        if (empty($session_id)) {
+            return ['should_block' => false, 'reason' => 'no_session_id'];
+        }
+
+        // Check if session is terminated
+        $terminated_sessions_key = 'bsp_terminated_sessions';
+        $terminated_sessions = get_transient($terminated_sessions_key) ?: [];
+        
+        if (!isset($terminated_sessions[$session_id])) {
+            return ['should_block' => false, 'reason' => 'session_not_terminated'];
+        }
+
+        $termination_info = $terminated_sessions[$session_id];
+        $termination_timestamp = $termination_info['terminated_at'] ?? time();
+
+        // Get lead creation time from database
+        global $wpdb;
+        BSP_Database_Unified::init_tables();
+        $table_name = BSP_Database_Unified::$tables['incomplete_leads'];
+        
+        $lead_creation_time = $wpdb->get_var($wpdb->prepare(
+            "SELECT UNIX_TIMESTAMP(created_at) FROM $table_name WHERE id = %d",
+            $lead_id
+        ));
+
+        if (!$lead_creation_time) {
+            // If we can't determine creation time, allow processing but log it
+            bsp_debug_log("WARNING: Cannot determine lead creation time - allowing processing", 'SESSION_MANAGEMENT', [
+                'session_id' => $session_id,
+                'lead_id' => $lead_id
+            ]);
+            return ['should_block' => false, 'reason' => 'cannot_determine_creation_time'];
+        }
+
+        // CRITICAL LOGIC: Allow incomplete leads created BEFORE session termination
+        if ($lead_creation_time < $termination_timestamp) {
+            bsp_debug_log("ALLOWING: Incomplete lead created before session termination", 'SESSION_MANAGEMENT', [
+                'session_id' => $session_id,
+                'lead_id' => $lead_id,
+                'lead_created_at' => date('Y-m-d H:i:s', $lead_creation_time),
+                'session_terminated_at' => date('Y-m-d H:i:s', $termination_timestamp),
+                'time_difference_seconds' => $termination_timestamp - $lead_creation_time
+            ]);
+            return [
+                'should_block' => false, 
+                'reason' => 'lead_created_before_termination',
+                'lead_created_time' => date('Y-m-d H:i:s', $lead_creation_time),
+                'termination_time' => date('Y-m-d H:i:s', $termination_timestamp)
+            ];
+        }
+
+        // Block leads created after session termination
+        return [
+            'should_block' => true, 
+            'reason' => 'lead_created_after_termination',
+            'lead_created_time' => date('Y-m-d H:i:s', $lead_creation_time),
+            'termination_time' => date('Y-m-d H:i:s', $termination_timestamp)
+        ];
     }
 }
 

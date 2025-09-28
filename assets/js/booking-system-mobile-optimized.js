@@ -537,13 +537,21 @@
     }
     
     function setupMemoryCleanup() {
-        setInterval(() => {
+        const cleanupInterval = setInterval(() => {
+            // CRITICAL SESSION MANAGEMENT: Stop cleanup if session is completed
+            if (window.isSessionCompleted) {
+                console.log('🚫 MOBILE: Stopping memory cleanup - session completed');
+                clearInterval(cleanupInterval);
+                return;
+            }
+            
             StateManager.cleanup();
             
             if (sessionStorage.length > 10) {
                 const keys = Object.keys(sessionStorage);
                 keys.forEach(key => {
-                    if (key.startsWith('temp-') || key.startsWith('cache-')) {
+                    // SAFE CLEANUP: Only clean up our own mobile system cache, not toast notifications or other systems
+                    if (key.startsWith('temp-booking-') || key.startsWith('cache-mobile-') || key.startsWith('detected-')) {
                         const data = sessionStorage.getItem(key);
                         try {
                             const parsed = JSON.parse(data);
@@ -560,7 +568,14 @@
     }
     
     function setupPerformanceMonitoring() {
-        setInterval(() => {
+        const monitoringInterval = setInterval(() => {
+            // CRITICAL SESSION MANAGEMENT: Stop monitoring if session is completed
+            if (window.isSessionCompleted) {
+                console.log('🚫 MOBILE: Stopping performance monitoring - session completed');
+                clearInterval(monitoringInterval);
+                return;
+            }
+            
             const report = performanceTracker.getReport();
             const memoryUsage = StateManager.getMemoryUsage();
             

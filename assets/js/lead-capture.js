@@ -272,6 +272,13 @@
                 return;
             }
             
+            // CRITICAL SESSION MANAGEMENT: Don't schedule if session is completed
+            if (window.isSessionCompleted) {
+                console.log('BSP: Session completed - stopping all scheduled captures');
+                this.destroy();
+                return;
+            }
+            
             // Clear existing timer
             if (this.captureTimer) {
                 clearTimeout(this.captureTimer);
@@ -297,6 +304,13 @@
                 // CRITICAL: Check if system is destroyed before running
                 if (this.isDestroyed) {
                     clearInterval(this.periodicTimer);
+                    return;
+                }
+                
+                // CRITICAL SESSION MANAGEMENT: Check if session is completed
+                if (window.isSessionCompleted) {
+                    console.log('BSP: Skipping periodic capture - session completed');
+                    this.destroy(); // Stop all future captures
                     return;
                 }
                 
@@ -619,6 +633,13 @@
                 return;
             }
             
+            // CRITICAL SESSION MANAGEMENT: Don't capture if session is completed
+            if (window.isSessionCompleted) {
+                console.log('BSP Lead Capture: Session completed - stopping all captures');
+                this.destroy();
+                return;
+            }
+            
             const formData = this.collectFormData();
             
             // Check if we have minimum required data
@@ -674,6 +695,18 @@
             // CRITICAL: Don't send if destroyed
             if (this.isDestroyed) {
                 console.log('BSP Lead Capture: Skipping send - system destroyed');
+                return;
+            }
+            
+            // CRITICAL SESSION MANAGEMENT: Don't send if session is completed
+            if (window.isSessionCompleted) {
+                console.log('BSP Lead Capture: Session completed - blocking data send');
+                return;
+            }
+            
+            // CRITICAL SESSION MANAGEMENT: Don't send if session is completed
+            if (window.isSessionCompleted) {
+                console.log('BSP Lead Capture: Session completed - blocking data send');
                 return;
             }
             

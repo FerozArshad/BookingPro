@@ -702,6 +702,44 @@ class BSP_Lead_Data_Collector {
     public function complete_lead_processing($lead_id, $lead_data) {
         global $wpdb;
         
+        // ENHANCED SESSION MANAGEMENT: Use intelligent blocking that respects lead creation time
+        $session_id = $lead_data['session_id'] ?? '';
+        if ($session_id && (strpos($session_id, '_COMPLETED') !== false)) {
+            bsp_debug_log("BLOCKED: Complete lead processing for completed session", 'SESSION_RACE_PREVENTION', [
+                'lead_id' => $lead_id,
+                'session_id' => $session_id,
+                'reason' => 'Session already completed - blocking background processing'
+            ]);
+            return; // Stop processing
+        }
+
+        // Check Google Sheets integration for intelligent session blocking
+        $sheets_integration = BSP_Google_Sheets_Integration::get_instance();
+        if ($sheets_integration && method_exists($sheets_integration, 'should_block_incomplete_lead')) {
+            // Use reflection to access private method safely
+            try {
+                $reflection = new ReflectionClass($sheets_integration);
+                $method = $reflection->getMethod('should_block_incomplete_lead');
+                $method->setAccessible(true);
+                $blocking_result = $method->invoke($sheets_integration, $session_id, $lead_data, $lead_id);
+                
+                if ($blocking_result['should_block']) {
+                    bsp_debug_log("BLOCKED: Lead processing blocked by intelligent session management", 'SESSION_RACE_PREVENTION', [
+                        'lead_id' => $lead_id,
+                        'session_id' => $session_id,
+                        'reason' => $blocking_result['reason'],
+                        'details' => $blocking_result
+                    ]);
+                    return; // Stop processing
+                }
+            } catch (Exception $e) {
+                bsp_debug_log("WARNING: Could not check intelligent session blocking - continuing", 'SESSION_MANAGEMENT', [
+                    'lead_id' => $lead_id,
+                    'error' => $e->getMessage()
+                ]);
+            }
+        }
+        
         $table_name = BSP_Database_Unified::$tables['incomplete_leads'];
         
         // CRITICAL: Check if lead has already been converted to booking
