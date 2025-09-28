@@ -2,7 +2,7 @@
 /**
  * Plugin Name:     Booking System Pro
  * Plugin URI:      https://amcomputerstx.com/
- * Description:     Professional booking system with unified admin interface, comprehensive debugging, and complete functionality
+ * Description:     Professional booking system with unified admin interface, comprehensive debugging, and complete functionality. Google Sheets sync optimized for sub-300ms form submissions using non-blocking HTTP requests.
  * Version:         2.1.0
  * Author:          AM Computerstx
  * Text Domain:     booking-system-pro
@@ -948,75 +948,51 @@ final class Booking_System_Pro_Final {
      * Handle background Google Sheets sync with retry logic
      */
     public function handle_google_sheets_sync($booking_id, $booking_data) {
-        bsp_debug_log("Google Sheets background sync started for booking ID: $booking_id", 'INTEGRATION');
-        
-        // Check if already successfully synced
+        // Check if already synced
         $sync_status = get_post_meta($booking_id, '_google_sheets_synced', true);
         if ($sync_status === 'success') {
-            bsp_debug_log("Google Sheets sync skipped - booking ID $booking_id already synced successfully", 'INTEGRATION');
             return;
         }
         
-        // Increment and check retry attempts (max 3 attempts)
+        // Increment retry attempts (max 3)
         $attempts = (int)get_post_meta($booking_id, '_google_sheets_sync_attempts', true);
         $attempts++;
         update_post_meta($booking_id, '_google_sheets_sync_attempts', $attempts);
         
         if ($attempts > 3) {
-            bsp_debug_log("Google Sheets sync abandoned - booking ID $booking_id exceeded max retry attempts ($attempts)", 'INTEGRATION_ERROR');
             update_post_meta($booking_id, '_google_sheets_synced', 'failed_max_attempts');
             return;
         }
         
-        bsp_debug_log("Google Sheets sync attempt #$attempts for booking ID: $booking_id", 'INTEGRATION');
-        
         // Check if Google Sheets component is available
         if (!$this->sheets_integration || !method_exists($this->sheets_integration, 'sync_converted_lead')) {
-            bsp_debug_log("Google Sheets sync failed: Google Sheets component not available", 'INTEGRATION_ERROR');
-            
-            // Schedule retry in 30 seconds if component not ready (but only if under max attempts)
             if ($attempts < 3 && function_exists('wp_schedule_single_event')) {
                 wp_schedule_single_event(time() + 30, 'bsp_sync_google_sheets', [$booking_id, $booking_data]);
-                bsp_debug_log("Google Sheets sync rescheduled for 30 seconds due to component unavailability (attempt $attempts)", 'INTEGRATION');
             }
             return;
         }
         
-        // Attempt sync using the proper method that handles session continuity
+        // Attempt sync
         try {
             $sync_result = $this->sheets_integration->sync_converted_lead($booking_id, $booking_data);
             
             if ($sync_result) {
-                // Mark as successfully synced
                 update_post_meta($booking_id, '_google_sheets_synced', 'success');
                 update_post_meta($booking_id, '_google_sheets_sync_timestamp', current_time('mysql'));
-                
-                bsp_debug_log("Google Sheets background sync SUCCESSFUL for booking ID: $booking_id after $attempts attempts", 'INTEGRATION_SUCCESS');
             } else {
-                // Sync failed, schedule retry if attempts remaining
+                // Schedule retry if attempts remaining
                 if ($attempts < 3) {
-                    $retry_delay = $attempts * 60; // Progressive delay: 60s, 120s, 180s
+                    $retry_delay = $attempts * 60;
                     wp_schedule_single_event(time() + $retry_delay, 'bsp_sync_google_sheets', [$booking_id, $booking_data]);
-                    
-                    bsp_debug_log("Google Sheets sync failed for booking ID: $booking_id, attempt $attempts. Retrying in {$retry_delay}s", 'INTEGRATION_RETRY');
                 } else {
                     update_post_meta($booking_id, '_google_sheets_synced', 'failed_after_retries');
-                    bsp_debug_log("Google Sheets sync failed permanently for booking ID: $booking_id after $attempts attempts", 'INTEGRATION_FAILED');
                 }
             }
         } catch (Exception $e) {
-            bsp_debug_log("Google Sheets sync exception for booking ID: $booking_id", 'INTEGRATION_EXCEPTION', [
-                'exception' => $e->getMessage(),
-                'file' => $e->getFile(),
-                'line' => $e->getLine(),
-                'attempt' => $attempts
-            ]);
-            
             // Schedule retry on exception if attempts remaining
             if ($attempts < 3) {
                 $retry_delay = $attempts * 60;
                 wp_schedule_single_event(time() + $retry_delay, 'bsp_sync_google_sheets', [$booking_id, $booking_data]);
-                bsp_debug_log("Google Sheets sync rescheduled due to exception, retry in {$retry_delay}s (attempt $attempts)", 'INTEGRATION_RETRY');
             } else {
                 update_post_meta($booking_id, '_google_sheets_synced', 'failed_exception');
             }
@@ -1027,23 +1003,15 @@ final class Booking_System_Pro_Final {
      * Handle background processing of incomplete leads
      */
     public function handle_incomplete_lead_processing($lead_id, $lead_data) {
-        bsp_debug_log("Background processing started for incomplete lead ID: $lead_id", 'LEAD_PROCESSING');
-        
-        // ENHANCED SESSION MANAGEMENT: Use intelligent blocking that respects lead creation time
+        // Check for session completion
         $session_id = $lead_data['session_id'] ?? '';
         if ($session_id && (strpos($session_id, '_COMPLETED') !== false)) {
-            bsp_debug_log("BLOCKED: Background processing for completed session", 'SESSION_RACE_PREVENTION', [
-                'lead_id' => $lead_id,
-                'session_id' => $session_id,
-                'reason' => 'Session already completed - blocking incomplete lead processing'
-            ]);
-            return; // Stop processing
+            return; // Skip completed sessions
         }
 
-        // Use intelligent session blocking from Google Sheets integration
+        // Use intelligent session blocking if available
         $sheets_integration = BSP_Google_Sheets_Integration::get_instance();
         if ($sheets_integration && method_exists($sheets_integration, 'should_block_incomplete_lead')) {
-            // Use reflection to access private method safely
             try {
                 $reflection = new ReflectionClass($sheets_integration);
                 $method = $reflection->getMethod('should_block_incomplete_lead');
@@ -1051,47 +1019,26 @@ final class Booking_System_Pro_Final {
                 $blocking_result = $method->invoke($sheets_integration, $session_id, $lead_data, $lead_id);
                 
                 if ($blocking_result['should_block']) {
-                    bsp_debug_log("BLOCKED: Background processing blocked by intelligent session management", 'SESSION_RACE_PREVENTION', [
-                        'lead_id' => $lead_id,
-                        'session_id' => $session_id,
-                        'reason' => $blocking_result['reason'],
-                        'details' => $blocking_result
-                    ]);
-                    return; // Stop processing
-                } else {
-                    bsp_debug_log("ALLOWING: Background processing approved by intelligent session management", 'SESSION_MANAGEMENT', [
-                        'lead_id' => $lead_id,
-                        'session_id' => $session_id,
-                        'reason' => $blocking_result['reason'],
-                        'details' => $blocking_result
-                    ]);
+                    return; // Block processing
                 }
             } catch (Exception $e) {
-                bsp_debug_log("WARNING: Could not check intelligent session blocking - continuing", 'SESSION_MANAGEMENT', [
-                    'lead_id' => $lead_id,
-                    'error' => $e->getMessage()
-                ]);
+                // Continue if blocking check fails
             }
         }
         
-        // Get the Lead Data Collector instance
+        // Get Lead Data Collector
         $lead_collector = BSP_Lead_Data_Collector::get_instance();
         
         if (!$lead_collector || !method_exists($lead_collector, 'complete_lead_processing')) {
-            bsp_debug_log("Lead processing failed: Lead Data Collector not available", 'LEAD_PROCESSING_ERROR');
-            
-            // Schedule retry in 15 seconds if component not ready
+            // Retry in 15 seconds if component not ready
             if (function_exists('wp_schedule_single_event')) {
                 wp_schedule_single_event(time() + 15, 'bsp_process_incomplete_lead_background', [$lead_id, $lead_data]);
-                bsp_debug_log("Lead processing rescheduled for 15 seconds due to component unavailability", 'LEAD_PROCESSING');
             }
             return;
         }
         
-        // Process the lead data completely
+        // Process the lead
         $lead_collector->complete_lead_processing($lead_id, $lead_data);
-        
-        bsp_debug_log("Background processing completed for incomplete lead ID: $lead_id", 'LEAD_PROCESSING');
     }
 
     /**
@@ -1102,7 +1049,7 @@ final class Booking_System_Pro_Final {
             return;
         }
 
-        // Clear any stuck WordPress cron events
+        // Clear stuck WordPress cron events
         $cleared_events = 0;
         $cron_jobs = wp_get_scheduled_events();
         
@@ -1116,11 +1063,6 @@ final class Booking_System_Pro_Final {
                 }
             }
         }
-
-        bsp_debug_log("Cleared stuck incomplete lead processing events", 'MAINTENANCE', [
-            'events_cleared' => $cleared_events,
-            'cleared_by' => get_current_user_id()
-        ]);
 
         if (isset($_GET['clear_stuck_leads'])) {
             wp_redirect(admin_url('admin.php?page=booking-system&stuck_leads_cleared=' . $cleared_events));

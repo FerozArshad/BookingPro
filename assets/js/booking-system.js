@@ -118,26 +118,18 @@ jQuery(document).ready(function($) {
         window.bookingFormEntryType = bookingFormEntryType;
     })();
 
-    // ─── USER TRACKING & DEBUGGING ──────────────────
+    // Initialize user tracking
     (function initializeUserTracking() {
-        console.group('👤 BSP User Tracking Initialized');
-        console.log('Entry Type:', bookingFormEntryType);
-        console.log('Page URL:', window.location.href);
-        console.log('Referrer:', document.referrer);
-        console.log('User Agent:', navigator.userAgent);
-        console.log('Timestamp:', new Date().toISOString());
-        console.groupEnd();
 
         // Track page visibility changes
         document.addEventListener('visibilitychange', function() {
             const state = document.visibilityState;
-            console.log('👁️ Page Visibility Changed:', state, 'at', new Date().toLocaleTimeString());
-            
             // Track user engagement via visibility changes
             if (state === 'hidden') {
-                console.log('📊 User left page - potential lead capture opportunity');
+                // User left page - potential lead capture opportunity
             } else if (state === 'visible') {
-                console.log('📊 User returned to page - continued engagement');
+                // User returned to page - continued engagement
+            }
             }
         });
 
@@ -145,19 +137,11 @@ jQuery(document).ready(function($) {
         window.addEventListener('beforeunload', function(event) {
             // CRITICAL SESSION MANAGEMENT: Don't capture if session is completed
             if (isSessionCompleted) {
-                console.log('🚫 BLOCKED: beforeunload capture - session completed');
                 return;
             }
             
-            console.group('🚪 User Leaving Page');
-            console.log('Current Step:', currentStepIndex);
-            console.log('Form State:', formState);
-            console.log('Selected Appointments:', selectedAppointments);
-            console.log('Time on Page:', (Date.now() - window.pageLoadTime) / 1000, 'seconds');
-            
             // Capture incomplete lead data before leaving
             captureIncompleteLeadData('beforeunload');
-            console.groupEnd();
         });
 
         // Track page load time
@@ -167,28 +151,23 @@ jQuery(document).ready(function($) {
         $(document).on('input change', 'input, select, textarea', function(e) {
             const fieldName = e.target.name || e.target.id || e.target.className;
             const fieldValue = e.target.type === 'password' ? '[HIDDEN]' : e.target.value;
-            console.log('📝 Form Field Changed:', fieldName, '→', fieldValue);
+            // Track form field changes for lead capture
             
             // Update form state based on field name/id
             if (fieldName.includes('zip') || e.target.id.includes('zip')) {
                 formState.zip_code = fieldValue;
-                console.log('📍 Updated formState.zip_code:', fieldValue);
             }
             if (fieldName.includes('name') && !fieldName.includes('company')) {
                 formState.full_name = fieldValue;
-                console.log('👤 Updated formState.full_name:', fieldValue);
             }
             if (fieldName.includes('email')) {
                 formState.email = fieldValue;
-                console.log('📧 Updated formState.email:', fieldValue);
             }
             if (fieldName.includes('phone')) {
                 formState.phone = fieldValue;
-                console.log('📞 Updated formState.phone:', fieldValue);
             }
             if (fieldName.includes('address')) {
                 formState.address = fieldValue;
-                console.log('🏠 Updated formState.address:', fieldValue);
             }
             
             // Debounced lead capture (only after 2 seconds of no activity)
@@ -196,11 +175,8 @@ jQuery(document).ready(function($) {
             window.leadCaptureTimeout = setTimeout(function() {
                 // CRITICAL SESSION MANAGEMENT: Don't capture if session is completed
                 if (isSessionCompleted) {
-                    console.log('🚫 BLOCKED: form interaction capture - session completed');
                     return;
                 }
-                
-                console.log('📊 Form State before lead capture:', formState);
                 captureIncompleteLeadData('form_interaction');
             }, 2000);
         });
@@ -209,14 +185,11 @@ jQuery(document).ready(function($) {
         $(document).on('click', 'button, .btn', function(e) {
             const buttonText = $(this).text().trim();
             const buttonClass = $(this).attr('class') || '';
-            console.log('🔘 Button Clicked:', buttonText, '| Classes:', buttonClass);
-            
             // Capture lead data on significant button clicks
             if (buttonClass.includes('service-option') || buttonClass.includes('option-btn') || 
                 buttonClass.includes('btn-request-estimate') || buttonClass.includes('btn-next')) {
                 // CRITICAL SESSION MANAGEMENT: Don't capture if session is completed
                 if (isSessionCompleted) {
-                    console.log('🚫 BLOCKED: button click capture - session completed');
                     return;
                 }
                 
@@ -1841,7 +1814,7 @@ jQuery(document).ready(function($) {
             return;
         }
         
-        console.log(`🔄 Refreshing availability for ${calendarsToRefresh} companies after booking`);
+        // Refresh availability for updated calendars
         
         $allCalendars.each(function() {
             const $calendar = $(this);

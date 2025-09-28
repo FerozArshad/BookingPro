@@ -35,7 +35,6 @@
         init: async function() {
             // CRITICAL: Prevent multiple initializations
             if (this.isInitialized) {
-                console.warn('BSP Lead Capture: Already initialized, skipping');
                 return;
             }
             

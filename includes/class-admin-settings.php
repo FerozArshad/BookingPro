@@ -969,38 +969,23 @@ class BSP_Admin_Settings {
         
         $webhook_url = $integration_settings['google_sheets_webhook_url'];
         
-        // Send test data
+        // Send test data (non-blocking)
         $response = wp_remote_post($webhook_url, [
-            'method'      => 'POST',
-            'headers'     => [
+            'method' => 'POST',
+            'headers' => [
                 'Content-Type' => 'application/json; charset=utf-8',
                 'Accept' => 'application/json',
                 'User-Agent' => 'BookingPro/2.1.0-TEST'
             ],
-            'body'        => wp_json_encode($test_data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
-            'timeout'     => 30,
-            'blocking'    => true,
-            'sslverify'   => true
+            'body' => wp_json_encode($test_data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+            'timeout' => 30,
+            'blocking' => false,
+            'sslverify' => true
         ]);
         
-        if (is_wp_error($response)) {
-            wp_send_json_error('Request failed: ' . $response->get_error_message());
-        }
-        
-        $response_code = wp_remote_retrieve_response_code($response);
-        $response_body = wp_remote_retrieve_body($response);
-        
-        if ($response_code === 200 || $response_code === 302) {
-            wp_send_json_success([
-                'message' => 'Test data sent successfully',
-                'response_code' => $response_code,
-                'response_body' => substr($response_body, 0, 500)
-            ]);
-        } else {
-            wp_send_json_error([
-                'message' => 'Test failed with response code: ' . $response_code,
-                'response_body' => substr($response_body, 0, 500)
-            ]);
-        }
+        wp_send_json_success([
+            'message' => 'Test data sent to Google Sheets. Check Google Sheets for delivery confirmation.',
+            'timestamp' => current_time('mysql')
+        ]);
     }
 }

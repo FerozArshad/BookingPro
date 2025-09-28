@@ -64,18 +64,10 @@ class BSP_Google_Sheets_Integration {
     public function sync_incomplete_lead($lead_id, $lead_data) {
         $session_id = $lead_data['session_id'] ?? 'unknown';
         
-        // ENHANCED SESSION MANAGEMENT: Check if incomplete lead should be blocked
+        // Check if lead should be blocked
         $termination_check = $this->should_block_incomplete_lead($session_id, $lead_data, $lead_id);
         if ($termination_check['should_block']) {
-            bsp_debug_log("BLOCKING: Incomplete lead webhook blocked", 'SESSION_RACE_PREVENTION', [
-                'session_id' => $session_id,
-                'lead_id' => $lead_id,
-                'blocked_at' => current_time('mysql'),
-                'reason' => $termination_check['reason'],
-                'termination_time' => $termination_check['termination_time'] ?? 'unknown',
-                'lead_created_time' => $termination_check['lead_created_time'] ?? 'unknown'
-            ]);
-            return false; // Prevent webhook sending
+            return false;
         }
         
         // CRITICAL FIX: Improved deduplication - check if lead already converted
@@ -88,14 +80,9 @@ class BSP_Google_Sheets_Integration {
             $session_id
         ));
         
-        // If lead is already converted to booking, stop sending incomplete data
+        // Check if lead is already converted
         if ($existing_lead && !empty($existing_lead->booking_post_id)) {
-            bsp_debug_log("SKIPPING: Lead already converted to booking", 'SHEETS_SKIP_CONVERTED', [
-                'session_id' => $session_id,
-                'booking_post_id' => $existing_lead->booking_post_id,
-                'lead_type' => $existing_lead->lead_type ?? 'unknown'
-            ]);
-            return true; // Return success but don't send webhook
+            return true;
         }
         
         // Create improved cache key with form step and completion percentage
@@ -103,47 +90,26 @@ class BSP_Google_Sheets_Integration {
         $form_step = $lead_data['form_step'] ?? 0;
         $cache_key = 'incomplete_' . $session_id . '_step_' . $form_step . '_completion_' . $completion;
         
-        // Check recent webhook cache using persistent transients (prevent duplicate sends within 60 seconds)
+        // Check for recent webhook cache to prevent duplicates
         $transient_key = self::$transient_prefix . md5($cache_key);
         $last_sent = get_transient($transient_key);
         
-        if ($last_sent !== false) {
-            $time_diff = time() - $last_sent;
-            if ($time_diff < 20) {
-                bsp_debug_log("SKIPPING: Duplicate webhook within 20 seconds", 'SHEETS_DUPLICATE_SKIP', [
-                    'session_id' => $session_id,
-                    'cache_key' => $cache_key,
-                    'time_since_last' => $time_diff,
-                    'form_step' => $form_step,
-                    'completion' => $completion,
-                    'transient_key' => $transient_key
-                ]);
-                return true;
-            }
+        if ($last_sent !== false && (time() - $last_sent) < 20) {
+            return true;
         }
         
-        // Mark this webhook as sent in both runtime and persistent cache
+        // Set cache and process lead
         $current_time = time();
         self::$webhook_cache[$cache_key] = $current_time;
-        set_transient($transient_key, $current_time, 60); // 1 minute persistent cache
+        set_transient($transient_key, $current_time, 60);
         
-        // Optimized logging - only critical sync info
-        bsp_debug_log("Google Sheets sync started", 'SHEETS_SYNC_START', [
-            'lead_id' => $lead_id,
-            'session_id' => $session_id,
-            'service' => $lead_data['service'] ?? 'unknown',
-            'has_appointments' => !empty($lead_data['appointments']),
-            'cache_key' => $cache_key
-        ]);
-        
-        // CRITICAL: Skip processing leads with no valuable data to prevent HTTP 400 errors
-        $has_customer_data = !empty($lead_data['customer_name']) || !empty($lead_data['name']) || !empty($lead_data['email']) || !empty($lead_data['customer_email']);
+        // Skip processing leads with no valuable data
+        $has_customer_data = !empty($lead_data['customer_name']) || !empty($lead_data['name']) || !empty($lead_data['email']);
         $has_service_data = !empty($lead_data['service']) || !empty($lead_data['service_type']);
         $has_appointment_data = !empty($lead_data['appointments']);
         
         if (!$has_customer_data && !$has_service_data && !$has_appointment_data) {
-            bsp_log_warn("Lead has no valuable data for sync", ['lead_id' => $lead_id]);
-            return true; // Return success to prevent retries
+            return true;
         }
         
         // Use field mapper for consistent data formatting
@@ -156,7 +122,7 @@ class BSP_Google_Sheets_Integration {
         // Use centralized data processor to format real lead data
         $sheet_data = $this->data_processor->format_for_external_system($mapped_data, 'google_sheets');
 
-        // Check if we have multiple appointments data
+        // Process appointment data if available
         $appointments_data = [];
         if (!empty($lead_data['appointments'])) {
             $appointments_json = $lead_data['appointments'];
@@ -164,49 +130,17 @@ class BSP_Google_Sheets_Integration {
                 $appointments_array = json_decode($appointments_json, true);
                 if ($appointments_array && is_array($appointments_array)) {
                     $appointments_data = $appointments_array;
-                    
-                    if (count($appointments_data) > 1) {
-                        bsp_log_info("Multiple appointments detected", ['count' => count($appointments_data), 'lead_id' => $lead_id]);
-                    }
-                } else {
-                    bsp_log_error("Failed to decode appointments JSON", ['json_error' => json_last_error_msg()]);
                 }
             }
         }
         
-        // ALWAYS USE SESSION-BASED APPROACH for single row per session
-        bsp_log_info("Using session-based payload for single row per session", [
-            'appointment_count' => count($appointments_data), 
-            'session_id' => $lead_data['session_id'] ?? 'unknown'
-        ]);
+
         
-        // Use session-based payload that combines appointments and includes upsert mode
+        // Build and send webhook payload
         $webhook_payload = $this->build_session_based_payload($sheet_data, $lead_data, $appointments_data);
-        
-        bsp_debug_log("Sending single appointment/lead to Google Sheets", 'SHEETS_SINGLE_SEND', [
-            'lead_id' => $lead_id,
-            'has_company' => !empty($webhook_payload['company']),
-            'has_date' => !empty($webhook_payload['booking_date']),
-            'has_time' => !empty($webhook_payload['booking_time'])
-        ]);
-        
-        // Send to webhook server
         $result = $this->send_webhook_data($webhook_payload);
         
-        if ($result['success']) {
-            bsp_debug_log("Google Sheets sync successful", 'SHEETS_SUCCESS', [
-                'lead_id' => $lead_id,
-                'session_id' => $lead_data['session_id'] ?? 'unknown'
-            ]);
-            return true;
-        } else {
-            bsp_debug_log("Google Sheets sync failed", 'SHEETS_ERROR', [
-                'lead_id' => $lead_id,
-                'error' => $result['error'] ?? 'Unknown error',
-                'http_code' => $result['http_code'] ?? 'unknown'
-            ]);
-            return false;
-        }
+        return $result['success'];
     }
     
     /**
@@ -469,13 +403,7 @@ class BSP_Google_Sheets_Integration {
      * Combine appointment data into comma-separated values
      */
     private function combine_appointment_data($appointments_data, $lead_data) {
-        bsp_debug_log("COMBINE APPOINTMENT DEBUG - Input data", 'APPOINTMENT_COMBINE', [
-            'appointments_data_count' => count($appointments_data),
-            'appointments_data_sample' => !empty($appointments_data) ? $appointments_data[0] : 'empty',
-            'lead_data_company' => $lead_data['company'] ?? 'not_set',
-            'lead_data_date' => $lead_data['date'] ?? $lead_data['booking_date'] ?? 'not_set',
-            'lead_data_time' => $lead_data['time'] ?? $lead_data['booking_time'] ?? 'not_set'
-        ]);
+
         
         if (!empty($appointments_data)) {
             $companies = [];
@@ -492,25 +420,10 @@ class BSP_Google_Sheets_Integration {
             $combined_date = implode(', ', array_filter($dates));
             $combined_time = implode(', ', array_filter($times));
             
-            // CRITICAL FIX: Handle long company field that gets truncated
+            // Handle long company field truncation
             if (strlen($combined_company) > 250) {
-                // Truncate and add indicator
                 $combined_company = substr($combined_company, 0, 247) . '...';
-                bsp_debug_log("COMPANY FIELD TRUNCATED", 'APPOINTMENT_COMBINE', [
-                    'original_length' => strlen(implode(', ', array_filter($companies))),
-                    'truncated_length' => strlen($combined_company),
-                    'truncated_value' => $combined_company
-                ]);
             }
-            
-            bsp_debug_log("COMBINE APPOINTMENT DEBUG - Combined result", 'APPOINTMENT_COMBINE', [
-                'company_string' => $combined_company,
-                'company_length' => strlen($combined_company),
-                'date_string' => $combined_date,
-                'time_string' => $combined_time,
-                'count' => count($appointments_data),
-                'truncation_warning' => strlen($combined_company) > 255 ? 'WILL_TRUNCATE' : 'OK'
-            ]);
             
             return [
                 'company' => $combined_company,
@@ -528,12 +441,7 @@ class BSP_Google_Sheets_Integration {
             'count' => (!empty($lead_data['company']) ? 1 : 0)
         ];
         
-        bsp_debug_log("COMBINE APPOINTMENT DEBUG - Fallback result", 'APPOINTMENT_COMBINE', [
-            'fallback_company' => $fallback_result['company'],
-            'fallback_date' => $fallback_result['date'],
-            'fallback_time' => $fallback_result['time'],
-            'fallback_count' => $fallback_result['count']
-        ]);
+
         
         return $fallback_result;
     }
@@ -583,13 +491,10 @@ class BSP_Google_Sheets_Integration {
      * FIXED: Simplified payload format to resolve HTTP 400 errors
      */
     private function send_webhook_data($payload) {
-        // Log the webhook attempt with current configuration
-        bsp_debug_log("Webhook data sending attempt", 'SHEETS_WEBHOOK_ATTEMPT', [
-            'webhook_url' => !empty($this->webhook_url) ? 'configured' : 'missing',
-            'webhook_url_value' => $this->webhook_url,
-            'spreadsheet_id' => $this->spreadsheet_id,
-            'payload_keys' => array_keys($payload)
-        ]);
+        // Validate webhook configuration
+        if (empty($this->webhook_url)) {
+            return ['success' => false, 'error' => 'No webhook URL configured'];
+        }
         
         // If no webhook URL is configured, use a default or log data locally
         if (empty($this->webhook_url)) {
@@ -632,32 +537,26 @@ class BSP_Google_Sheets_Integration {
             ],
             'body' => json_encode($simplified_payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
             'timeout' => 45,
-            'blocking' => true,
+            'blocking' => false,
             'sslverify' => true,
             'redirection' => 3
         ];
         
-        bsp_debug_log("Sending JSON payload to Google Apps Script (primary method)", 'WEBHOOK_SEND', [
-            'payload_keys' => array_keys($simplified_payload),
-            'payload_count' => count($simplified_payload),
-            'url' => $this->webhook_url,
-            'method' => 'json_primary',
-            'content_type' => 'application/json; charset=utf-8',
-            'action' => $simplified_payload['action'] ?? 'missing',
-            'booking_id' => $simplified_payload['booking_id'] ?? 'missing'
-        ]);
-        
-        // Send JSON payload first (primary method for Google Apps Script)
+        // Send JSON payload (primary method)
         $response = wp_remote_post($this->webhook_url, $json_args);
         
+        // Non-blocking request handling
+        if ($json_args['blocking'] === false) {
+            return [
+                'success' => true,
+                'response' => ['status' => 'sent_nonblocking'],
+                'http_code' => 'nonblocking'
+            ];
+        }
+        
         if (is_wp_error($response) || wp_remote_retrieve_response_code($response) >= 400) {
-            // If JSON fails, try form-encoded as fallback
+            // Try form-encoded fallback
             $json_error = is_wp_error($response) ? $response->get_error_message() : 'HTTP ' . wp_remote_retrieve_response_code($response);
-            
-            bsp_debug_log("JSON request failed, trying form-encoded fallback", 'WEBHOOK_FALLBACK', [
-                'json_error' => $json_error,
-                'fallback_method' => 'form_encoded'
-            ]);
             
             // Create form-encoded fallback - Google Apps Script compatible
             $form_args = [
@@ -669,68 +568,52 @@ class BSP_Google_Sheets_Integration {
                 ],
                 'body' => http_build_query($simplified_payload, '', '&', PHP_QUERY_RFC3986),
                 'timeout' => 30,
-                'blocking' => true,
+                'blocking' => false,
                 'sslverify' => true,
                 'redirection' => 2
             ];
             
             $response = wp_remote_post($this->webhook_url, $form_args);
             
-            if (is_wp_error($response)) {
-                $error_code = $response->get_error_code();
-                $error_message = $response->get_error_message();
-                
-                // Check for specific timeout or network errors
-                if (strpos($error_message, 'timeout') !== false || strpos($error_message, 'timed out') !== false) {
-                    bsp_debug_log("Both JSON and form-encoded requests timed out - network connectivity issue", 'WEBHOOK_TIMEOUT', [
-                        'json_error' => $json_error,
-                        'form_error' => $error_message,
-                        'error_code' => $error_code,
-                        'webhook_url' => substr($this->webhook_url, 0, 50) . '...'
-                    ]);
-                } else {
-                    bsp_debug_log("Both JSON and form-encoded requests failed", 'WEBHOOK_WP_ERROR', [
-                        'json_error' => $json_error,
-                        'form_error' => $error_message,
-                        'error_code' => $error_code
-                    ]);
-                }
+            // Non-blocking fallback handling
+            if ($form_args['blocking'] === false) {
                 return [
-                    'success' => false,
-                    'error' => 'JSON: ' . $json_error . ', Form: ' . $error_message
+                    'success' => true,
+                    'response' => ['status' => 'sent_nonblocking_fallback'],
+                    'http_code' => 'nonblocking'
                 ];
             }
+            
+            if (is_wp_error($response)) {
+                $error_message = $response->get_error_message();
+                return [
+                    'success' => false,
+                    'error' => 'Webhook failed: ' . $error_message
+                ];
+            }
+        }
+
+        // Check if request was non-blocking
+        $is_nonblocking = ($json_args['blocking'] === false) || (isset($form_args) && $form_args['blocking'] === false);
+        
+        if ($is_nonblocking) {
+            return [
+                'success' => true,
+                'response' => ['status' => 'sent_nonblocking'],
+                'http_code' => 'nonblocking'
+            ];
         }
 
         $response_code = wp_remote_retrieve_response_code($response);
         $response_body = wp_remote_retrieve_body($response);
         
-        // Enhanced error logging for Google Sheets issues
         if ($response_code >= 200 && $response_code < 300) {
-            bsp_debug_log("Webhook sent successfully", 'WEBHOOK_SUCCESS', [
-                'response_code' => $response_code,
-                'body_length' => strlen($response_body),
-                'method' => (is_wp_error($response) || wp_remote_retrieve_response_code($response) >= 400) ? 'form_fallback' : 'json_primary'
-            ]);
             return [
                 'success' => true,
                 'response' => json_decode($response_body, true),
                 'http_code' => $response_code
             ];
         } else {
-            // Detailed error logging for troubleshooting
-            bsp_debug_log("WEBHOOK ERROR - Google Sheets returned error", 'WEBHOOK_ERROR', [
-                'http_code' => $response_code,
-                'response_body' => $response_body,
-                'payload_sample' => [
-                    'session_id' => $simplified_payload['session_id'] ?? 'missing',
-                    'customer_name' => $simplified_payload['customer_name'] ?? 'missing',
-                    'service' => $simplified_payload['service'] ?? 'missing',
-                    'booking_date' => $simplified_payload['booking_date'] ?? 'missing',
-                    'booking_time' => $simplified_payload['booking_time'] ?? 'missing'
-                ]
-            ]);
-            
             return [
                 'success' => false,
                 'error' => "HTTP {$response_code}: {$response_body}",
@@ -744,11 +627,7 @@ class BSP_Google_Sheets_Integration {
      * CRITICAL FIX: Include ALL fields required for lead status, type, and score calculation
      */
     private function create_simplified_payload($payload) {
-        bsp_debug_log("PAYLOAD ANALYSIS - Creating complete payload for Google Apps Script", 'PAYLOAD_CREATE', [
-            'original_keys' => array_keys($payload),
-            'action' => $payload['action'] ?? 'unknown',
-            'original_booking_id' => $payload['booking_id'] ?? 'none'
-        ]);
+
         
         // Core fields that Google Apps Script expects
         $simplified = [
@@ -851,17 +730,7 @@ class BSP_Google_Sheets_Integration {
             return $value !== '' && $value !== null && $value !== false;
         }, ARRAY_FILTER_USE_BOTH);
         
-        bsp_debug_log("PAYLOAD COMPLETE - Final payload ready for Google Apps Script", 'PAYLOAD_FINAL', [
-            'original_field_count' => count($payload),
-            'simplified_field_count' => count($filtered),
-            'has_booking_id' => !empty($filtered['booking_id']),
-            'booking_id_value' => $filtered['booking_id'] ?? 'missing',
-            'has_utm_data' => !empty($filtered['utm_source']) || !empty($filtered['utm_medium']),
-            'action' => $filtered['action'] ?? 'unknown',
-            'has_customer_data' => !empty($filtered['customer_name']) && !empty($filtered['customer_email']),
-            'has_service_data' => !empty($filtered['service']),
-            'has_date_time' => !empty($filtered['booking_date']) && !empty($filtered['booking_time'])
-        ]);
+
         
         return $filtered;
     }
@@ -936,13 +805,6 @@ class BSP_Google_Sheets_Integration {
         }
         
         // Log the cleaning process
-        bsp_debug_log("Payload cleaned for Google Apps Script", 'WEBHOOK_CLEAN', [
-            'original_count' => count($payload),
-            'clean_count' => count($clean_payload),
-            'required_fields_added' => array_keys($required_defaults),
-            'final_keys' => array_keys($clean_payload)
-        ]);
-        
         return $clean_payload;
     }
 
@@ -951,25 +813,16 @@ class BSP_Google_Sheets_Integration {
      * ENHANCED with global deduplication across all call sources
      */
     public function sync_converted_lead($booking_id, $booking_data) {
-        // GLOBAL DEDUPLICATION: Use a global transient key to prevent ANY duplicate processing
+        // Global deduplication check
         $global_key = 'bsp_converted_processed_' . $booking_id;
-        $already_processed = get_transient($global_key);
-        
-        if ($already_processed !== false) {
-            bsp_debug_log("GLOBAL SKIP: Booking already fully processed", 'SHEETS_GLOBAL_SKIP', [
-                'booking_id' => $booking_id,
-                'processed_at' => $already_processed,
-                'source' => 'global_deduplication'
-            ]);
-            return true; // Already processed successfully
+        if (get_transient($global_key) !== false) {
+            return true;
         }
-        
-        // Mark as being processed immediately to prevent race conditions
-        set_transient($global_key, current_time('mysql'), 3600); // 1 hour lock
+        set_transient($global_key, current_time('mysql'), 3600);
         
         $session_id = $booking_data['session_id'] ?? $this->extract_session_id_from_booking($booking_data);
         
-        // CRITICAL: Mark the lead as converted in database to stop incomplete webhooks
+        // Mark lead as converted in database
         if ($session_id) {
             global $wpdb;
             BSP_Database_Unified::init_tables();
@@ -987,77 +840,32 @@ class BSP_Google_Sheets_Integration {
                 ['%d', '%d', '%s', '%s'],
                 ['%s']
             );
-            
-            bsp_debug_log("Marked lead as converted in database", 'CONVERSION_TRACKING', [
-                'booking_id' => $booking_id,
-                'session_id' => $session_id,
-                'update_result' => 'success'
-            ]);
         }
         
+        // Check for recent duplicate syncs
         $cache_key = 'complete_' . $booking_id . '_' . $session_id;
-        
-        // ENHANCED DEDUPLICATION: Also check for any recent sync of this booking ID (regardless of session)
         $booking_cache_key = 'booking_' . $booking_id;
         $booking_transient_key = self::$transient_prefix . md5($booking_cache_key);
         $booking_last_sent = get_transient($booking_transient_key);
         
-        // Check if we've already sent this booking data recently using persistent transients
         $transient_key = self::$transient_prefix . md5($cache_key);
         $last_sent = get_transient($transient_key);
         
-        // CRITICAL: Also check if this booking ID was sent recently (prevents duplicate sends with different sessions)
-        if ($booking_last_sent !== false) {
-            $booking_time_diff = time() - $booking_last_sent;
-            if ($booking_time_diff < 20) {
-                bsp_debug_log("SKIPPING: Booking already sent recently (different session)", 'SHEETS_BOOKING_DUPLICATE_SKIP', [
-                    'booking_id' => $booking_id,
-                    'session_id' => $session_id,
-                    'booking_cache_key' => $booking_cache_key,
-                    'time_since_last_booking_sync' => $booking_time_diff,
-                    'last_sync_was_booking' => true
-                ]);
-                return true;
-            }
+        // Skip if recently sent
+        if (($booking_last_sent !== false && (time() - $booking_last_sent) < 20) ||
+            ($last_sent !== false && (time() - $last_sent) < 20)) {
+            return true;
         }
         
-        if ($last_sent !== false) {
-            $time_diff = time() - $last_sent;
-            if ($time_diff < 20) { // 20 second window for complete bookings
-                bsp_debug_log("SKIPPING: Complete booking already sent recently", 'SHEETS_DUPLICATE_SKIP', [
-                    'booking_id' => $booking_id,
-                    'session_id' => $session_id,
-                    'cache_key' => $cache_key,
-                    'time_since_last' => $time_diff,
-                    'transient_key' => $transient_key
-                ]);
-                return true;
-            }
-        }
-        
-        // Mark this webhook as sent in both runtime and persistent cache
+        // Set cache to prevent duplicates
         $current_time = time();
         self::$webhook_cache[$cache_key] = $current_time;
-        set_transient($transient_key, $current_time, 60); // 1 minute persistent cache
-        
-        // ENHANCED: Also mark booking ID as recently synced to prevent duplicates with different sessions
+        set_transient($transient_key, $current_time, 60);
         self::$webhook_cache[$booking_cache_key] = $current_time;
-        set_transient($booking_transient_key, $current_time, 60); // 1 minute booking-specific cache
+        set_transient($booking_transient_key, $current_time, 60);
         
         try {
-            bsp_debug_log("Complete booking webhook sync attempt", 'SHEETS_BOOKING_SYNC', [
-                'booking_id' => $booking_id,
-                'session_id' => $session_id,
-                'available_booking_data_keys' => array_keys($booking_data),
-                'cache_key' => $cache_key
-            ]);
-            
-            // Get the associated lead data
             if (!$session_id) {
-                bsp_debug_log("No session ID found for converted lead", 'SHEETS_WARNING', [
-                    'booking_id' => $booking_id,
-                    'booking_data_keys' => array_keys($booking_data)
-                ]);
                 return false;
             }
             
