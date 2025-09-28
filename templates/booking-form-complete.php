@@ -454,7 +454,7 @@ window.BOOKING_DIRECT_ZIP_MODE = true;
     <div class="booking-step" data-step="5">
         <div class="step-card">
             <h2 class="step-title">Please enter your <br>Full Name</h2>
-            <h4 class="step-title">Your matches are almost ready!</h4>
+            <h4 class="step-sub-title">Your matches are almost ready!</h4>
             <div class="form-group">
                 <input type="text" class="form-input" id="name-input" name="full_name" placeholder="John Doe" required>
             </div>

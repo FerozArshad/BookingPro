@@ -47,8 +47,8 @@ jQuery(document).ready(function($) {
             { id: 'adu_type', depends_on: ['service', 'ADU'], type: 'single-choice', question: 'What type of ADU project?', options: ['New Build', 'Addition', 'Garage Conversion'] },
             
             // Common steps
-            { id: 'full_name', type: 'text', question: 'Please enter your full name' },
-            { id: 'address', type: 'text', question: 'What is your street address?' },
+            { id: 'full_name', type: 'text', question: 'Please enter your Full Name' },
+            { id: 'address', type: 'text', question: 'What is your Street Address?' },
             { id: 'contact_info', type: 'form', question: 'We have matching Pros in [city]', fields: [
                 { name: 'phone', label: 'Cell Number' },
                 { name: 'email', label: 'Email Address' }

@@ -2733,17 +2733,14 @@ body .booking-system-form .featured-badge,
 }
 
 /* Default styling - 1st and 3rd children: White background, green text */
-body .booking-system-form .featured-badge:nth-child(1),
-.booking-system-form .featured-badge:nth-child(1),
-body .booking-system-form .featured-badge:nth-child(3),
-.booking-system-form .featured-badge:nth-child(3) {
+html body .booking-system-form .featured-badge:nth-child(1),
+html body .booking-system-form .featured-badge:nth-child(3) {
     background: white !important;
     color: #79B62F !important;
 }
 
 /* 2nd child: Green background, white text */
-body .booking-system-form .featured-badge:nth-child(2),
-.booking-system-form .featured-badge:nth-child(2) {
+html body .booking-system-form .featured-badge:nth-child(2) {
     background: #79B62F !important;
     color: white !important;
 }
@@ -2758,16 +2755,13 @@ body .booking-system-form .featured-badge .badge-icon,
 }
 
 /* Icon color for 1st and 3rd children (white background) - make icon green */
-body .booking-system-form .featured-badge:nth-child(1) .badge-icon,
-.booking-system-form .featured-badge:nth-child(1) .badge-icon,
-body .booking-system-form .featured-badge:nth-child(3) .badge-icon,
-.booking-system-form .featured-badge:nth-child(3) .badge-icon {
+html body .booking-system-form .featured-badge:nth-child(1) .badge-icon,
+html body .booking-system-form .featured-badge:nth-child(3) .badge-icon {
     filter: brightness(0) saturate(100%) invert(43%) sepia(51%) saturate(1573%) hue-rotate(75deg) brightness(94%) contrast(88%) !important; /* Green color */
 }
 
 /* Icon color for 2nd child (green background) - make icon white */
-body .booking-system-form .featured-badge:nth-child(2) .badge-icon,
-.booking-system-form .featured-badge:nth-child(2) .badge-icon {
+html body .booking-system-form .featured-badge:nth-child(2) .badge-icon {
     filter: brightness(0) invert(1) !important; /* White color */
 }
 
