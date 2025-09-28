@@ -64,6 +64,17 @@ class BSP_Google_Sheets_Integration {
     public function sync_incomplete_lead($lead_id, $lead_data) {
         $session_id = $lead_data['session_id'] ?? 'unknown';
         
+        // CRITICAL SESSION MANAGEMENT: Check if session is terminated (complete booking already processed)
+        if ($this->is_session_terminated($session_id)) {
+            bsp_debug_log("BLOCKING: Incomplete lead webhook blocked - session already completed", 'SESSION_RACE_PREVENTION', [
+                'session_id' => $session_id,
+                'lead_id' => $lead_id,
+                'blocked_at' => current_time('mysql'),
+                'reason' => 'Session terminated by complete_booking'
+            ]);
+            return false; // Prevent webhook sending
+        }
+        
         // CRITICAL FIX: Improved deduplication - check if lead already converted
         global $wpdb;
         BSP_Database_Unified::init_tables();
@@ -598,66 +609,69 @@ class BSP_Google_Sheets_Integration {
             'simplified_payload_count' => count($simplified_payload),
             'simplified_payload' => $simplified_payload,
             'session_id' => $simplified_payload['session_id'] ?? 'missing',
-            'action_value' => $simplified_payload['action'] ?? 'missing'
+            'action_value' => $simplified_payload['action'] ?? 'missing',
+            'booking_id_check' => [
+                'original_booking_id' => $payload['booking_id'] ?? 'not_in_original',
+                'simplified_booking_id' => $simplified_payload['booking_id'] ?? 'not_in_simplified',
+                'booking_id_type' => gettype($simplified_payload['booking_id'] ?? null)
+            ]
         ]);
 
-        // PHASE 1 FIX: Use form-encoded as primary method (more reliable for Google Apps Script)
-        $form_args = [
+        // CRITICAL FIX: Use JSON as primary method for complex payloads (better for long company names)
+        // Google Apps Script specific headers to avoid HTTP 400 errors
+        $json_args = [
             'method' => 'POST',
             'headers' => [
+                'Content-Type' => 'application/json; charset=utf-8',
                 'User-Agent' => 'BookingPro-WordPress-Plugin/2.0',
-                'Accept' => 'text/html,application/json,*/*'
+                'Accept' => 'application/json,text/html,*/*',
+                'Cache-Control' => 'no-cache'
             ],
-            'body' => $simplified_payload, // WordPress will convert array to form data
-            'timeout' => 45, // Optimized timeout
+            'body' => json_encode($simplified_payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+            'timeout' => 45,
             'blocking' => true,
             'sslverify' => true,
-            'redirection' => 3 // Reduced redirections for speed
+            'redirection' => 3
         ];
         
-        bsp_debug_log("Sending simplified form-encoded payload to Google Apps Script", 'WEBHOOK_SEND', [
+        bsp_debug_log("Sending JSON payload to Google Apps Script (primary method)", 'WEBHOOK_SEND', [
             'payload_keys' => array_keys($simplified_payload),
             'payload_count' => count($simplified_payload),
             'url' => $this->webhook_url,
-            'method' => 'form_primary_simplified'
+            'method' => 'json_primary',
+            'content_type' => 'application/json; charset=utf-8',
+            'action' => $simplified_payload['action'] ?? 'missing',
+            'booking_id' => $simplified_payload['booking_id'] ?? 'missing'
         ]);
         
-        // Send form-encoded payload first (primary method for Google Apps Script)
-        $response = wp_remote_post($this->webhook_url, $form_args);
+        // Send JSON payload first (primary method for Google Apps Script)
+        $response = wp_remote_post($this->webhook_url, $json_args);
         
         if (is_wp_error($response) || wp_remote_retrieve_response_code($response) >= 400) {
-            // If form fails, try JSON as fallback with even more simplified payload
-            $form_error = is_wp_error($response) ? $response->get_error_message() : 'HTTP ' . wp_remote_retrieve_response_code($response);
+            // If JSON fails, try form-encoded as fallback
+            $json_error = is_wp_error($response) ? $response->get_error_message() : 'HTTP ' . wp_remote_retrieve_response_code($response);
             
-            bsp_debug_log("Form request failed, trying minimal JSON fallback", 'WEBHOOK_FALLBACK', [
-                'form_error' => $form_error,
-                'fallback_method' => 'minimal_json'
+            bsp_debug_log("JSON request failed, trying form-encoded fallback", 'WEBHOOK_FALLBACK', [
+                'json_error' => $json_error,
+                'fallback_method' => 'form_encoded'
             ]);
             
-            // Create ultra-minimal payload for JSON fallback
-            $minimal_payload = [
-                'session_id' => $simplified_payload['session_id'] ?? ('session_' . time()),
-                'action' => $simplified_payload['action'] ?? 'booking',
-                'customer_name' => $simplified_payload['customer_name'] ?? '',
-                'customer_email' => $simplified_payload['customer_email'] ?? '',
-                'service' => $simplified_payload['service'] ?? '',
-                'timestamp' => date('Y-m-d H:i:s')
-            ];
-            
-            $json_args = [
+            // Create form-encoded fallback - Google Apps Script compatible
+            $form_args = [
                 'method' => 'POST',
                 'headers' => [
-                    'Content-Type' => 'application/json',
-                    'User-Agent' => 'BookingPro-WordPress-Plugin/2.0'
+                    'Content-Type' => 'application/x-www-form-urlencoded; charset=utf-8',
+                    'User-Agent' => 'BookingPro-WordPress-Plugin/2.0',
+                    'Accept' => 'text/html,application/json,*/*'
                 ],
-                'body' => json_encode($minimal_payload),
-                'timeout' => 30, // Shorter timeout for fallback
+                'body' => http_build_query($simplified_payload, '', '&', PHP_QUERY_RFC3986),
+                'timeout' => 30,
                 'blocking' => true,
                 'sslverify' => true,
                 'redirection' => 2
             ];
             
-            $response = wp_remote_post($this->webhook_url, $json_args);
+            $response = wp_remote_post($this->webhook_url, $form_args);
             
             if (is_wp_error($response)) {
                 $error_code = $response->get_error_code();
@@ -666,21 +680,21 @@ class BSP_Google_Sheets_Integration {
                 // Check for specific timeout or network errors
                 if (strpos($error_message, 'timeout') !== false || strpos($error_message, 'timed out') !== false) {
                     bsp_debug_log("Both JSON and form-encoded requests timed out - network connectivity issue", 'WEBHOOK_TIMEOUT', [
-                        'json_error' => $form_error,
+                        'json_error' => $json_error,
                         'form_error' => $error_message,
                         'error_code' => $error_code,
                         'webhook_url' => substr($this->webhook_url, 0, 50) . '...'
                     ]);
                 } else {
                     bsp_debug_log("Both JSON and form-encoded requests failed", 'WEBHOOK_WP_ERROR', [
-                        'json_error' => $form_error,
+                        'json_error' => $json_error,
                         'form_error' => $error_message,
                         'error_code' => $error_code
                     ]);
                 }
                 return [
                     'success' => false,
-                    'error' => 'JSON: ' . $form_error . ', Form: ' . $error_message
+                    'error' => 'JSON: ' . $json_error . ', Form: ' . $error_message
                 ];
             }
         }
@@ -693,7 +707,7 @@ class BSP_Google_Sheets_Integration {
             bsp_debug_log("Webhook sent successfully", 'WEBHOOK_SUCCESS', [
                 'response_code' => $response_code,
                 'body_length' => strlen($response_body),
-                'method' => is_wp_error($response) || wp_remote_retrieve_response_code($response) >= 400 ? 'form_fallback' : 'json_primary'
+                'method' => (is_wp_error($response) || wp_remote_retrieve_response_code($response) >= 400) ? 'form_fallback' : 'json_primary'
             ]);
             return [
                 'success' => true,
@@ -706,11 +720,11 @@ class BSP_Google_Sheets_Integration {
                 'http_code' => $response_code,
                 'response_body' => $response_body,
                 'payload_sample' => [
-                    'session_id' => $clean_payload['session_id'] ?? 'missing',
-                    'customer_name' => $clean_payload['customer_name'] ?? 'missing',
-                    'service' => $clean_payload['service'] ?? 'missing',
-                    'booking_date' => $clean_payload['booking_date'] ?? 'missing',
-                    'booking_time' => $clean_payload['booking_time'] ?? 'missing'
+                    'session_id' => $simplified_payload['session_id'] ?? 'missing',
+                    'customer_name' => $simplified_payload['customer_name'] ?? 'missing',
+                    'service' => $simplified_payload['service'] ?? 'missing',
+                    'booking_date' => $simplified_payload['booking_date'] ?? 'missing',
+                    'booking_time' => $simplified_payload['booking_time'] ?? 'missing'
                 ]
             ]);
             
@@ -723,7 +737,156 @@ class BSP_Google_Sheets_Integration {
     }
 
     /**
+     * Create a complete payload that Google Apps Script needs for proper lead analysis
+     * CRITICAL FIX: Include ALL fields required for lead status, type, and score calculation
+     */
+    private function create_simplified_payload($payload) {
+        bsp_debug_log("PAYLOAD ANALYSIS - Creating complete payload for Google Apps Script", 'PAYLOAD_CREATE', [
+            'original_keys' => array_keys($payload),
+            'action' => $payload['action'] ?? 'unknown',
+            'original_booking_id' => $payload['booking_id'] ?? 'none'
+        ]);
+        
+        // Core fields that Google Apps Script expects
+        $simplified = [
+            'session_id' => (string) ($payload['session_id'] ?? 'session_' . time()),
+            'timestamp' => date('Y-m-d H:i:s'),
+            'action' => (string) ($payload['action'] ?? 'booking'),
+            'update_mode' => 'upsert',
+            
+            // Customer information - REQUIRED for lead analysis
+            'customer_name' => $this->clean_string($payload['customer_name'] ?? ''),
+            'customer_email' => $this->clean_string($payload['customer_email'] ?? ''),
+            'customer_phone' => $this->clean_string($payload['customer_phone'] ?? ''),
+            'customer_address' => $this->clean_string($payload['customer_address'] ?? ''),
+            'city' => $this->clean_string($payload['city'] ?? ''),
+            'state' => $this->clean_string($payload['state'] ?? ''),
+            'zip_code' => $this->clean_string($payload['zip_code'] ?? ''),
+            
+            // Service information - REQUIRED for lead scoring
+            'service' => $this->clean_string($payload['service'] ?? $payload['service_type'] ?? ''),
+            'service_type' => $this->clean_string($payload['service'] ?? $payload['service_type'] ?? ''),
+            'specifications' => $this->clean_string($payload['specifications'] ?? $payload['service_details'] ?? ''),
+            
+            // Company and booking info - MULTIPLE FIELD NAMES for compatibility
+            'company' => $this->clean_string($payload['company'] ?? $payload['company_name'] ?? ''),
+            'company_name' => $this->clean_string($payload['company'] ?? $payload['company_name'] ?? ''),
+            
+            // Date/Time fields - Google Script expects BOTH formats
+            'booking_date' => $this->clean_string($payload['booking_date'] ?? ''),
+            'booking_time' => $this->clean_string($payload['booking_time'] ?? ''),
+            'formatted_date' => $this->clean_string($payload['booking_date'] ?? $payload['formatted_date'] ?? ''),
+            'formatted_time' => $this->clean_string($payload['booking_time'] ?? $payload['formatted_time'] ?? ''),
+            'selected_date' => $this->clean_string($payload['booking_date'] ?? $payload['selected_date'] ?? ''),
+            'selected_time' => $this->clean_string($payload['booking_time'] ?? $payload['selected_time'] ?? ''),
+            
+            // CRITICAL: Always preserve booking_id
+            'booking_id' => $this->clean_string($payload['booking_id'] ?? ''),
+            'id' => $this->clean_string($payload['booking_id'] ?? $payload['id'] ?? ''),
+            
+            // Status fields - Google Script will recalculate these based on data
+            'lead_type' => $this->clean_string($payload['lead_type'] ?? 'Booking'),
+            'lead_status' => $this->clean_string($payload['lead_status'] ?? $payload['status'] ?? 'Complete'),
+            'status' => $this->clean_string($payload['status'] ?? $payload['lead_status'] ?? 'Active'),
+            'completion_percentage' => (int) ($payload['completion_percentage'] ?? 100),
+            'appointment_count' => (int) ($payload['appointment_count'] ?? 1),
+            'form_step' => (int) ($payload['form_step'] ?? 4), // Default to final step for complete bookings
+            'lead_score' => (int) ($payload['lead_score'] ?? 0),
+            
+            // UTM/Marketing data - ESSENTIAL for lead scoring and analysis
+            'utm_source' => $this->clean_string($payload['utm_source'] ?? ''),
+            'utm_medium' => $this->clean_string($payload['utm_medium'] ?? ''),
+            'utm_campaign' => $this->clean_string($payload['utm_campaign'] ?? ''),
+            'utm_term' => $this->clean_string($payload['utm_term'] ?? ''),
+            'utm_content' => $this->clean_string($payload['utm_content'] ?? ''),
+            'gclid' => $this->clean_string($payload['gclid'] ?? ''),
+            'referrer' => $this->clean_string($payload['referrer'] ?? $payload['http_referer'] ?? ''),
+            
+            // Date tracking for analytics
+            'created_date' => $this->clean_string($payload['created_date'] ?? $payload['created_at'] ?? date('m/d/Y')),
+            'last_updated' => date('Y-m-d H:i:s'),
+            'conversion_time' => ($payload['action'] === 'complete_booking') ? date('Y-m-d H:i:s') : '',
+            'notes' => $this->clean_string($payload['notes'] ?? $payload['special_notes'] ?? $payload['message'] ?? '')
+        ];
+        
+        // Add ALL service-specific fields that Google Script expects
+        $service_fields = [
+            'roof_action', 'roof_material', 'roof_zip',
+            'windows_action', 'windows_replace_qty', 'windows_repair_needed', 'windows_zip',
+            'bathroom_option', 'bathroom_zip',
+            'siding_option', 'siding_material', 'siding_zip',
+            'kitchen_action', 'kitchen_component', 'kitchen_zip',
+            'decks_action', 'decks_material', 'decks_zip',
+            'adu_action', 'adu_type', 'adu_zip'
+        ];
+        
+        foreach ($service_fields as $field) {
+            if (isset($payload[$field]) && $payload[$field] !== '') {
+                $simplified[$field] = $this->clean_string($payload[$field]);
+            }
+        }
+        
+        // Map generic zip_code to service-specific zip codes if available
+        $generic_zip = $payload['zip_code'] ?? '';
+        $service = strtolower($simplified['service']);
+        if ($generic_zip && $service) {
+            $service_zip_field = $service . '_zip';
+            if (in_array($service_zip_field, $service_fields) && !isset($simplified[$service_zip_field])) {
+                $simplified[$service_zip_field] = $this->clean_string($generic_zip);
+            }
+        }
+        
+        // Remove ONLY truly empty values, but preserve important fields
+        // CRITICAL FIX: Preserve booking_id, session_id, and other key identifiers
+        $filtered = array_filter($simplified, function($value, $key) {
+            // Always preserve critical identification fields
+            $preserve_fields = ['booking_id', 'session_id', 'id', 'action', 'timestamp', 'update_mode'];
+            if (in_array($key, $preserve_fields)) {
+                return true;
+            }
+            // Keep non-empty values, but allow numeric 0
+            return $value !== '' && $value !== null && $value !== false;
+        }, ARRAY_FILTER_USE_BOTH);
+        
+        bsp_debug_log("PAYLOAD COMPLETE - Final payload ready for Google Apps Script", 'PAYLOAD_FINAL', [
+            'original_field_count' => count($payload),
+            'simplified_field_count' => count($filtered),
+            'has_booking_id' => !empty($filtered['booking_id']),
+            'booking_id_value' => $filtered['booking_id'] ?? 'missing',
+            'has_utm_data' => !empty($filtered['utm_source']) || !empty($filtered['utm_medium']),
+            'action' => $filtered['action'] ?? 'unknown',
+            'has_customer_data' => !empty($filtered['customer_name']) && !empty($filtered['customer_email']),
+            'has_service_data' => !empty($filtered['service']),
+            'has_date_time' => !empty($filtered['booking_date']) && !empty($filtered['booking_time'])
+        ]);
+        
+        return $filtered;
+    }
+    
+    /**
+     * Clean string for Google Apps Script compatibility
+     */
+    private function clean_string($value) {
+        if (is_array($value) || is_object($value)) {
+            $value = json_encode($value);
+        }
+        
+        $value = (string) $value;
+        // Remove control characters and trim
+        $value = preg_replace('/[\x00-\x1F\x7F]/', '', $value);
+        $value = trim($value);
+        
+        // Limit length to prevent payload bloat - but keep reasonable limit
+        if (strlen($value) > 500) {
+            $value = substr($value, 0, 500) . '...';
+        }
+        
+        return $value;
+    }
+
+    /**
      * Prepare payload specifically for Google Apps Script expectations
+     * LEGACY METHOD - kept for backward compatibility
      */
     private function prepare_apps_script_payload($payload) {
         // Clean payload - remove any null values and ensure all values are strings or numbers
@@ -1028,6 +1191,13 @@ class BSP_Google_Sheets_Integration {
             $webhook_payload['booking_id'] = $booking_id;
             $webhook_payload['converted_to_booking'] = 1;
             $webhook_payload['conversion_time'] = current_time('mysql');
+            
+            // CRITICAL SESSION MANAGEMENT: Mark session as completed to prevent future incomplete_lead webhooks
+            $webhook_payload['session_completed'] = true;
+            $webhook_payload['session_termination_time'] = current_time('mysql');
+            
+            // Terminate session to prevent race conditions
+            $this->terminate_session($webhook_payload['session_id'], $booking_id);
             
             // DEBUG: Log key fields before sending webhook
             bsp_debug_log("WEBHOOK PAYLOAD DEBUG - Key fields", 'WEBHOOK_DEBUG', [
@@ -1489,6 +1659,45 @@ class BSP_Google_Sheets_Integration {
             ]);
             return false;
         }
+    }
+    
+    /**
+     * CRITICAL SESSION MANAGEMENT: Terminate session to prevent race conditions
+     */
+    private function terminate_session($session_id, $booking_id) {
+        if (empty($session_id)) return;
+        
+        // Set a transient to mark this session as completed
+        $terminated_sessions_key = 'bsp_terminated_sessions';
+        $terminated_sessions = get_transient($terminated_sessions_key) ?: [];
+        
+        $terminated_sessions[$session_id] = [
+            'booking_id' => $booking_id,
+            'terminated_at' => time(),
+            'reason' => 'complete_booking_processed'
+        ];
+        
+        // Keep terminated sessions list for 24 hours to prevent race conditions
+        set_transient($terminated_sessions_key, $terminated_sessions, 24 * HOUR_IN_SECONDS);
+        
+        bsp_debug_log("Session terminated to prevent incomplete_lead race conditions", 'SESSION_MANAGEMENT', [
+            'session_id' => $session_id,
+            'booking_id' => $booking_id,
+            'terminated_at' => current_time('mysql')
+        ]);
+    }
+    
+    /**
+     * Check if session is terminated (completed booking already processed)
+     */
+    private function is_session_terminated($session_id) {
+        if (empty($session_id)) return false;
+        
+        $terminated_sessions_key = 'bsp_terminated_sessions';
+        $terminated_sessions = get_transient($terminated_sessions_key) ?: [];
+        
+        return isset($terminated_sessions[$session_id]);
+    }
     }
 }
 

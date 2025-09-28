@@ -272,12 +272,12 @@ function processWebhookData(data, logActivity = false) {
 function analyzeLead(data) {
   const hasBookingId = !!(data.booking_id || data.id);
   const hasCompleteCustomerInfo = !!(data.customer_name && data.customer_email && data.customer_phone);
-  const hasAppointmentInfo = !!(data.booking_date || data.selected_date) && (data.booking_time || data.selected_time);
+  const hasAppointmentInfo = !!(data.booking_date || data.selected_date || data.date) && (data.booking_time || data.selected_time || data.time);
   const hasServiceInfo = !!(data.service_type || data.service);
   
-  // Check if this is explicitly marked as a complete booking
+  // CRITICAL FIX: Check if this is explicitly marked as a complete booking
   const isCompleteBookingAction = data.action === 'complete_booking';
-  const isCompleteLeadStatus = data.lead_status === 'Complete';
+  const isCompleteLeadStatus = data.lead_status === 'Complete' || data.lead_status === 'Converted';
   
   // Calculate completion percentage
   const requiredFields = [
@@ -287,39 +287,59 @@ function analyzeLead(data) {
   
   const completedFields = requiredFields.filter(field => {
     const value = data[field] || data[field.replace('customer_', '')] || 
-                   data[field.replace('booking_', 'selected_')];
+                   data[field.replace('booking_', 'selected_')] || 
+                   data[field.replace('booking_', '')];
     return value && value.toString().trim() !== '';
   }).length;
   
   const completionPercentage = Math.round((completedFields / requiredFields.length) * 100);
   
-  // Determine lead type and status
+  // CRITICAL FIX: Determine lead type and status with priority logic
   let leadType, status;
   
   // Priority 1: Check explicit complete booking indicators
-  if (isCompleteBookingAction || isCompleteLeadStatus) {
+  if (isCompleteBookingAction) {
     leadType = 'Complete Booking';
     status = 'Converted';
+    console.log(`✅ Complete booking detected via action: ${data.action}`);
   }
-  // Priority 2: Traditional logic - has booking ID and complete info
+  // Priority 2: Check lead status indicators
+  else if (isCompleteLeadStatus) {
+    leadType = 'Complete Booking';
+    status = 'Converted';
+    console.log(`✅ Complete booking detected via lead_status: ${data.lead_status}`);
+  }
+  // Priority 3: Traditional logic - has booking ID and complete info
   else if (hasBookingId && hasCompleteCustomerInfo && hasAppointmentInfo) {
     leadType = 'Complete Booking';
     status = 'Converted';
-  } else if (hasServiceInfo && (hasCompleteCustomerInfo || completionPercentage >= 50)) {
+    console.log(`✅ Complete booking detected via data completeness`);
+  } 
+  // Priority 4: Qualified lead logic
+  else if (hasServiceInfo && (hasCompleteCustomerInfo || completionPercentage >= 50)) {
     leadType = 'Qualified Lead';
     status = 'In Progress';
-  } else if (hasServiceInfo) {
+  } 
+  // Priority 5: Initial lead
+  else if (hasServiceInfo) {
     leadType = 'Initial Lead';
     status = 'Started';
-  } else {
+  } 
+  // Priority 6: Anonymous visitor
+  else {
     leadType = 'Anonymous Visitor';
     status = 'Browsing';
   }
   
+  // CRITICAL FIX: Override completion percentage for complete bookings
+  const finalCompletionPercentage = (leadType === 'Complete Booking') ? 100 : completionPercentage;
+  
+  console.log(`Lead analysis result: ${leadType} | ${status} | ${finalCompletionPercentage}%`);
+  
   return {
     leadType: leadType,
     status: status,
-    completionPercentage: completionPercentage,
+    completionPercentage: finalCompletionPercentage,
     isComplete: leadType === 'Complete Booking'
   };
 }
@@ -334,18 +354,25 @@ function getFieldValue(header, data, leadAnalysis, sessionId) {
     case 'Timestamp':
       return timestamp;
     case 'Lead Type':
-      return leadAnalysis.leadType || 'Unknown';
+      // CRITICAL FIX: Use leadAnalysis result, but fallback to data values
+      return leadAnalysis.leadType || data.lead_type || 'Unknown';
     case 'Status':
+      // CRITICAL FIX: Use leadAnalysis result, but fallback to data values
       return leadAnalysis.status || data.lead_status || data.status || 'New';
     case 'Booking ID':
-      // For complete bookings, ALWAYS use the actual booking_id, not session_id
-      if (data.action === 'complete_booking' && data.booking_id) {
-        console.log(`✅ Complete booking detected - using booking_id: ${data.booking_id}`);
-        return data.booking_id;
+      // CRITICAL FIX: For complete bookings, ALWAYS prioritize actual booking_id
+      if (data.action === 'complete_booking') {
+        // Try multiple possible field names for booking ID
+        const bookingId = data.booking_id || data.id;
+        if (bookingId && String(bookingId).trim() !== '' && String(bookingId) !== 'undefined') {
+          console.log(`✅ Complete booking detected - using booking_id: ${bookingId}`);
+          return String(bookingId);
+        }
+        console.log(`⚠️ Complete booking but no valid booking_id found. Available keys:`, Object.keys(data));
       }
       // For incomplete leads or when no booking_id is available, use session_id
       const fallbackId = data.booking_id || data.id || sessionId || '';
-      console.log(`ℹ️ Using fallback ID: ${fallbackId} (action: ${data.action}, booking_id: ${data.booking_id})`);
+      console.log(`ℹ️ Using fallback ID: ${fallbackId} (action: ${data.action})`);
       return fallbackId;
     case 'Customer Name':
       return data.customer_name || data.name || '';
@@ -367,9 +394,11 @@ function getFieldValue(header, data, leadAnalysis, sessionId) {
     case 'Company':
       return data.company_name || data.company || '';
     case 'Date':
-      return data.formatted_date || data.booking_date || data.selected_date || '';
+      // CRITICAL FIX: Try multiple date formats that WordPress sends
+      return data.formatted_date || data.booking_date || data.selected_date || data.date || '';
     case 'Time':
-      return data.formatted_time || data.booking_time || data.selected_time || '';
+      // CRITICAL FIX: Try multiple time formats that WordPress sends
+      return data.formatted_time || data.booking_time || data.selected_time || data.time || '';
     case 'UTM Source':
       return data.utm_source || '';
     case 'UTM Medium':
@@ -389,17 +418,27 @@ function getFieldValue(header, data, leadAnalysis, sessionId) {
     case 'Form Step':
       return determineFormStep(data);
     case 'Completion %':
-      return (leadAnalysis.completionPercentage || 0) + '%';
+      // CRITICAL FIX: Use leadAnalysis completion percentage
+      return (leadAnalysis.completionPercentage || data.completion_percentage || 0) + '%';
     case 'Lead Score':
-      return calculateLeadScore(data, leadAnalysis) || 0;
+      // CRITICAL FIX: Use calculated lead score or provided score
+      return calculateLeadScore(data, leadAnalysis) || data.lead_score || 0;
     case 'Conversion Time':
-      return leadAnalysis.isComplete ? timestamp : '';
+      // CRITICAL FIX: For complete bookings, always set conversion time
+      return (leadAnalysis.isComplete || data.action === 'complete_booking') ? (data.conversion_time || timestamp) : '';
     case 'Created Date':
       return data.created_date || data.created_at || timestamp;
     case 'Last Updated':
       return timestamp;
     case 'Notes':
-      return data.notes || data.special_notes || data.message || '';
+      // CRITICAL FIX: Combine multiple note fields
+      const notes = [
+        data.notes,
+        data.special_notes, 
+        data.message,
+        data.specifications
+      ].filter(note => note && note.trim() !== '').join('; ');
+      return notes || '';
     case 'Specifications':
       return data.specifications || data.service_details || '';
     
@@ -444,10 +483,24 @@ function getFieldValue(header, data, leadAnalysis, sessionId) {
  * Determine which form step the user is on
  */
 function determineFormStep(data) {
-  if (data.booking_date && data.booking_time) return 'Step 4: Confirmation';
-  if (data.customer_name && data.customer_email) return 'Step 3: Contact Info';
-  if (data.selected_date) return 'Step 2: Date Selection';
-  if (data.service_type || data.service) return 'Step 1: Service Selection';
+  // CRITICAL FIX: Check for complete booking first
+  if (data.action === 'complete_booking') {
+    return 'Step 4: Confirmation';
+  }
+  
+  // Traditional step detection
+  if ((data.booking_date || data.selected_date) && (data.booking_time || data.selected_time)) {
+    return 'Step 4: Confirmation';
+  }
+  if (data.customer_name && data.customer_email) {
+    return 'Step 3: Contact Info';
+  }
+  if (data.selected_date || data.booking_date) {
+    return 'Step 2: Date Selection';
+  }
+  if (data.service_type || data.service) {
+    return 'Step 1: Service Selection';
+  }
   return 'Initial Visit';
 }
 
@@ -455,7 +508,12 @@ function determineFormStep(data) {
  * Calculate lead score
  */
 function calculateLeadScore(data, leadAnalysis) {
-  let score = leadAnalysis?.completionPercentage || 0;
+  // CRITICAL FIX: For complete bookings, always return high score
+  if (data.action === 'complete_booking' || leadAnalysis?.isComplete) {
+    return 100;
+  }
+  
+  let score = leadAnalysis?.completionPercentage || data.completion_percentage || 0;
   
   // Service type bonus
   const serviceScores = {

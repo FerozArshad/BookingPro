@@ -2679,10 +2679,18 @@ jQuery(document).ready(function($) {
 
     // ─── BOOKING SUBMISSION ──────────────────────────
     function submitBooking() {
+        // CRITICAL: Prevent double submissions
+        if (isSubmissionInProgress) {
+            console.log('🚫 BLOCKED: Submission already in progress');
+            return;
+        }
+        
+        isSubmissionInProgress = true;
         
         // Validate that we have at least one appointment
         if (!selectedAppointments || selectedAppointments.length === 0) {
             showErrorMessage('Please select at least one appointment before submitting.');
+            isSubmissionInProgress = false; // Reset flag on error
             return;
         }
         
@@ -2817,6 +2825,15 @@ jQuery(document).ready(function($) {
                     if (response.success) {
                         console.log('🎉 Booking successful! ID:', response.data?.booking_id || 'N/A');
                         
+                        // CRITICAL SESSION MANAGEMENT: Terminate session to prevent race conditions
+                        isSessionCompleted = true;
+                        isSubmissionInProgress = false;
+                        
+                        // Remove event listeners that could trigger incomplete lead capture
+                        terminateSession();
+                        
+                        console.log('🔒 Session terminated - no more lead capture possible');
+                        
                         // Refresh availability data for all companies involved in the booking
                         refreshAllCompanyAvailability(() => {
                             // Show success message after refreshing data
@@ -2824,7 +2841,7 @@ jQuery(document).ready(function($) {
                         });
                     } else {
                         console.warn('⚠️ Booking failed:', response.data);
-                        // Don't revert URL - just show error message
+                        isSubmissionInProgress = false; // Reset on failure
                         showErrorMessage(response.data || 'Booking failed. Please try again.');
                     }
                 },
@@ -2835,6 +2852,9 @@ jQuery(document).ready(function($) {
                     console.error('Error:', error);
                     console.error('Response Text:', xhr.responseText);
                     console.groupEnd();
+                    
+                    // Reset submission flag on error
+                    isSubmissionInProgress = false;
                     
                     // Keep URL on waiting state since user is still on confirmation page
                     // Don't revert URL - just show error message
@@ -3055,6 +3075,20 @@ jQuery(document).ready(function($) {
      * @param {object} extraData - Additional data to include
      */
     function captureIncompleteLeadData(trigger, extraData = {}) {
+        // CRITICAL SESSION MANAGEMENT: Don't capture if session is completed
+        if (isSessionCompleted) {
+            console.log('🚫 BLOCKED: Lead capture blocked - session completed');
+            return;
+        }
+        
+        // Check if session cookie indicates completion
+        const sessionId = getCookie('bsp_session_id');
+        if (sessionId && sessionId.includes('_COMPLETED')) {
+            console.log('🚫 BLOCKED: Lead capture blocked - session marked as completed');
+            isSessionCompleted = true; // Update flag for consistency
+            return;
+        }
+        
         // Don't capture if we don't have enough data
         if (!formState || Object.keys(formState).length === 0) {
             console.log('📊 Skipping lead capture - no form data yet');
@@ -3209,6 +3243,43 @@ jQuery(document).ready(function($) {
         if (currentStepIndex >= 2) return 'Step 3: Contact Info';
         if (currentStepIndex >= 1) return 'Step 2: Service Details';
         return 'Step 1: Service Selection';
+    }
+
+    /**
+     * CRITICAL SESSION MANAGEMENT: Terminate session to prevent race conditions
+     * Remove event listeners and invalidate session after successful booking
+     */
+    function terminateSession() {
+        console.log('🔒 TERMINATING SESSION - Removing lead capture event listeners');
+        
+        // Clear any pending lead capture timeouts
+        if (window.leadCaptureTimeout) {
+            clearTimeout(window.leadCaptureTimeout);
+            window.leadCaptureTimeout = null;
+            console.log('⏰ Cleared leadCaptureTimeout');
+        }
+        
+        // Clear any periodic lead capture if it exists
+        if (window.leadCaptureInterval) {
+            clearInterval(window.leadCaptureInterval);
+            window.leadCaptureInterval = null;
+            console.log('⏰ Cleared leadCaptureInterval');
+        }
+        
+        // Remove beforeunload listener that captures incomplete leads
+        $(window).off('beforeunload');
+        console.log('🚫 Removed beforeunload listener');
+        
+        // Remove form interaction listeners to prevent future lead capture
+        $(document).off('input change', 'input, select, textarea');
+        $(document).off('click', 'button, .btn');
+        console.log('🚫 Removed form interaction listeners');
+        
+        // Clear the session cookie to prevent future requests
+        const currentSessionId = getOrCreateSessionId();
+        setCookie('bsp_session_id', currentSessionId + '_COMPLETED', 0.1); // Short expire time
+        
+        console.log('✅ Session terminated successfully - no more incomplete lead webhooks will be sent');
     }
 
     /**

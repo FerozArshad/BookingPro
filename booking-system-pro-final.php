@@ -954,30 +954,70 @@ final class Booking_System_Pro_Final {
             return;
         }
         
-        // Check retry attempts (max 3 attempts)
+        // Increment and check retry attempts (max 3 attempts)
         $attempts = (int)get_post_meta($booking_id, '_google_sheets_sync_attempts', true);
-        if ($attempts >= 3) {
+        $attempts++;
+        update_post_meta($booking_id, '_google_sheets_sync_attempts', $attempts);
+        
+        if ($attempts > 3) {
             bsp_debug_log("Google Sheets sync abandoned - booking ID $booking_id exceeded max retry attempts ($attempts)", 'INTEGRATION_ERROR');
+            update_post_meta($booking_id, '_google_sheets_synced', 'failed_max_attempts');
             return;
         }
         
-        // Attempt sync using the proper Google Sheets integration
+        bsp_debug_log("Google Sheets sync attempt #$attempts for booking ID: $booking_id", 'INTEGRATION');
+        
+        // Check if Google Sheets component is available
         if (!$this->sheets_integration || !method_exists($this->sheets_integration, 'sync_converted_lead')) {
             bsp_debug_log("Google Sheets sync failed: Google Sheets component not available", 'INTEGRATION_ERROR');
             
             // Schedule retry in 30 seconds if component not ready (but only if under max attempts)
-            if ($attempts < 2 && function_exists('wp_schedule_single_event')) {
+            if ($attempts < 3 && function_exists('wp_schedule_single_event')) {
                 wp_schedule_single_event(time() + 30, 'bsp_sync_google_sheets', [$booking_id, $booking_data]);
-                bsp_debug_log("Google Sheets sync rescheduled for 30 seconds due to component unavailability", 'INTEGRATION');
+                bsp_debug_log("Google Sheets sync rescheduled for 30 seconds due to component unavailability (attempt $attempts)", 'INTEGRATION');
             }
             return;
         }
         
         // Attempt sync using the proper method that handles session continuity
-        $sync_result = $this->sheets_integration->sync_converted_lead($booking_id, $booking_data);
-        
-        // Note: send_to_google_sheets logs its own success/failure, so we don't need to duplicate that here
-        bsp_debug_log("Google Sheets background sync completed for booking ID: $booking_id, result: " . ($sync_result ? 'success' : 'failed'), 'INTEGRATION');
+        try {
+            $sync_result = $this->sheets_integration->sync_converted_lead($booking_id, $booking_data);
+            
+            if ($sync_result) {
+                // Mark as successfully synced
+                update_post_meta($booking_id, '_google_sheets_synced', 'success');
+                update_post_meta($booking_id, '_google_sheets_sync_timestamp', current_time('mysql'));
+                
+                bsp_debug_log("Google Sheets background sync SUCCESSFUL for booking ID: $booking_id after $attempts attempts", 'INTEGRATION_SUCCESS');
+            } else {
+                // Sync failed, schedule retry if attempts remaining
+                if ($attempts < 3) {
+                    $retry_delay = $attempts * 60; // Progressive delay: 60s, 120s, 180s
+                    wp_schedule_single_event(time() + $retry_delay, 'bsp_sync_google_sheets', [$booking_id, $booking_data]);
+                    
+                    bsp_debug_log("Google Sheets sync failed for booking ID: $booking_id, attempt $attempts. Retrying in {$retry_delay}s", 'INTEGRATION_RETRY');
+                } else {
+                    update_post_meta($booking_id, '_google_sheets_synced', 'failed_after_retries');
+                    bsp_debug_log("Google Sheets sync failed permanently for booking ID: $booking_id after $attempts attempts", 'INTEGRATION_FAILED');
+                }
+            }
+        } catch (Exception $e) {
+            bsp_debug_log("Google Sheets sync exception for booking ID: $booking_id", 'INTEGRATION_EXCEPTION', [
+                'exception' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'attempt' => $attempts
+            ]);
+            
+            // Schedule retry on exception if attempts remaining
+            if ($attempts < 3) {
+                $retry_delay = $attempts * 60;
+                wp_schedule_single_event(time() + $retry_delay, 'bsp_sync_google_sheets', [$booking_id, $booking_data]);
+                bsp_debug_log("Google Sheets sync rescheduled due to exception, retry in {$retry_delay}s (attempt $attempts)", 'INTEGRATION_RETRY');
+            } else {
+                update_post_meta($booking_id, '_google_sheets_synced', 'failed_exception');
+            }
+        }
     }
     
     /**

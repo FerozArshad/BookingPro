@@ -259,6 +259,19 @@ class BSP_Lead_Data_Collector {
         $session_id = sanitize_text_field($_POST['session_id'] ?? '');
         $trigger_type = sanitize_text_field($_POST['trigger'] ?? 'form_submit');
         
+        // CRITICAL SESSION MANAGEMENT: Block requests for completed sessions
+        if (strpos($session_id, '_COMPLETED') !== false) {
+            bsp_debug_log("BLOCKED: Incomplete lead capture for completed session", 'SESSION_RACE_PREVENTION', [
+                'session_id' => $session_id,
+                'trigger' => $trigger_type,
+                'blocked_at' => current_time('mysql')
+            ]);
+            
+            // Return success to prevent JavaScript errors, but don't process
+            wp_send_json_success(['message' => 'Session completed - lead capture blocked']);
+            return;
+        }
+        
         // REQUEST DEDUPLICATION: Prevent simultaneous requests for same session
         $request_key = "bsp_processing_" . $session_id;
         $current_time = time();

@@ -185,19 +185,26 @@ class BSP_Data_Processor_Unified {
             'booking_time' => $data['booking_time'] ?? $data['selected_time'] ?? ''
         ];
         
-        // CRITICAL FIX: Add properly formatted date and time for Google Sheets
-        $formatted['formatted_date'] = $this->format_date_for_sheets($formatted['booking_date']);
-        $formatted['formatted_time'] = $this->format_time_for_sheets($formatted['booking_time']);
-        $formatted['date'] = $formatted['formatted_date']; // Fallback for Google Sheets compatibility
-        $formatted['time'] = $formatted['formatted_time']; // Fallback for Google Sheets compatibility
+        // DISABLED: Keep raw date/time values as selected from form
+        // $formatted['formatted_date'] = $this->format_date_for_sheets($formatted['booking_date']);
+        // $formatted['formatted_time'] = $this->format_time_for_sheets($formatted['booking_time']);
         
-        // Debug the date/time formatting
+        // Use raw values as received from form instead of formatted versions
+        $formatted['formatted_date'] = $formatted['selected_date'] ?? $formatted['booking_date'] ?? '';
+        $formatted['formatted_time'] = $formatted['selected_time'] ?? $formatted['booking_time'] ?? '';
+        // Use raw selected values for Google Sheets compatibility
+        $formatted['date'] = $formatted['selected_date'] ?? $formatted['booking_date'] ?? '';
+        $formatted['time'] = $formatted['selected_time'] ?? $formatted['booking_time'] ?? '';
+        
+        // Debug the raw date/time values (no formatting applied)
         if (function_exists('bsp_debug_log')) {
-            bsp_debug_log("Date/Time formatting for Google Sheets", 'DATETIME_FORMAT', [
+            bsp_debug_log("Raw Date/Time values sent to Google Sheets (no formatting)", 'DATETIME_RAW', [
                 'original_booking_date' => $formatted['booking_date'],
                 'original_booking_time' => $formatted['booking_time'],
-                'formatted_date' => $formatted['formatted_date'],
-                'formatted_time' => $formatted['formatted_time']
+                'selected_date' => $formatted['selected_date'] ?? '',
+                'selected_time' => $formatted['selected_time'] ?? '',
+                'sent_date' => $formatted['date'],
+                'sent_time' => $formatted['time']
             ]);
         }
         

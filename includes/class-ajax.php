@@ -532,9 +532,11 @@ class BSP_Ajax {
         
         // CRITICAL: Schedule all background jobs AFTER the response is sent using shutdown hook
         add_action('shutdown', function() use ($primary_booking_id, $booking_data, $session_id) {
-            bsp_debug_log("=== SCHEDULING BACKGROUND JOBS AFTER RESPONSE ===", 'INTEGRATION', [
+            bsp_debug_log("=== SHUTDOWN HOOK STARTED - BACKGROUND PROCESSING ===", 'INTEGRATION', [
                 'primary_booking_id' => $primary_booking_id,
-                'session_id' => $session_id
+                'session_id' => $session_id,
+                'hook_execution_time' => current_time('mysql'),
+                'memory_usage' => memory_get_usage(true)
             ]);
             
             // CRITICAL: Mark lead as converted IMMEDIATELY - MOVED TO BACKGROUND FOR SPEED
@@ -555,46 +557,128 @@ class BSP_Ajax {
                 $this->update_incomplete_lead_to_complete($session_id, $primary_booking_id, $booking_data);
             }
             
-            // FIXED: Single Google Sheets sync with proper deduplication - FASTER TIMING
-            if (function_exists('wp_schedule_single_event')) {
-                // Check if sync job already scheduled for this booking to prevent duplicates
-                $existing_sync = get_post_meta($primary_booking_id, '_google_sheets_sync_scheduled', true);
-                if (!$existing_sync) {
-                    // Customer email notification (immediate - 2 seconds)
-                    wp_schedule_single_event(time() + 2, 'bsp_send_customer_notification', [$primary_booking_id, $booking_data]);
-                    bsp_debug_log("Scheduled customer email notification", 'INTEGRATION', [
-                        'booking_id' => $primary_booking_id,
-                        'schedule_time' => time() + 2
-                    ]);
+            // IMMEDIATE EXECUTION: Google Sheets sync directly in shutdown hook (no cron dependency)
+            $existing_sync = get_post_meta($primary_booking_id, '_google_sheets_sync_scheduled', true);
+            if (!$existing_sync) {
+                // Mark as being processed to prevent duplicates
+                update_post_meta($primary_booking_id, '_google_sheets_sync_scheduled', time());
+                
+                // DIRECT EXECUTION: Execute Google Sheets sync immediately in background
+                try {
+                    // Set a reasonable timeout for background execution
+                    set_time_limit(60); // Allow up to 60 seconds for background processing
                     
-                    // Admin email notification (immediate - 4 seconds)
-                    wp_schedule_single_event(time() + 4, 'bsp_send_admin_notification', [$primary_booking_id, $booking_data]);
-                    bsp_debug_log("Scheduled admin email notification", 'INTEGRATION', [
-                        'booking_id' => $primary_booking_id,
-                        'schedule_time' => time() + 4
-                    ]);
+                    $sheets_integration = BSP_Google_Sheets_Integration::get_instance();
+                    if ($sheets_integration && method_exists($sheets_integration, 'sync_converted_lead')) {
+                        $sheets_sync_data = $booking_data;
+                        $sheets_sync_data['session_id'] = $session_id; // Include session_id for lead continuity
+                        
+                        bsp_debug_log("EXECUTING Google Sheets sync DIRECTLY in shutdown hook", 'INTEGRATION_DIRECT', [
+                            'booking_id' => $primary_booking_id,
+                            'session_id' => $session_id,
+                            'method' => 'direct_execution_no_cron',
+                            'execution_start' => current_time('mysql')
+                        ]);
+                        
+                        // Execute sync directly - this happens after response is sent
+                        $sync_result = $sheets_integration->sync_converted_lead($primary_booking_id, $sheets_sync_data);
+                        
+                        if ($sync_result) {
+                            update_post_meta($primary_booking_id, '_google_sheets_synced', 'success');
+                            update_post_meta($primary_booking_id, '_google_sheets_sync_timestamp', current_time('mysql'));
+                            
+                            bsp_debug_log("DIRECT Google Sheets sync SUCCESSFUL", 'INTEGRATION_SUCCESS', [
+                                'booking_id' => $primary_booking_id,
+                                'session_id' => $session_id,
+                                'execution_time' => current_time('mysql'),
+                                'method' => 'shutdown_hook_direct'
+                            ]);
+                        } else {
+                            // If direct execution fails, schedule as fallback
+                            if (function_exists('wp_schedule_single_event')) {
+                                wp_schedule_single_event(time() + 30, 'bsp_sync_google_sheets', [$primary_booking_id, $sheets_sync_data]);
+                                bsp_debug_log("DIRECT sync failed, scheduled as fallback", 'INTEGRATION_FALLBACK', [
+                                    'booking_id' => $primary_booking_id,
+                                    'fallback_schedule_time' => time() + 30
+                                ]);
+                            }
+                            
+                            bsp_debug_log("DIRECT Google Sheets sync FAILED", 'INTEGRATION_ERROR', [
+                                'booking_id' => $primary_booking_id,
+                                'session_id' => $session_id,
+                                'method' => 'shutdown_hook_direct',
+                                'fallback_scheduled' => function_exists('wp_schedule_single_event') ? 'yes' : 'no'
+                            ]);
+                        }
+                        
+                    } else {
+                        // If class not available, schedule as fallback
+                        if (function_exists('wp_schedule_single_event')) {
+                            $sheets_sync_data = $booking_data;
+                            $sheets_sync_data['session_id'] = $session_id;
+                            wp_schedule_single_event(time() + 30, 'bsp_sync_google_sheets', [$primary_booking_id, $sheets_sync_data]);
+                            bsp_debug_log("Google Sheets class not available, scheduled as fallback", 'INTEGRATION_FALLBACK', [
+                                'booking_id' => $primary_booking_id,
+                                'fallback_schedule_time' => time() + 30
+                            ]);
+                        }
+                        
+                        bsp_debug_log("Google Sheets integration class not available for direct execution", 'INTEGRATION_ERROR', [
+                            'booking_id' => $primary_booking_id,
+                            'sheets_integration_available' => !empty($sheets_integration) ? 'yes' : 'no',
+                            'method_exists' => method_exists($sheets_integration ?? null, 'sync_converted_lead') ? 'yes' : 'no',
+                            'fallback_scheduled' => function_exists('wp_schedule_single_event') ? 'yes' : 'no'
+                        ]);
+                    }
+                } catch (Exception $e) {
+                    // Log error but don't affect user experience (response already sent)
+                    // Schedule as fallback if direct execution fails with exception
+                    if (function_exists('wp_schedule_single_event')) {
+                        $sheets_sync_data = $booking_data;
+                        $sheets_sync_data['session_id'] = $session_id;
+                        wp_schedule_single_event(time() + 60, 'bsp_sync_google_sheets', [$primary_booking_id, $sheets_sync_data]);
+                    }
                     
-                    // Google Sheets sync (single attempt - 8 seconds) - ONLY ONE HANDLER NOW
-                    $sheets_sync_data = $booking_data;
-                    $sheets_sync_data['session_id'] = $session_id; // Include session_id for lead continuity
-                    wp_schedule_single_event(time() + 8, 'bsp_sync_google_sheets', [$primary_booking_id, $sheets_sync_data]);
-                    update_post_meta($primary_booking_id, '_google_sheets_sync_scheduled', time());
-                    
-                    bsp_debug_log("Scheduled Google Sheets sync with session ID", 'INTEGRATION', [
+                    bsp_debug_log("EXCEPTION in direct Google Sheets sync", 'INTEGRATION_EXCEPTION', [
                         'booking_id' => $primary_booking_id,
-                        'session_id' => $session_id,
-                        'schedule_time' => time() + 8,
-                        'sync_scheduled_timestamp' => time()
-                    ]);
-                } else {
-                    bsp_debug_log("Google Sheets sync already scheduled, skipping duplicate", 'INTEGRATION', [
-                        'booking_id' => $primary_booking_id,
-                        'existing_sync_timestamp' => $existing_sync
+                        'error' => $e->getMessage(),
+                        'file' => $e->getFile(),
+                        'line' => $e->getLine(),
+                        'fallback_scheduled' => function_exists('wp_schedule_single_event') ? 'yes_60s' : 'no'
                     ]);
                 }
+                
+                // KEEP EMAIL NOTIFICATIONS ON CRON (less critical, can be delayed)
+                if (function_exists('wp_schedule_single_event')) {
+                    // Customer email notification (delayed - 30 seconds to avoid conflicts)
+                    wp_schedule_single_event(time() + 30, 'bsp_send_customer_notification', [$primary_booking_id, $booking_data]);
+                    bsp_debug_log("Scheduled customer email notification", 'INTEGRATION', [
+                        'booking_id' => $primary_booking_id,
+                        'schedule_time' => time() + 30
+                    ]);
+                    
+                    // Admin email notification (delayed - 60 seconds)
+                    wp_schedule_single_event(time() + 60, 'bsp_send_admin_notification', [$primary_booking_id, $booking_data]);
+                    bsp_debug_log("Scheduled admin email notification", 'INTEGRATION', [
+                        'booking_id' => $primary_booking_id,
+                        'schedule_time' => time() + 60
+                    ]);
+                }
+                
             } else {
-                bsp_debug_log("wp_schedule_single_event function not available!", 'CRON_ERROR');
+                bsp_debug_log("Google Sheets sync already processed, skipping duplicate", 'INTEGRATION', [
+                    'booking_id' => $primary_booking_id,
+                    'existing_sync_timestamp' => $existing_sync
+                ]);
             }
+            
+            // COMPLETION MARKER: Background processing completed
+            bsp_debug_log("=== SHUTDOWN HOOK COMPLETED - BACKGROUND PROCESSING DONE ===", 'INTEGRATION_COMPLETE', [
+                'booking_id' => $primary_booking_id,
+                'session_id' => $session_id,
+                'completion_time' => current_time('mysql'),
+                'memory_peak' => memory_get_peak_usage(true)
+            ]);
         });
         
         // CRITICAL: Ensure success response is sent immediately before any Google Sheets processing
@@ -1132,8 +1216,8 @@ class BSP_Ajax {
             'company_name' => $data_for_sheets['company_name'],
             'booking_date' => $data_for_sheets['booking_date'],
             'booking_time' => $data_for_sheets['booking_time'],
-            'formatted_date' => $data_for_sheets['formatted_date'] ?? date('F j, Y', strtotime($data_for_sheets['booking_date'])),
-            'formatted_time' => $data_for_sheets['formatted_time'] ?? date('g:i A', strtotime($data_for_sheets['booking_time'])),
+            'formatted_date' => $data_for_sheets['selected_date'] ?? $data_for_sheets['booking_date'] ?? '',
+            'formatted_time' => $data_for_sheets['selected_time'] ?? $data_for_sheets['booking_time'] ?? '',
             'specifications' => $data_for_sheets['specifications'],
             'status' => $data_for_sheets['status'],
             'created_at' => $data_for_sheets['created_at'],
