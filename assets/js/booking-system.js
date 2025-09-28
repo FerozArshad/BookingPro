@@ -15,7 +15,7 @@ jQuery(document).ready(function($) {
                 id: 'zip_code', 
                 type: 'text', 
                 depends_on: ['service'], // Depends on 'service' key being present in formState
-                question_template: 'Start Your {service} Remodel Today.<br>Find Local Pros Now.', 
+                question_template: 'Start Your {service} Remodel Today.<br>Connect With Trusted Local Pros Now', 
                 label: 'Enter Zip Code to check eligibility for free estimate'
             },
             
@@ -129,7 +129,6 @@ jQuery(document).ready(function($) {
                 // User left page - potential lead capture opportunity
             } else if (state === 'visible') {
                 // User returned to page - continued engagement
-            }
             }
         });
 
@@ -989,7 +988,13 @@ jQuery(document).ready(function($) {
         $options.empty();
         
         step.options.forEach(option => {
-            $options.append(`<button class="option-btn" data-value="${option}">${option}</button>`);
+            const iconHtml = getOptionIcon(step.id, option);
+            $options.append(`
+                <button class="option-btn" data-value="${option}">
+                    ${iconHtml}
+                    <span class="option-text">${option}</span>
+                </button>
+            `);
         });
         
         // Determine if this step should auto-advance
@@ -2452,6 +2457,9 @@ jQuery(document).ready(function($) {
                     if (window.zipLookupService) {
                         formState.city = window.zipLookupService.currentCity || '';
                         formState.state = window.zipLookupService.currentState || '';
+                        
+                        // Display city/state message after successful lookup
+                        displayZipCityState();
                     }
                 }
                 break;
@@ -2683,6 +2691,21 @@ jQuery(document).ready(function($) {
         
         $(document).on('click', '.date-selection-section, .time-selection-section, .booking-disclaimer, .estimate-button-container', function(e) {
             e.stopPropagation();
+        });
+        
+        // ZIP code input handler - trigger city/state display after lookup
+        $(document).on('input', '#step2-zip-input', function() {
+            const zipValue = $(this).val().trim();
+            
+            // Hide display immediately when user types
+            $('#zip-city-display').fadeOut(100);
+            
+            // Only attempt to show after valid 5-digit ZIP and a brief delay for lookup
+            if (zipValue.length === 5 && /^\d{5}$/.test(zipValue)) {
+                setTimeout(() => {
+                    displayZipCityState();
+                }, 500); // Wait 500ms for ZIP lookup to complete
+            }
         });
     }
 
@@ -2980,6 +3003,50 @@ jQuery(document).ready(function($) {
         setTimeout(() => {
             $error.fadeOut(() => $error.remove());
         }, 7000);
+    }
+
+    // ─── OPTION ICON GENERATION ──────────────────────
+    function getOptionIcon(stepId, option) {
+        const baseUrl = window.location.origin + '/wp-content/plugins/BookingPro/assets/images/service-specific/';
+        
+        // Roof service icons
+        if (stepId === 'roof_action') {
+            if (option === 'Replace') {
+                return `<img src="${baseUrl}replace-roof.svg" class="option-icon" alt="Replace Roof">`;
+            } else if (option === 'Repair') {
+                return `<img src="${baseUrl}repair-roof.svg" class="option-icon" alt="Repair Roof">`;
+            }
+        } else if (stepId === 'roof_material') {
+            if (option === 'Asphalt') {
+                return `<img src="${baseUrl}material-asphalt-roof.svg" class="option-icon" alt="Asphalt Roof">`;
+            } else if (option === 'Metal') {
+                return `<img src="${baseUrl}material-metal-roof.svg" class="option-icon" alt="Metal Roof">`;
+            } else if (option === 'Tile') {
+                return `<img src="${baseUrl}material-tile-roof.svg" class="option-icon" alt="Tile Roof">`;
+            } else if (option === 'Flat') {
+                return `<img src="${baseUrl}material-flat-roof.svg" class="option-icon" alt="Flat Roof">`;
+            }
+        }
+        
+        // Placeholder for other services - will be replaced when icons are provided
+        return `<div class="option-icon option-placeholder"></div>`;
+    }
+
+    // ─── ZIP CODE CITY/STATE DISPLAY ─────────────────
+    function displayZipCityState() {
+        const $display = $('#zip-city-display');
+        
+        // Only show if ZIP lookup service has successfully fetched city and state
+        if (window.zipLookupService && 
+            window.zipLookupService.currentCity && 
+            window.zipLookupService.currentState &&
+            window.zipLookupService.isDataLoaded) {
+            
+            const cityState = `${window.zipLookupService.currentCity}, ${window.zipLookupService.currentState}`;
+            $display.text(cityState).fadeIn(300);
+        } else {
+            $display.fadeOut(200);
+        }
     }
 
     // ─── MULTIPLE APPOINTMENT MANAGEMENT ─────────────

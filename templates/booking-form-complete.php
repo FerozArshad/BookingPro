@@ -393,7 +393,7 @@ window.BOOKING_DIRECT_ZIP_MODE = true;
         <div class="step-card">
             <h2 class="step-title" id="step2-title"><?php 
                 if ($has_preselected_service) {
-                    echo 'Start Your ' . $detected_service . ' Remodel Today.<br>Find Local Pros Now.';
+                    echo 'Start Your ' . $detected_service . ' Remodel Today.<br>Connect With Trusted Local Pros Now';
                 } else {
                     echo 'Service Details';
                 }
@@ -412,6 +412,8 @@ window.BOOKING_DIRECT_ZIP_MODE = true;
                     }
                 ?></label>
                 <input type="text" class="form-input" id="step2-zip-input" name="zip_code" placeholder="Enter ZIP code (e.g., 12345)" maxlength="10" required>
+                <!-- Dynamic city/state display -->
+                <div id="zip-city-display" class="zip-city-message" style="font-size: 16px; text-align:center; margin-top: 8px; color: rgba(255,255,255,0.8); display: none;"></div>
             </div>
             <div class="form-navigation">
                 <button class="btn btn-secondary btn-back">Back</button>

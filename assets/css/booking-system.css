@@ -350,7 +350,7 @@ body .booking-system-form .step-overlay,
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.8);
+    background: rgba(0, 0, 0, 0.01);
     z-index: 1;
 }
 
@@ -447,19 +447,20 @@ body .booking-system-form .option-btn,
     color: #fff !important;
     border: 2px solid rgba(255, 255, 255, 0.8) !important;
     border-radius: 12px;
-    padding: 40px 30px;
+    padding: 30px 25px;
     font-size: 20px !important;
     font-weight: 600 !important;
     cursor: pointer;
     transition: all 0.3s ease;
-    text-align: center;
-    min-height: 60px;
+    text-align: left;
+    min-height: 80px;
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
+    gap: 20px;
     flex: 1;
-    min-width: 200px;
-    max-width: 25%;
+    min-width: 250px;
+    max-width: 45%;
     font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
     word-wrap: break-word;
     overflow-wrap: break-word;
@@ -486,6 +487,24 @@ body .booking-system-form .option-btn.selected,
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
 }
 
+/* ─── OPTION ICON & TEXT LAYOUT ──────────────────────────── */
+body .booking-system-form .option-icon,
+.booking-system-form .option-icon {
+    width: 72px;
+    height: 72px;
+    flex-shrink: 0;
+    object-fit: contain;
+    filter: brightness(0) invert(1); /* Make SVG white */
+}
+
+body .booking-system-form .option-text,
+.booking-system-form .option-text {
+    flex: 1;
+    font-size: 20px !important;
+    font-weight: 600 !important;
+    line-height: 1.4;
+}
+
 /* Responsive option button layouts */
 @media (max-width: 768px) {
     html body .booking-system-form .option-grid,
@@ -496,6 +515,30 @@ body .booking-system-form .option-btn.selected,
         gap: 12px !important;
         justify-content: center !important;
     }
+    
+    /* Tablet icon sizing */
+    html body .booking-system-form .option-icon,
+    body .booking-system-form .option-icon,
+    .booking-system-form .option-icon {
+        width: 56px !important;
+        height: 56px !important;
+    }
+    
+    html body .booking-system-form .option-btn,
+    body .booking-system-form .option-btn,
+    .booking-system-form .option-btn {
+        padding: 20px 15px !important;
+        gap: 15px !important;
+        min-width: 200px !important;
+        max-width: 100% !important;
+    }
+    
+    html body .booking-system-form .option-text,
+    body .booking-system-form .option-text,
+    .booking-system-form .option-text {
+        font-size: 18px !important;
+    }
+    
     html body .booking-system-form .form-input,
     body .booking-system-form .form-input,
     .booking-system-form .form-input {
@@ -526,12 +569,28 @@ body .booking-system-form .option-btn.selected,
         gap: 10px !important;
     }
     
+    /* Mobile icon sizing */
+    html body .booking-system-form .option-icon,
+    body .booking-system-form .option-icon,
+    .booking-system-form .option-icon {
+        width: 48px !important;
+        height: 48px !important;
+    }
+    
+    html body .booking-system-form .option-placeholder,
+    body .booking-system-form .option-placeholder,
+    .booking-system-form .option-placeholder {
+        width: 48px !important;
+        height: 48px !important;
+    }
+    
     html body .booking-system-form .option-btn,
     body .booking-system-form .option-btn,
     .booking-system-form .option-btn {
-        padding: 16px 15px !important;
-        font-size: 20px !important;
-        min-height: 55px !important;
+        padding: 15px 12px !important;
+        gap: 12px !important;
+        font-size: 18px !important;
+        min-height: 60px !important;
         word-wrap: break-word !important;
         overflow-wrap: break-word !important;
         hyphens: auto !important;
@@ -564,14 +623,18 @@ body .booking-system-form .form-input,
     margin: 0 auto;
     padding: 15px;
     text-align: center;
-    border: none !important;
-    border-radius: 8px;
-    background: rgba(255, 255, 255, 0.2) !important;
+    border: 2px solid white !important;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.3) !important;
     color: #fff !important;
     font-size: 20px !important;
     box-sizing: border-box;
     display: block;
     font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+    -webkit-border-radius: 10px;
+    -moz-border-radius: 10px;
+    -ms-border-radius: 10px;
+    -o-border-radius: 10px;
 }
 
 body .booking-system-form .form-input::placeholder,
@@ -1059,7 +1122,8 @@ body .booking-system-form .btn,
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-width: 120px;
+    max-width: 120px;
+    margin: 0px auto;
     font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
 }
 
@@ -1789,7 +1853,7 @@ body .booking-system-form .rs-step-1,
     position: relative;
     width: 100%;
     min-height: 580px;
-    background-image: url('../images/step-1-bg.webp');
+    background-image: url('');
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
@@ -1806,7 +1870,7 @@ body .booking-system-form .rs-step-1 .step-overlay,
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.7);
+    background: rgba(0, 0, 0, 0.01);
     z-index: 1;
 }
 
