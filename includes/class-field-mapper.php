@@ -346,12 +346,7 @@ class BSP_Field_Mapper {
     public static function debug_field_mapping($raw_data) {
         $mapped = self::map_form_data($raw_data);
         
-        error_log("=== BSP Field Mapper Debug ===");
-        error_log("Raw data: " . print_r($raw_data, true));
-        error_log("Mapped data: " . print_r($mapped, true));
-        error_log("Completion %: " . self::calculate_completion_percentage($mapped));
-        error_log("Is valid lead: " . (self::is_valid_lead_data($mapped) ? 'Yes' : 'No'));
-        error_log("===============================");
+        // Debug information available but not logged in production
         
         return $mapped;
     }

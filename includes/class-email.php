@@ -124,8 +124,6 @@ class BSP_Email {
             return false;
         }
         
-        error_log('BSP: Attempting to send customer confirmation email to ' . $booking['customer_email']);
-        
         $to = $booking['customer_email'];
         $subject = 'Booking Confirmation - ' . $booking['service'];
         $message = $this->get_customer_email_template($booking);
@@ -133,10 +131,8 @@ class BSP_Email {
         
         $result = wp_mail($to, $subject, $message, $headers);
         
-        // Log email result for debugging
-        if ($result) {
-            error_log('BSP: Customer confirmation email sent to ' . $to);
-        } else {
+        // Log email failures only
+        if (!$result) {
             error_log('BSP: Failed to send customer confirmation email to ' . $to);
         }
         
@@ -166,9 +162,7 @@ class BSP_Email {
         $success = true;
         foreach ($recipients as $email) {
             $result = wp_mail(trim($email), $subject, $message, $headers);
-            if ($result) {
-                error_log('BSP: Admin notification email sent to ' . $email);
-            } else {
+            if (!$result) {
                 error_log('BSP: Failed to send admin notification email to ' . $email);
                 $success = false;
             }

@@ -6,12 +6,12 @@
 /* Container */
 #bsp-social-proof-container {
     position: fixed !important;
-    bottom: 20px !important;
-    left: 20px !important;
+    bottom: 14px !important;
+    left: 14px !important;
     z-index: 999999 !important;
     pointer-events: none;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif !important;
-    max-width: 90vw;
+    max-width: 80vw;
 }
 
 /* Toast Notification */

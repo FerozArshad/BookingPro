@@ -55,13 +55,6 @@
             this.setupEventListeners();
             this.startPeriodicCapture();
             this.isInitialized = true;
-            
-            console.log('BSP Lead Capture initialized', {
-                sessionId: this.sessionId,
-                config: this.config,
-                utmData: this.getUTMData(),
-                timestamp: new Date().toISOString()
-            });
         },
         
         generateSessionId: function() {
@@ -481,14 +474,9 @@
             }
             // Method 4: Check hidden form fields (DOM-based fallback)  
             if (!appointmentsData) {
-                console.log('===== METHOD 4: DOM FALLBACK =====');
-                console.log('BSP Lead Capture: Trying DOM fallback methods...');
-                
                 // Check for appointments input field
                 const appointmentsInput = document.querySelector('input[name="appointments"]');
-                console.log('Appointments input field:', appointmentsInput);
                 if (appointmentsInput && appointmentsInput.value) {
-                    console.log('Appointments input value:', appointmentsInput.value);
                     try {
                         const appointments = JSON.parse(appointmentsInput.value);
                         if (appointments && appointments.length > 0) {

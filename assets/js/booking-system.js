@@ -199,20 +199,16 @@ jQuery(document).ready(function($) {
         // Track step changes
         window.originalNextStep = window.nextStep;
         window.nextStep = function() {
-            console.log('➡️ Moving to Next Step from:', currentStepIndex);
             if (window.originalNextStep) {
                 window.originalNextStep();
             }
-            console.log('✅ Now on Step:', currentStepIndex);
         };
 
         window.originalPreviousStep = window.previousStep;
         window.previousStep = function() {
-            console.log('⬅️ Moving to Previous Step from:', currentStepIndex);
             if (window.originalPreviousStep) {
                 window.originalPreviousStep();
             }
-            console.log('✅ Now on Step:', currentStepIndex);
         };
     })();
 
@@ -2787,7 +2783,6 @@ jQuery(document).ready(function($) {
     function submitBooking() {
         // CRITICAL: Prevent double submissions
         if (isSubmissionInProgress) {
-            console.log('🚫 BLOCKED: Submission already in progress');
             return;
         }
         
@@ -2817,21 +2812,6 @@ jQuery(document).ready(function($) {
             // Lead continuity tracking
             session_id: getOrCreateSessionId()
         };
-
-        // DEBUG: Log address data being sent
-        console.group('🏠 ADDRESS DEBUG - Submit Booking');
-        console.log('formState.address:', formState.address);
-        console.log('formState.street_address:', formState.street_address);
-        console.log('formState.customer_address:', formState.customer_address);
-        console.log('formState.email:', formState.email);
-        console.log('bookingData.address:', bookingData.address);
-        console.log('bookingData after formState spread:', {
-            address: bookingData.address,
-            street_address: bookingData.street_address,
-            customer_address: bookingData.customer_address,
-            email: bookingData.email
-        });
-        console.groupEnd();
 
         // Add city and state from zip lookup service or hidden form fields
         if (window.zipLookupService && (window.zipLookupService.currentCity || window.zipLookupService.currentState)) {
@@ -2905,14 +2885,6 @@ jQuery(document).ready(function($) {
         // Show loading state immediately for user feedback
         $('.btn-submit').prop('disabled', true).html('Processing...');
         
-        // Debug logging for booking submission
-        console.group('🚀 BSP Booking Submission Debug');
-        console.log('📋 Form Data:', formState);
-        console.log('📅 Selected Appointments:', selectedAppointments);
-        console.log('📊 Complete Booking Data:', bookingData);
-        console.log('🌐 Ajax URL:', (typeof BSP_Ajax !== 'undefined') ? BSP_Ajax.ajaxUrl : 'undefined');
-        console.groupEnd();
-        
         if (typeof BSP_Ajax !== 'undefined' && BSP_Ajax.ajaxUrl) {
             // Submit to WordPress with optimized settings for immediate response
             $.ajax({
@@ -2922,15 +2894,7 @@ jQuery(document).ready(function($) {
                 timeout: 60000, // 60 second timeout (increased for backend processing)
                 cache: false,
                 success: function(response) {
-                    console.group('✅ AJAX Success Response');
-                    console.log('Response:', response);
-                    console.log('Success:', response.success);
-                    console.log('Data:', response.data);
-                    console.groupEnd();
-                    
                     if (response.success) {
-                        console.log('🎉 Booking successful! ID:', response.data?.booking_id || 'N/A');
-                        
                         // CRITICAL SESSION MANAGEMENT: Terminate session to prevent race conditions
                         isSessionCompleted = true;
                         isSubmissionInProgress = false;
@@ -2938,27 +2902,17 @@ jQuery(document).ready(function($) {
                         // Remove event listeners that could trigger incomplete lead capture
                         terminateSession();
                         
-                        console.log('🔒 Session terminated - no more lead capture possible');
-                        
                         // Refresh availability data for all companies involved in the booking
                         refreshAllCompanyAvailability(() => {
                             // Show success message after refreshing data
                             showSuccessMessage(response.data);
                         });
                     } else {
-                        console.warn('⚠️ Booking failed:', response.data);
                         isSubmissionInProgress = false; // Reset on failure
                         showErrorMessage(response.data || 'Booking failed. Please try again.');
                     }
                 },
                 error: function(xhr, status, error) {
-                    console.group('❌ AJAX Error');
-                    console.error('XHR Status:', xhr.status);
-                    console.error('Status:', status);
-                    console.error('Error:', error);
-                    console.error('Response Text:', xhr.responseText);
-                    console.groupEnd();
-                    
                     // Reset submission flag on error
                     isSubmissionInProgress = false;
                     
@@ -3325,15 +3279,8 @@ jQuery(document).ready(function($) {
         
         // Don't capture if we don't have enough data
         if (!formState || Object.keys(formState).length === 0) {
-            console.log('📊 Skipping lead capture - no form data yet');
             return;
         }
-
-        console.group('📊 Capturing Incomplete Lead Data');
-        console.log('Trigger:', trigger);
-        console.log('Current Form State:', formState);
-        console.log('Current Step:', currentStepIndex);
-        console.log('Extra Data:', extraData);
 
         // Calculate completion percentage
         const completionPercentage = calculateCompletionPercentage();
@@ -3445,10 +3392,8 @@ jQuery(document).ready(function($) {
                 }
             });
         } else {
-            console.warn('⚠️ BSP_Ajax not available - lead data not sent');
+            // Lead data not sent - no AJAX available
         }
-
-        console.groupEnd();
     }
 
     /**
