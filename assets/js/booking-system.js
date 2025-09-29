@@ -1041,6 +1041,11 @@ jQuery(document).ready(function($) {
         
         // Update navigation (this handles back button setup)
         updateNavigation($stepEl);
+        
+        // Add verification section for choice steps (from ZIP code onwards)
+        if (formState.service) {
+            addVerificationSection($stepEl, formState.service);
+        }
     }
 
     function showTextStep(step) {
@@ -1109,16 +1114,14 @@ jQuery(document).ready(function($) {
             }
         });
         
-        // Add verification section for ZIP code steps
-        if (step.id === 'zip_code') {
-            addVerificationSection($stepEl, formState.service);
-        }
+        // Add verification section for ALL text steps (from ZIP code onwards)
+        addVerificationSection($stepEl, formState.service);
         
         // Update navigation
         updateNavigation($stepEl);
     }
 
-    // ─── VERIFICATION SECTION FOR ZIP CODE STEP ──────
+    // ─── VERIFICATION SECTION FOR ALL STEPS ──────
     function addVerificationSection($stepEl, serviceName) {
         // Remove any existing verification section first
         $stepEl.find('.verification-section').remove();
@@ -1126,16 +1129,73 @@ jQuery(document).ready(function($) {
         // Get the service name for the text (fallback to 'Service' if not available)
         const service = serviceName || 'Service';
         
-        // Create verification section HTML
+        // Create verification section HTML with new design
         const verificationHTML = `
-            <div class="verification-section" style="max-width: 550px; width: 100%; margin-left: auto; margin-right: auto; text-align: center; justify-content:center; align-items: center; gap:22px; margin-top: 20px; display:flex; flex-direction:row; padding: 15px;">
-                <img src="${window.location.origin}/wp-content/plugins/BookingPro/assets/images/Verified-icon.webp" 
-                     style="width: 30px; max-width: 30px;" 
-                     alt="Verified" 
-                     onerror="this.style.display='none'">
-                <p class="verification-text" style="font-size: 14px; margin:0px; color: #fff; line-height: 1.4; word-wrap: break-word;">
-                    IA Remodeling has verified +232 licensed ${service} contractors in your area
-                </p>
+            <div class="verification-section" style="max-width: 580px; width: 100%; margin-left: auto; margin-right: auto; text-align: center; margin-top: 20px; padding: 15px;">
+                
+                <!-- Mobile/Tablet Layout: Stack vertically -->
+                <div class="verification-mobile" style="display: flex; flex-direction: column; align-items: center; gap: 15px;">
+                    <!-- Top verified icon -->
+                    <img src="${window.location.origin}/wp-content/plugins/BookingPro/assets/images/Verified-icon.webp" 
+                         style="width: 30px; max-width: 30px;" 
+                         alt="Verified" 
+                         onerror="this.style.display='none'">
+                    
+                    <!-- Text -->
+                    <p class="verification-text" style="font-size: 13px; margin: 0; color: #fff; line-height: 1.4; word-wrap: break-word;">
+                        IA Remodeling has verified +232 licensed ${service} contractors in your area
+                    </p>
+                    
+                    <!-- Bottom two images -->
+                    <div style="display: flex; gap: 15px; align-items: center; justify-content: center;">
+                        <img src="${window.location.origin}/wp-content/plugins/BookingPro/assets/images/google-gurante.svg" 
+                             style="width: 35px; height: 35px; min-width: 35px; min-height: 35px;" 
+                             alt="Google Guarantee" 
+                             onerror="this.style.display='none'">
+                        <img src="${window.location.origin}/wp-content/plugins/BookingPro/assets/images/home-advisors.svg" 
+                             style="width: 35px; height: 35px; min-width: 35px; min-height: 35px;" 
+                             alt="Home Advisors" 
+                             onerror="this.style.display='none'">
+                    </div>
+                </div>
+
+                <!-- Desktop Layout: Inline with text -->
+                <div class="verification-desktop" style="display: none; align-items: center; justify-content: center; gap: 22px;">
+                    <!-- Left: Verified icon -->
+                    <img src="${window.location.origin}/wp-content/plugins/BookingPro/assets/images/Verified-icon.webp" 
+                         style="width: 30px; max-width: 30px; flex-shrink: 0;" 
+                         alt="Verified" 
+                         onerror="this.style.display='none'">
+                    
+                    <!-- Center: Text -->
+                    <p class="verification-text" style="font-size: 13px; margin: 0; color: #fff; line-height: 1.4; word-wrap: break-word; flex: 1; max-width: 400px;">
+                        IA Remodeling has verified +232 licensed ${service} contractors in your area
+                    </p>
+                    
+                    <!-- Right: Two images -->
+                    <div style="display: flex; gap: 15px; align-items: center; flex-shrink: 0;">
+                        <img src="${window.location.origin}/wp-content/plugins/BookingPro/assets/images/google-gurante.svg" 
+                             style="width: 35px; height: 35px; min-width: 35px; min-height: 35px;" 
+                             alt="Google Guarantee" 
+                             onerror="this.style.display='none'">
+                        <img src="${window.location.origin}/wp-content/plugins/BookingPro/assets/images/home-advisors.svg" 
+                             style="width: 35px; height: 35px; min-width: 35px; min-height: 35px;" 
+                             alt="Home Advisors" 
+                             onerror="this.style.display='none'">
+                    </div>
+                </div>
+
+                <!-- Responsive CSS -->
+                <style>
+                    @media (min-width: 768px) {
+                        .verification-section .verification-mobile {
+                            display: none !important;
+                        }
+                        .verification-section .verification-desktop {
+                            display: flex !important;
+                        }
+                    }
+                </style>
             </div>
         `;
         
@@ -1290,6 +1350,11 @@ jQuery(document).ready(function($) {
         
         // Update navigation
         updateNavigation($stepEl);
+        
+        // Add verification section for form steps (from ZIP code onwards)
+        if (formState.service) {
+            addVerificationSection($stepEl, formState.service);
+        }
     }
 
     function showDateTimeStep() {
@@ -1447,6 +1512,10 @@ jQuery(document).ready(function($) {
         // Update navigation
         updateNavigation($stepEl);
         
+        // Add verification section for datetime steps (from ZIP code onwards)
+        if (formState.service) {
+            addVerificationSection($stepEl, formState.service);
+        }
 
     }
 
@@ -1524,6 +1593,11 @@ jQuery(document).ready(function($) {
         
         // Update navigation and ensure submit button is enabled
         updateNavigation($stepEl);
+        
+        // Add verification section for summary step
+        if (formState.service) {
+            addVerificationSection($stepEl, formState.service);
+        }
         
         // Enable the submit button since we have appointments
         $stepEl.find('.btn-submit').prop('disabled', false);
@@ -2948,6 +3022,10 @@ jQuery(document).ready(function($) {
                 </div>
             </div>
         `);
+        
+        // Add verification section to confirmation screen
+        const service = formState.service || 'Service';
+        addVerificationSection($('#booking-form'), service);
     }
     
     function showErrorMessage(message) {

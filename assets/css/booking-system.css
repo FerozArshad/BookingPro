@@ -532,6 +532,7 @@ body .booking-system-form .option-btn:not(:has(.option-icon)):not(:has(.option-p
         display: grid !important;
         grid-template-columns: 1fr 1fr !important;
         gap: 12px !important;
+        margin: 0px auto;
         justify-content: center !important;
     }
     
@@ -806,11 +807,9 @@ body .booking-system-form .company-phone,
 body .booking-system-form .calendar-container,
 .booking-system-form .calendar-container,
 .calendar-container {
-    padding: 50px 30px;
-    /* background: rgba(255, 255, 255, 0.95); */
+    padding: 50px 20px;
     border-radius: 12px;
     margin-bottom: 20px;
-    /* Step 8 specific: flex layout for company cards */
     display: flex;
     flex-direction: row;
     gap: 20px;
@@ -2257,10 +2256,15 @@ body .booking-system-form .rs-step-1 .service-option[data-service="ADU"] .servic
 
 /* ─── RESPONSIVE DESIGN ────────────────────────────── */
 @media (max-width: 1024px) and (min-width: 769px) {
-    .calendar-container {
-        flex-direction: column;
-        gap: 15px;
-    }
+body .booking-system-form .calendar-container,
+.booking-system-form .calendar-container,
+.calendar-container {
+    padding: 30px 10px;
+    display: flex;
+    flex-direction: column !important;
+    gap: 10px;
+    width: 100%;
+}
     
     .calendar-container .company-card {
         width: 100%;
@@ -2399,7 +2403,7 @@ body .booking-system-form .rs-step-1 .service-option[data-service="ADU"] .servic
     html body .booking-system-form .form-navigation,
     body .booking-system-form .form-navigation,
     .booking-system-form .form-navigation {
-        flex-direction: column !important;
+        flex-direction: row !important;
     }
     
     html body .booking-system-form .btn,
@@ -2553,10 +2557,10 @@ body .booking-system-form .rs-step-1 .service-option[data-service="ADU"] .servic
     html body .booking-system-form .summary-row,
     body .booking-system-form .summary-row,
     .booking-system-form .summary-row {
-        flex-direction: column !important;
+        flex-direction: row !important;
         align-items: flex-start !important;
-        gap: 0.2rem !important;
-        padding: 0.5rem 0 !important;
+        gap: 0.8rem !important;
+        padding: 0.3rem 0 !important;
     }
     
     html body .booking-system-form .summary-label,
@@ -2667,7 +2671,7 @@ body .booking-system-form .rs-step-1 .service-option[data-service="ADU"] .servic
     html body .booking-system-form .form-navigation,
     body .booking-system-form .form-navigation,
     .booking-system-form .form-navigation {
-        flex-direction: column !important;
+        flex-direction: row !important;
     }
     
     html body .booking-system-form .btn,
@@ -3267,17 +3271,28 @@ html body .booking-system-form input[readonly]:focus {
         flex-direction: column !important;
         gap: 0.75rem !important;
     }
+    body .booking-system-form .calendar-container,
+.booking-system-form .calendar-container,
+.calendar-container {
+    padding: 30px 10px;
+    display: flex;
+    flex-direction: column !important;
+    gap: 60px;
+    width: 100%;
 }
-
-/* ─── COMPREHENSIVE FONT SIZE ENFORCEMENT ─────────────────── */
-/* Ensure all text throughout the plugin meets minimum 20px requirement */
+body .booking-system-form .calendar-container .company-card, 
+.booking-system-form .calendar-container .company-card, 
+.calendar-container .company-card{
+    width:100% !important;
+}
+    
+}
 
 /* Global text elements */
 html body .booking-system-form,
 html body .booking-system-form *,
 .booking-system-form,
 .booking-system-form * {
-    /* Allow base inheritance without forcing it over responsive overrides */
     font-size: inherit;
 }
 
