@@ -159,8 +159,21 @@ class BSP_Ajax {
             return [];
         }
         
-        // SIMPLIFIED: Use basic query to avoid complex LIKE operations that cause timeouts
-        $company_ids_str = implode(',', array_map('intval', $company_ids));
+        // RESTORED: Use LIKE operations to handle comma-separated company storage
+        // Build LIKE conditions for each requested company ID - FIXED: Proper escaping
+        $like_conditions = [];
+        $like_values = [];
+        
+        foreach ($company_ids as $company_id) {
+            $company_id = intval($company_id);
+            // Handle both single values and comma-separated lists
+            $like_conditions[] = "pm3.meta_value LIKE %s";
+            $like_values[] = '%' . $company_id . '%';
+        }
+        $company_like_clause = '(' . implode(' OR ', $like_conditions) . ')';
+        
+        // Prepare query with all parameters properly
+        $query_params = array_merge([$date_from, $date_to], $like_values);
         
         $query = $wpdb->prepare("
             SELECT 
@@ -176,25 +189,61 @@ class BSP_Ajax {
             AND p.post_status IN ('publish', 'pending')
             AND pm1.meta_value >= %s
             AND pm1.meta_value <= %s
-            AND pm3.meta_value IN ({$company_ids_str})
+            AND {$company_like_clause}
             ORDER BY pm1.meta_value, pm2.meta_value
-        ", $date_from, $date_to);
+        ", $query_params);
         
         $results = $wpdb->get_results($query);
         
-        // Organize results by company ID for fast lookup
+        // Process results to handle comma-separated data properly
         $booked_slots = [];
         foreach ($results as $row) {
-            $company_id = intval($row->company_id);
+            // Parse comma-separated data
+            $company_ids_str = trim($row->company_id);
+            $booking_dates_str = trim($row->booking_date);
+            $booking_times_str = trim($row->booking_time);
             
-            // Only include if this company was requested
-            if (in_array($company_id, $company_ids)) {
-                $slot_key = trim($row->booking_date) . '_' . trim($row->booking_time);
+            // Split comma-separated values
+            $companies = array_map('trim', explode(',', $company_ids_str));
+            $dates = array_map('trim', explode(',', $booking_dates_str));
+            $times = array_map('trim', explode(',', $booking_times_str));
+            
+            // Create slots for each combination (appointments can have different dates/times per company)
+            $max_appointments = max(count($companies), count($dates), count($times));
+            
+            for ($i = 0; $i < $max_appointments; $i++) {
+                $company_id = intval($companies[$i] ?? $companies[0]);
+                $date = $dates[$i] ?? $dates[0];
+                $time = $times[$i] ?? $times[0];
                 
-                if (!isset($booked_slots[$company_id])) {
-                    $booked_slots[$company_id] = [];
+                // Only include if this company was requested
+                if (in_array($company_id, $company_ids)) {
+                    $slot_key = trim($date) . '_' . trim($time);
+                    
+                    if (!isset($booked_slots[$company_id])) {
+                        $booked_slots[$company_id] = [];
+                    }
+                    
+                    // Avoid duplicates
+                    if (!in_array($slot_key, $booked_slots[$company_id])) {
+                        $booked_slots[$company_id][] = $slot_key;
+                    }
                 }
-                $booked_slots[$company_id][] = $slot_key;
+            }
+        }
+        
+        // Debug logging for slot detection
+        if (function_exists('bsp_debug_log')) {
+            foreach ($company_ids as $company_id) {
+                $slots_count = isset($booked_slots[$company_id]) ? count($booked_slots[$company_id]) : 0;
+                if ($slots_count > 0) {
+                    bsp_debug_log("BOOKED SLOTS FOUND", 'SLOT_DEBUG', [
+                        'company_id' => $company_id,
+                        'date_range' => $date_from . ' to ' . $date_to,
+                        'slots_found' => $slots_count,
+                        'sample_slots' => array_slice($booked_slots[$company_id], 0, 3)
+                    ]);
+                }
             }
         }
         
@@ -1298,17 +1347,15 @@ class BSP_Ajax {
             $slot_key = $date . '_' . $time_24;
             $is_booked = in_array($slot_key, $company_booked_slots, true); // Strict comparison
             
-            // CRITICAL DEBUG: Log slot checking for ALL slots to identify the issue
-            if (function_exists('bsp_debug_log') && $date === '2025-08-29') {
-                bsp_debug_log("SLOT CHECK FOR 2025-08-29", 'SLOT_CHECK_DEBUG', [
+            // DEBUG: Always log slot checking for debugging booked slots
+            if (function_exists('bsp_debug_log') && !empty($company_booked_slots)) {
+                bsp_debug_log("BOOKING SLOT CHECK", 'SLOT_DEBUG', [
                     'date' => $date,
                     'time_24' => $time_24,
                     'slot_key' => $slot_key,
-                    'is_booked' => $is_booked,
-                    'company_booked_slots_count' => count($company_booked_slots),
-                    'first_5_slots' => array_slice($company_booked_slots, 0, 5),
-                    'contains_18_30' => in_array('2025-08-29_18:30', $company_booked_slots, true),
-                    'method' => 'array_lookup'
+                    'is_booked' => $is_booked ? 'YES' : 'NO',
+                    'total_booked_slots' => count($company_booked_slots),
+                    'sample_booked_slots' => array_slice($company_booked_slots, 0, 3)
                 ]);
             }
             

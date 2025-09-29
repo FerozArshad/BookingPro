@@ -1782,7 +1782,7 @@ jQuery(document).ready(function($) {
         sortedDates.forEach(dateStr => {
             const dayData = availabilityData[dateStr];
             
-            // Calculate availability metrics with 30-minute buffer
+            // Calculate availability metrics with 3-hour buffer
             const totalSlots = dayData.slots.length;
             const originalAvailableSlots = dayData.slots.filter(slot => slot.available).length;
             const bufferFilteredAvailableSlots = calculateAvailableSlotsWithBuffer(dayData, dateStr);
@@ -1808,7 +1808,7 @@ jQuery(document).ready(function($) {
                 if (isFullyBookedOrTooSoon && originalAvailableSlots === 0) {
                     dayTitle = 'Fully booked - no available time slots';
                 } else if (isFullyBookedOrTooSoon && originalAvailableSlots > 0) {
-                    dayTitle = 'No available time slots (booking window closed)';
+                    dayTitle = 'No available time slots (3-hour minimum notice required)';
                 } else {
                     dayTitle = `Very limited availability - only ${bufferFilteredAvailableSlots} slots remaining`;
                 }
@@ -1957,15 +1957,20 @@ jQuery(document).ready(function($) {
             let slotsBookedByBackend = 0;
             
             
-            dayData.slots.forEach(slot => {
+                dayData.slots.forEach(slot => {
                 // Check if slot is available from backend
                 const isBackendAvailable = slot.available;
                 
-                // Check if slot passes 30-minute buffer filter
+                // Check if slot passes 3-hour buffer filter
                 const isBufferBookable = isSlotBookableWithBuffer(slot.time, date);
                 
                 // Slot is fully available only if both conditions are met
                 const isFullyAvailable = isBackendAvailable && isBufferBookable;
+                
+                // DEBUG: Log slot status for debugging
+                if (typeof console !== 'undefined' && !isBackendAvailable) {
+                    console.log(`🚫 BOOKED SLOT DETECTED: ${date} ${slot.time} - ${slot.formatted}`);
+                }
                 
                 // Track filtering reasons
                 if (!isBackendAvailable) {
@@ -1973,9 +1978,7 @@ jQuery(document).ready(function($) {
                 } else if (!isBufferBookable) {
                     slotsHiddenByBuffer++;
                     return; // Skip this slot entirely
-                }
-                
-                // Determine slot class and title
+                }                // Determine slot class and title
                 let slotClass, slotTitle;
                 if (!isBackendAvailable) {
                     // Backend says slot is booked
@@ -2059,18 +2062,18 @@ jQuery(document).ready(function($) {
                                 return; // Skip this slot entirely
                             }
                             
-                            // Determine slot class and title
+                            // Determine slot class and title with better debugging
                             let slotClass, slotTitle;
                             if (!isBackendAvailable) {
-                                // Backend says slot is booked
-                                slotClass = 'time-slot disabled';
+                                // Backend says slot is booked - MAKE THIS MORE VISIBLE
+                                slotClass = 'time-slot disabled booked-slot';
                                 slotTitle = 'This time slot is already booked';
                             } else if (!isBufferBookable) {
-                                // Backend available but filtered by 30-min buffer - don't show this slot at all
+                                // Backend available but filtered by 3-hour buffer - don't show this slot at all
                                 return; // Skip this slot entirely
                             } else {
                                 // Fully available
-                                slotClass = 'time-slot';
+                                slotClass = 'time-slot available-slot';
                                 slotTitle = 'Click to select this time';
                             }
                             
@@ -2080,10 +2083,12 @@ jQuery(document).ready(function($) {
                                      data-company="${company}" 
                                      data-company-id="${companyData.id}" 
                                      data-date="${date}"
+                                     data-backend-available="${isBackendAvailable}"
+                                     data-buffer-bookable="${isBufferBookable}"
                                      ${!isFullyAvailable ? 'data-disabled="true"' : ''}
                                      title="${slotTitle}">
                                     ${slot.formatted}
-                                    ${!isBackendAvailable ? '<span class="booked-indicator">Booked</span>' : ''}
+                                    ${!isBackendAvailable ? '<span class="booked-indicator">BOOKED</span>' : ''}
                                 </div>
                             `);
                             
@@ -2196,18 +2201,23 @@ jQuery(document).ready(function($) {
         });
     }
 
-    // 30-Minute Booking Buffer System
+    // 3-Hour Booking Buffer System
     function isSlotBookableWithBuffer(slotTime, selectedDate) {
         // Get current browser time
         const now = new Date();
         const slotDateTime = new Date(selectedDate + 'T' + slotTime);
-        const bufferTime = new Date(now.getTime() + 30 * 60 * 1000); // +30 minutes
+        const bufferTime = new Date(now.getTime() + 3 * 60 * 60 * 1000); // +3 hours
         const today = new Date().toISOString().split('T')[0];
         const isToday = selectedDate === today;
-        if (!isToday) {
-            return true;
+        
+        // For today's bookings, enforce 3-hour minimum notice
+        if (isToday) {
+            const isBookable = slotDateTime >= bufferTime;     
+            return isBookable;
         }
-        const isBookable = slotDateTime >= bufferTime;     
+        
+        // For future dates, check if booking is within 3 hours of slot time
+        const isBookable = slotDateTime >= bufferTime;
         return isBookable;
     }
     
@@ -2215,9 +2225,13 @@ jQuery(document).ready(function($) {
         const originalAvailableSlots = dayData.slots.filter(slot => slot.available).length;
         const today = new Date().toISOString().split('T')[0];
         const isToday = dateStr === today;
+        
+        // For future dates, use original available slots (no buffer needed)
         if (!isToday) {
             return originalAvailableSlots;
         }
+        
+        // For today, filter by 3-hour buffer
         const bufferFilteredSlots = dayData.slots.filter(slot => {
             return slot.available && isSlotBookableWithBuffer(slot.time, dateStr);
         }).length;

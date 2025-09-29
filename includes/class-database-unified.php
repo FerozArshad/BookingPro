@@ -113,7 +113,6 @@ class BSP_Database_Unified {
             time_slot_duration int DEFAULT 30,
             max_bookings_per_day int DEFAULT 10,
             advance_booking_days int DEFAULT 30,
-            booking_buffer_minutes int DEFAULT 15,
             auto_confirm_bookings tinyint(1) DEFAULT 0,
             send_notifications tinyint(1) DEFAULT 1,
             metadata text DEFAULT NULL,
@@ -525,7 +524,6 @@ class BSP_Database_Unified {
                 'time_slot_duration' => 30,
                 'max_bookings_per_day' => 12,
                 'advance_booking_days' => 45,
-                'booking_buffer_minutes' => 15,
                 'auto_confirm_bookings' => 1
             ],
             [
@@ -544,8 +542,7 @@ class BSP_Database_Unified {
                 'available_hours_end' => '17:00:00',
                 'time_slot_duration' => 30,
                 'max_bookings_per_day' => 8,
-                'advance_booking_days' => 30,
-                'booking_buffer_minutes' => 30
+                'advance_booking_days' => 30
             ],
             [
                 'name' => 'Pro Remodeling Solutions',

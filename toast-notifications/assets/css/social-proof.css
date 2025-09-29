@@ -6,8 +6,8 @@
 /* Container */
 #bsp-social-proof-container {
     position: fixed !important;
-    bottom: 14px !important;
-    left: 14px !important;
+    bottom: 10px !important;
+    left: 10px !important;
     z-index: 999999 !important;
     pointer-events: none;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif !important;
@@ -20,14 +20,13 @@
     border-radius: 12px !important;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4) !important;
     border-left: 4px solid #79B62F !important;
-    margin-bottom: 16px !important;
+    margin-bottom: 10px !important;
     pointer-events: auto !important;
     transform: translateX(-100%) !important;
     opacity: 0 !important;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-    max-width: 420px !important;
-    min-width: 350px !important;
-    min-height: 72px !important;
+    max-width: 330px !important;
+    min-height: 68px !important;
     height: auto !important;
     will-change: transform, opacity;
     position: relative !important;
@@ -47,10 +46,10 @@
 .bsp-toast-content {
     display: flex;
     align-items: center;
-    padding: 16px 20px;
+    padding: 10px 14px;
     gap: 16px;
     position: relative;
-    min-height: 40px;
+    min-height: 36px;
 }
 
 /* Icon */
@@ -73,7 +72,7 @@
 .bsp-toast-message {
     flex: 1;
     color: #fff;
-    font-size: 15px;
+    font-size: 14px;
     font-weight: 400;
     line-height: 1.5;
     margin: 0;
@@ -133,9 +132,9 @@
 /* Responsive Design */
 @media (max-width: 768px) {
     #bsp-social-proof-container {
-        bottom: 16px;
-        left: 16px;
-        right: 16px;
+        bottom: 4px;
+        left: 4px;
+        right: 30px;
         width: auto;
         max-width: none;
     }
@@ -144,51 +143,51 @@
         max-width: none;
         min-width: auto;
         width: 100%;
-        min-height: 68px;
+        min-height: 60px;
     }
     
     .bsp-toast-content {
-        padding: 16px 18px;
+        padding: 10px 14px;
         gap: 14px;
     }
     
     .bsp-toast-message {
-        font-size: 14px;
+        font-size: 13px;
         line-height: 1.4;
     }
     
     .bsp-toast-close {
-        width: 40px;
-        height: 40px;
+        width: 42px;
+        height: 42px;
         margin: -12px -6px -12px 10px;
     }
 }
 
 @media (max-width: 480px) {
     #bsp-social-proof-container {
-        bottom: 12px;
-        left: 12px;
-        right: 12px;
+        bottom: 6px;
+        left: 6px;
+        right: 50px;
     }
     
     .bsp-social-proof-toast {
-        min-height: 64px;
+        min-height: 58px;
         border-radius: 10px;
     }
     
     .bsp-toast-content {
-        padding: 14px 16px;
+        padding: 8px 12px;
         gap: 12px;
     }
     
     .bsp-toast-message {
-        font-size: 13px;
+        font-size: 12px;
         line-height: 1.3;
     }
     
     .bsp-toast-close {
-        width: 36px;
-        height: 36px;
+        width: 30px;
+        height: 30px;
         margin: -10px -4px -10px 8px;
     }
 }

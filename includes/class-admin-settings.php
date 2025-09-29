@@ -344,16 +344,10 @@ class BSP_Admin_Settings {
                     <th scope="row"><?php _e('Advance Booking Days', 'booking-system-pro'); ?></th>
                     <td>
                         <input type="number" name="bsp_booking_settings[advance_days]" class="small-text" 
-                               value="<?php echo esc_attr($options['advance_days'] ?? 30); ?>" min="1" max="365">
-                        <p class="description"><?php _e('How many days in advance can customers book', 'booking-system-pro'); ?></p>
-                    </td>
-                </tr>
-                <tr>
-                    <th scope="row"><?php _e('Minimum Notice Hours', 'booking-system-pro'); ?></th>
-                    <td>
-                        <input type="number" name="bsp_booking_settings[minimum_notice]" class="small-text" 
-                               value="<?php echo esc_attr($options['minimum_notice'] ?? 24); ?>" min="0">
-                        <p class="description"><?php _e('Minimum hours notice required for bookings', 'booking-system-pro'); ?></p>
+                               value="<?php echo esc_attr($options['advance_days'] ?? 30); ?>" min="1" max="365" readonly disabled>
+                        <p class="description" style="color: #666;">
+                            <?php _e('This setting is currently disabled. The system shows 3 days of availability for optimal performance.', 'booking-system-pro'); ?>
+                        </p>
                     </td>
                 </tr>
                 <tr>
@@ -671,7 +665,6 @@ class BSP_Admin_Settings {
         $sanitized = [];
         
         $sanitized['advance_days'] = absint($input['advance_days'] ?? 30);
-        $sanitized['minimum_notice'] = absint($input['minimum_notice'] ?? 24);
         $sanitized['default_duration'] = absint($input['default_duration'] ?? 60);
         $sanitized['time_interval'] = absint($input['time_interval'] ?? 30);
         $sanitized['auto_confirm'] = isset($input['auto_confirm']) ? true : false;

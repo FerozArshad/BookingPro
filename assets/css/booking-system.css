@@ -807,9 +807,8 @@ body .booking-system-form .company-phone,
 body .booking-system-form .calendar-container,
 .booking-system-form .calendar-container,
 .calendar-container {
-    padding: 50px 20px;
+    padding: 50px 10px;
     border-radius: 12px;
-    margin-bottom: 20px;
     display: flex;
     flex-direction: row;
     gap: 20px;
@@ -1043,30 +1042,41 @@ body .booking-system-form .time-slot.selected,
 /* ─── TIME SLOT IMPROVEMENTS ───────────────────── */
 body .booking-system-form .time-slot.disabled,
 .booking-system-form .time-slot.disabled,
-.time-slot.disabled {
-    background: #f5f5f5 !important;
-    color: #999 !important;
+.time-slot.disabled,
+.time-slot.booked-slot {
+    background: #f8f9fa !important;
+    color: #6c757d !important;
     cursor: not-allowed !important;
-    opacity: 0.6;
-    border: 1px solid #ddd !important;
+    opacity: 0.7;
+    border: 2px solid #dc3545 !important;
     position: relative;
 }
 
-.time-slot.disabled:hover {
+.time-slot.disabled:hover,
+.time-slot.booked-slot:hover {
     background: #f5f5f5 !important;
     transform: none !important;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1) !important;
+    box-shadow: 0 2px 5px rgba(220, 53, 69, 0.2) !important;
 }
 
 .booked-indicator {
     display: inline-block;
     background: #dc3545;
     color: white;
-    font-size: 20px;
+    font-size: 10px;
     padding: 2px 6px;
     border-radius: 8px;
     margin-left: 8px;
-    font-weight: 600;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.7; }
+    100% { opacity: 1; }
 }
 
 .limited-slots-warning {
@@ -1894,11 +1904,10 @@ body .booking-system-form .rs-step-1 .step-content,
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
     gap: 40px;
     min-height: 580px;
     width: 100%;
-    padding: 40px 0;
+    padding: 30px 0;
     text-align: center;
 }
 
