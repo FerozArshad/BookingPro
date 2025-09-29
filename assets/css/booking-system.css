@@ -436,7 +436,7 @@ body .booking-system-form .option-grid,
 .booking-system-form .option-grid {
     display: flex;
     flex-wrap: wrap;
-    gap: 15px;
+    gap: 10px;
     margin: 20px 0;
     justify-content: center;
 }
@@ -447,8 +447,8 @@ body .booking-system-form .option-btn,
     color: #fff !important;
     border: 2px solid rgba(255, 255, 255, 0.8) !important;
     border-radius: 12px;
-    padding: 26px 22px;
-    font-size: 20px !important;
+    padding: 26px 14px;
+    font-size: 18px !important;
     font-weight: 600 !important;
     cursor: pointer;
     transition: all 0.3s ease;
@@ -457,10 +457,10 @@ body .booking-system-form .option-btn,
     display: flex;
     align-items: center;
     justify-content: flex-start;
-    gap: 20px;
+    gap: 15px;
     flex: 1;
-    width: 200px;
-    max-width: 250px;
+    width: 210px;
+    max-width: 260px;
     font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
     word-wrap: break-word;
     overflow-wrap: break-word;
@@ -490,10 +490,10 @@ body .booking-system-form .option-btn.selected,
 /* ─── OPTION ICON & TEXT LAYOUT ──────────────────────────── */
 body .booking-system-form .option-icon,
 .booking-system-form .option-icon {
-    width: 62px;
-    height: 62px;
+    width: 50px;
+    height: 50px;
     flex-shrink: 0;
-    margin-left: 10px;
+    margin-left: 8px;
     object-fit: contain;
     filter: brightness(0) invert(1); /* Make SVG white */
 }
@@ -540,9 +540,9 @@ body .booking-system-form .option-btn:not(:has(.option-icon)):not(:has(.option-p
     html body .booking-system-form .option-icon,
     body .booking-system-form .option-icon,
     .booking-system-form .option-icon {
-        width: 56px !important;
-        height: 56px !important;
-        margin-left:12px;
+        width: 40px !important;
+        height: 40px !important;
+        margin-left:10px;
     }
     
     html body .booking-system-form .option-placeholder,
@@ -556,8 +556,8 @@ body .booking-system-form .option-btn:not(:has(.option-icon)):not(:has(.option-p
     html body .booking-system-form .option-btn,
     body .booking-system-form .option-btn,
     .booking-system-form .option-btn {
-        padding: 20px 15px !important;
-        gap: 15px !important;
+        padding: 20px 8px !important;
+        gap: 9px !important;
         min-width: 200px !important;
         max-width: 100% !important;
     }
@@ -580,8 +580,8 @@ body .booking-system-form .option-btn:not(:has(.option-icon)):not(:has(.option-p
         min-width: auto !important;
         max-width: none !important;
         flex: none !important;
-        padding: 18px 20px !important;
-        font-size: 20px !important;
+        padding: 18px 14px !important;
+        font-size: 14px !important;
         word-wrap: break-word !important;
         overflow-wrap: break-word !important;
         hyphens: auto !important;
@@ -620,7 +620,7 @@ body .booking-system-form .option-btn:not(:has(.option-icon)):not(:has(.option-p
     .booking-system-form .option-btn {
         padding: 15px 12px !important;
         gap: 12px !important;
-        font-size: 18px !important;
+        font-size: 17px !important;
         min-height: 60px !important;
         word-wrap: break-word !important;
         overflow-wrap: break-word !important;
@@ -1063,14 +1063,14 @@ body .booking-system-form .time-slot.disabled,
     display: inline-block;
     background: #dc3545;
     color: white;
-    font-size: 10px;
+    font-size: 12px !important;
     padding: 2px 6px;
     border-radius: 8px;
-    margin-left: 8px;
-    font-weight: 700;
+    font-weight: 500;
     text-transform: uppercase;
     letter-spacing: 0.5px;
     animation: pulse 2s infinite;
+
 }
 
 @keyframes pulse {

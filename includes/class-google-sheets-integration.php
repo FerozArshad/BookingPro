@@ -536,60 +536,35 @@ class BSP_Google_Sheets_Integration {
                 'Cache-Control' => 'no-cache'
             ],
             'body' => json_encode($simplified_payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
-            'timeout' => 45,
+            'timeout' => 8,
             'blocking' => false,
-            'sslverify' => true,
-            'redirection' => 3
+            'sslverify' => false,
+            'redirection' => 2
         ];
+        
+        // Log webhook attempt
+        if (function_exists('bsp_debug_log')) {
+            bsp_debug_log("WEBHOOK ATTEMPT", 'SHEETS_DEBUG', [
+                'webhook_url_configured' => !empty($this->webhook_url) ? 'YES' : 'NO',
+                'payload_session_id' => $simplified_payload['session_id'] ?? 'missing',
+                'payload_action' => $simplified_payload['action'] ?? 'missing'
+            ]);
+        }
         
         // Send JSON payload (primary method)
         $response = wp_remote_post($this->webhook_url, $json_args);
         
-        // Non-blocking request handling
-        if ($json_args['blocking'] === false) {
-            return [
-                'success' => true,
-                'response' => ['status' => 'sent_nonblocking'],
-                'http_code' => 'nonblocking'
-            ];
-        }
+        // Always return success for non-blocking requests
+        return [
+            'success' => true,
+            'response' => ['status' => 'sent_async'],
+            'http_code' => 'async'
+        ];
         
-        if (is_wp_error($response) || wp_remote_retrieve_response_code($response) >= 400) {
-            // Try form-encoded fallback
-            $json_error = is_wp_error($response) ? $response->get_error_message() : 'HTTP ' . wp_remote_retrieve_response_code($response);
-            
-            // Create form-encoded fallback - Google Apps Script compatible
-            $form_args = [
-                'method' => 'POST',
-                'headers' => [
-                    'Content-Type' => 'application/x-www-form-urlencoded; charset=utf-8',
-                    'User-Agent' => 'BookingPro-WordPress-Plugin/2.0',
-                    'Accept' => 'text/html,application/json,*/*'
-                ],
-                'body' => http_build_query($simplified_payload, '', '&', PHP_QUERY_RFC3986),
-                'timeout' => 30,
-                'blocking' => false,
-                'sslverify' => true,
-                'redirection' => 2
-            ];
-            
-            $response = wp_remote_post($this->webhook_url, $form_args);
-            
-            // Non-blocking fallback handling
-            if ($form_args['blocking'] === false) {
-                return [
-                    'success' => true,
-                    'response' => ['status' => 'sent_nonblocking_fallback'],
-                    'http_code' => 'nonblocking'
-                ];
-            }
-            
-            if (is_wp_error($response)) {
-                $error_message = $response->get_error_message();
-                return [
-                    'success' => false,
-                    'error' => 'Webhook failed: ' . $error_message
-                ];
+        // Log errors but don't retry (async mode)
+        if (is_wp_error($response)) {
+            if (function_exists('bsp_debug_log')) {
+                bsp_debug_log('Webhook error (async)', 'SHEETS_ERROR', ['error' => $response->get_error_message()]);
             }
         }
 

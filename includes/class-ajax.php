@@ -108,6 +108,14 @@ class BSP_Ajax {
      * Get company availability for frontend calendar (REFACTORED for performance and accuracy)
      */
     public function get_availability() {
+        // Log availability request
+        if (function_exists('bsp_debug_log')) {
+            bsp_debug_log("=== AVAILABILITY REQUEST ===", 'AVAILABILITY', [
+                'company_ids' => $_POST['company_ids'] ?? 'missing',
+                'date_from' => $_POST['date_from'] ?? 'missing',
+                'has_nonce' => !empty($_POST['nonce']) ? 'YES' : 'NO'
+            ]);
+        }
         // Verify nonce
         if (!wp_verify_nonce($_POST['nonce'], 'bsp_frontend_nonce')) {
             wp_send_json_error('Security check failed.');
@@ -159,21 +167,52 @@ class BSP_Ajax {
             return [];
         }
         
-        // RESTORED: Use LIKE operations to handle comma-separated company storage
-        // Build LIKE conditions for each requested company ID - FIXED: Proper escaping
+        // Enhanced debug logging for analysis
+        if (function_exists('bsp_debug_log')) {
+            bsp_debug_log("FETCH BOOKED SLOTS - START", 'SQL_DEBUG', [
+                'requested_companies' => $company_ids,
+                'date_range' => $date_from . ' to ' . $date_to
+            ]);
+        }
+        
+        // CRITICAL FIX: Use WordPress post meta queries since that's where the data is actually stored
+        // Build company conditions for WordPress post meta
         $like_conditions = [];
         $like_values = [];
         
         foreach ($company_ids as $company_id) {
             $company_id = intval($company_id);
-            // Handle both single values and comma-separated lists
-            $like_conditions[] = "pm3.meta_value LIKE %s";
-            $like_values[] = '%' . $company_id . '%';
+            // CRITICAL FIX: Use the EXACT patterns from the working old version (BookingPro43)
+            // These patterns were proven to work with comma-separated company IDs
+            $like_conditions[] = "(pm3.meta_value = %s OR pm3.meta_value LIKE %s OR pm3.meta_value LIKE %s OR pm3.meta_value LIKE %s)";
+            $like_values[] = (string)$company_id; // Exact match: "1"
+            $like_values[] = $company_id . ',%'; // Start of list: "1,%"  
+            $like_values[] = '%,' . $company_id . ',%'; // Middle of list: "%,1,%"
+            $like_values[] = '%,' . $company_id; // End of list: "%,1"
         }
         $company_like_clause = '(' . implode(' OR ', $like_conditions) . ')';
         
-        // Prepare query with all parameters properly
-        $query_params = array_merge([$date_from, $date_to], $like_values);
+        // CRITICAL FIX: Use LIKE approach for dates (from working old version)
+        // Build date conditions using LIKE patterns to handle comma-separated dates
+        $date_conditions = [];
+        $date_params = [];
+        
+        // Create date range for the requested period  
+        $start_date = new DateTime($date_from);
+        $end_date = new DateTime($date_to);
+        
+        // Generate all dates in the range
+        $current = clone $start_date;
+        while ($current <= $end_date) {
+            $date_str = $current->format('Y-m-d');
+            $date_conditions[] = "pm1.meta_value LIKE %s";
+            $date_params[] = '%' . $date_str . '%';
+            $current->add(new DateInterval('P1D'));
+        }
+        
+        // Combine date and company conditions
+        $date_clause = !empty($date_conditions) ? '(' . implode(' OR ', $date_conditions) . ')' : '1=1';
+        $all_query_params = array_merge($date_params, $like_values);
         
         $query = $wpdb->prepare("
             SELECT 
@@ -186,14 +225,51 @@ class BSP_Ajax {
             INNER JOIN {$wpdb->postmeta} pm2 ON p.ID = pm2.post_id AND pm2.meta_key = '_booking_time'
             INNER JOIN {$wpdb->postmeta} pm3 ON p.ID = pm3.post_id AND pm3.meta_key = '_company_id'
             WHERE p.post_type = 'bsp_booking'
-            AND p.post_status IN ('publish', 'pending')
-            AND pm1.meta_value >= %s
-            AND pm1.meta_value <= %s
-            AND {$company_like_clause}
+            AND p.post_status = 'publish'
+            AND " . $date_clause . "
+            AND " . $company_like_clause . "
             ORDER BY pm1.meta_value, pm2.meta_value
-        ", $query_params);
+        ", ...$all_query_params);
+        
+        // Enhanced debug logging for SQL query analysis
+        if (function_exists('bsp_debug_log')) {
+            bsp_debug_log("FETCH BOOKED SLOTS - WORDPRESS POST META SQL QUERY", 'SQL_DEBUG', [
+                'like_patterns' => array_chunk($like_values, 4), // Show patterns per company
+                'date_conditions' => $date_conditions,
+                'final_sql' => $query,
+                'table_used' => 'WordPress posts + postmeta',
+                'query_params' => $all_query_params // Log the actual parameters
+            ]);
+        }
         
         $results = $wpdb->get_results($query);
+        
+        // CRITICAL DEBUG: Log the exact query with substituted parameters
+        if (function_exists('bsp_debug_log')) {
+            // Get the last query executed by WordPress
+            $last_query = $wpdb->last_query;
+            bsp_debug_log("FETCH BOOKED SLOTS - EXECUTED SQL", 'SQL_DEBUG', [
+                'last_query' => $last_query,
+                'wpdb_last_error' => $wpdb->last_error
+            ]);
+        }
+        
+        $results = $wpdb->get_results($query);
+        
+        // Log raw SQL results
+        if (function_exists('bsp_debug_log')) {
+            bsp_debug_log("FETCH BOOKED SLOTS - RAW RESULTS", 'SQL_DEBUG', [
+                'results_count' => count($results),
+                'raw_results' => array_map(function($r) {
+                    return [
+                        'booking_id' => $r->booking_id,
+                        'booking_date' => $r->booking_date,
+                        'booking_time' => $r->booking_time,
+                        'company_id' => $r->company_id
+                    ];
+                }, $results)
+            ]);
+        }
         
         // Process results to handle comma-separated data properly
         $booked_slots = [];
@@ -232,18 +308,25 @@ class BSP_Ajax {
             }
         }
         
-        // Debug logging for slot detection
+        // Log booked slots detection results
         if (function_exists('bsp_debug_log')) {
-            foreach ($company_ids as $company_id) {
-                $slots_count = isset($booked_slots[$company_id]) ? count($booked_slots[$company_id]) : 0;
-                if ($slots_count > 0) {
+            $total_slots = 0;
+            foreach ($company_ids as $cid) {
+                $count = isset($booked_slots[$cid]) ? count($booked_slots[$cid]) : 0;
+                $total_slots += $count;
+                if ($count > 0) {
                     bsp_debug_log("BOOKED SLOTS FOUND", 'SLOT_DEBUG', [
-                        'company_id' => $company_id,
-                        'date_range' => $date_from . ' to ' . $date_to,
-                        'slots_found' => $slots_count,
-                        'sample_slots' => array_slice($booked_slots[$company_id], 0, 3)
+                        'company_id' => $cid,
+                        'slots_count' => $count,
+                        'sample_slots' => array_slice($booked_slots[$cid], 0, 2)
                     ]);
                 }
+            }
+            if ($total_slots === 0) {
+                bsp_debug_log("NO BOOKED SLOTS DETECTED", 'BOOKING_ERROR', [
+                    'companies' => $company_ids,
+                    'date_range' => $date_from . ' to ' . $date_to
+                ]);
             }
         }
         
@@ -254,15 +337,14 @@ class BSP_Ajax {
      * Submit booking from frontend
      */
     public function submit_booking() {
-        // Add comprehensive debugging at the start
-        bsp_debug_log("=== BOOKING SUBMISSION STARTED ===", 'BOOKING', [
-            'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? 'unknown',
-            'ip_address' => $_SERVER['REMOTE_ADDR'] ?? 'unknown',
-            'referrer' => $_SERVER['HTTP_REFERER'] ?? 'direct'
-        ]);
-        
-        // Log raw POST data for debugging
-        bsp_debug_log("Raw POST data received", 'BOOKING', $_POST);
+        // Essential logging only
+        if (function_exists('bsp_debug_log')) {
+            bsp_debug_log("=== BOOKING SUBMISSION STARTED ===", 'BOOKING', [
+                'method' => $_SERVER['REQUEST_METHOD'] ?? 'unknown',
+                'action' => $_POST['action'] ?? 'no_action',
+                'has_nonce' => !empty($_POST['nonce']) ? 'YES' : 'NO'
+            ]);
+        }
         
         // Verify nonce
         if (!wp_verify_nonce($_POST['nonce'], 'bsp_frontend_nonce')) {
@@ -270,18 +352,16 @@ class BSP_Ajax {
             wp_send_json_error('Security check failed.');
         }
         
-        bsp_debug_log("Security check passed", 'BOOKING');
-        
         // Validate required fields
         $required_fields = ['service', 'full_name', 'email', 'phone', 'address', 'company', 'selected_date', 'selected_time'];
         foreach ($required_fields as $field) {
             if (empty($_POST[$field])) {
-                bsp_debug_log("VALIDATION: Missing required field: {$field}", 'ERROR');
+                if (function_exists('bsp_debug_log')) {
+                    bsp_debug_log("Missing field: {$field}", 'BOOKING_ERROR');
+                }
                 wp_send_json_error("Missing required field: {$field}");
             }
         }
-        
-        bsp_debug_log("Required field validation passed", 'BOOKING');
         
         // Sanitize data with field mapper integration
         bsp_debug_log("Starting data sanitization with field mapper", 'BOOKING');
@@ -579,14 +659,8 @@ class BSP_Ajax {
         
         $primary_booking_id = $created_booking_ids[0];
         
-        // CRITICAL: Schedule all background jobs AFTER the response is sent using shutdown hook
+        // Schedule background jobs after response is sent
         add_action('shutdown', function() use ($primary_booking_id, $booking_data, $session_id) {
-            bsp_debug_log("=== SHUTDOWN HOOK STARTED - BACKGROUND PROCESSING ===", 'INTEGRATION', [
-                'primary_booking_id' => $primary_booking_id,
-                'session_id' => $session_id,
-                'hook_execution_time' => current_time('mysql'),
-                'memory_usage' => memory_get_usage(true)
-            ]);
             
             // CRITICAL: Mark lead as converted IMMEDIATELY - MOVED TO BACKGROUND FOR SPEED
             if ($session_id && class_exists('BSP_Lead_Conversion_Tracker')) {
@@ -687,6 +761,14 @@ class BSP_Ajax {
             'created_booking_ids' => $created_booking_ids,
             'timestamp' => current_time('mysql')
         ]);
+        
+        // Log success response
+        if (function_exists('bsp_debug_log')) {
+            bsp_debug_log("=== SENDING SUCCESS RESPONSE ===", 'BOOKING_SUCCESS', [
+                'primary_booking_id' => $primary_booking_id,
+                'total_bookings_created' => count($created_booking_ids)
+            ]);
+        }
         
         // Immediate success response - GUARANTEED to reach frontend before background jobs
         wp_send_json_success([
@@ -1347,15 +1429,12 @@ class BSP_Ajax {
             $slot_key = $date . '_' . $time_24;
             $is_booked = in_array($slot_key, $company_booked_slots, true); // Strict comparison
             
-            // DEBUG: Always log slot checking for debugging booked slots
-            if (function_exists('bsp_debug_log') && !empty($company_booked_slots)) {
-                bsp_debug_log("BOOKING SLOT CHECK", 'SLOT_DEBUG', [
-                    'date' => $date,
-                    'time_24' => $time_24,
+            // Log both booked and available slots for debugging
+            if (function_exists('bsp_debug_log')) {
+                bsp_debug_log("SLOT CHECK", 'BOOKING_DEBUG', [
                     'slot_key' => $slot_key,
                     'is_booked' => $is_booked ? 'YES' : 'NO',
-                    'total_booked_slots' => count($company_booked_slots),
-                    'sample_booked_slots' => array_slice($company_booked_slots, 0, 3)
+                    'company_booked_slots_count' => count($company_booked_slots)
                 ]);
             }
             
@@ -1368,14 +1447,7 @@ class BSP_Ajax {
             ];
         }
         
-        if (function_exists('bsp_debug_log')) {
-            bsp_debug_log("Generated slots summary", 'AVAILABILITY_DEBUG', [
-                'date' => $date,
-                'total_slots' => count($slots),
-                'available_slots' => count(array_filter($slots, function($slot) { return $slot['available']; })),
-                'booked_slots' => count(array_filter($slots, function($slot) { return !$slot['available']; }))
-            ]);
-        }
+        // Removed verbose slot generation logging for performance
         
         return $slots;
     }
