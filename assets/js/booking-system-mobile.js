@@ -335,7 +335,6 @@
         script.src = src;
         script.onload = callback;
         script.onerror = () => {
-            console.warn(`Failed to load ${src}`);
             if (callback) callback();
         };
         document.head.appendChild(script);
@@ -345,7 +344,6 @@
         // Load components in sequence for better reliability
         const components = [
             'zipcode-lookup.js',
-            'video-section-controller.js',
             'source-tracker.js',
             'booking-system.js'
         ];

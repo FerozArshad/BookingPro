@@ -540,7 +540,6 @@
         const cleanupInterval = setInterval(() => {
             // CRITICAL SESSION MANAGEMENT: Stop cleanup if session is completed
             if (window.isSessionCompleted) {
-                console.log('🚫 MOBILE: Stopping memory cleanup - session completed');
                 clearInterval(cleanupInterval);
                 return;
             }
@@ -571,7 +570,6 @@
         const monitoringInterval = setInterval(() => {
             // CRITICAL SESSION MANAGEMENT: Stop monitoring if session is completed
             if (window.isSessionCompleted) {
-                console.log('🚫 MOBILE: Stopping performance monitoring - session completed');
                 clearInterval(monitoringInterval);
                 return;
             }

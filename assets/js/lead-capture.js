@@ -247,13 +247,11 @@
             
             // Also handle page hide (more reliable than beforeunload)
             window.addEventListener('pagehide', () => {
-                console.log('BSP Lead Capture: Page hiding - cleanup');
                 this.destroy();
             });
             
             // Handle unload as final fallback
             window.addEventListener('unload', () => {
-                console.log('BSP Lead Capture: Page unloading - emergency cleanup');
                 this.destroy();
             });
         },

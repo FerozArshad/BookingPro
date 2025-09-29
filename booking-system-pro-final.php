@@ -587,7 +587,6 @@ final class Booking_System_Pro_Final {
                         },
                         deferredScripts: [
                             'zipcode-lookup.js',
-                            'video-section-controller.js', 
                             'source-tracker.js',
                             'booking-system.js'
                         ],
@@ -619,7 +618,6 @@ final class Booking_System_Pro_Final {
                 
                 // Enqueue JavaScript files in dependency order
                 wp_enqueue_script('bsp-zipcode-lookup', BSP_PLUGIN_URL . 'assets/js/zipcode-lookup.js', ['jquery'], BSP_VERSION, true);
-                wp_enqueue_script('bsp-video-controller', BSP_PLUGIN_URL . 'assets/js/video-section-controller.js', ['jquery'], BSP_VERSION, true);
                 wp_enqueue_script('bsp-source-tracker', BSP_PLUGIN_URL . 'assets/js/source-tracker.js', ['jquery'], BSP_VERSION, true);
                 wp_enqueue_script('bsp-frontend', BSP_PLUGIN_URL . 'assets/js/booking-system.js', ['jquery', 'bsp-zipcode-lookup', 'bsp-video-controller', 'bsp-source-tracker'], BSP_VERSION, true);
                 

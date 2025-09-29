@@ -59,7 +59,7 @@ jQuery(document).ready(function($) {
         companies: ['Top Remodeling Pro', 'RH Remodeling', 'Eco Green']
     };
 
-    // ─── STATE MANAGEMENT ─────────────────────────────
+    // State Management
     let currentStepIndex = 0;
     let formState = {};
     let selectedAppointments = []; // Array to store multiple company/date/time selections
@@ -212,7 +212,7 @@ jQuery(document).ready(function($) {
         };
     })();
 
-    // ─── URL HASH MANAGEMENT (NON-BREAKING) ──────────
+    // URL Hash Management (Non-Breaking)
     function updateURLHash(hashType) {
         
         try {
@@ -325,7 +325,7 @@ jQuery(document).ready(function($) {
         }
     }
 
-    // ─── URL SERVICE DETECTION (HYBRID APPROACH) ─────
+    // URL Service Detection (Hybrid Approach)
     function getServiceFromURL() {
         // If server-side already detected a service, use that (highest priority)
         if (window.BOOKING_PRESELECTED_SERVICE) {
@@ -365,7 +365,7 @@ jQuery(document).ready(function($) {
         }
     }
 
-    // ─── REDIRECT TO LANDING PAGE ────────────────────
+    // Redirect to Landing Page
     function redirectToLandingPage() {
         try {
             if (window.history && window.history.pushState) {
@@ -378,7 +378,7 @@ jQuery(document).ready(function($) {
         }
     }
 
-    // ─── FIND FIRST SERVICE STEP ─────────────────────
+    // Find First Service Step
     function findFirstServiceStep(service) {
         // Find the first step that depends on this service (usually the ZIP code step)
         const serviceStepIndex = CONFIG.steps.findIndex(step => 
@@ -391,7 +391,7 @@ jQuery(document).ready(function($) {
         return serviceStepIndex !== -1 ? serviceStepIndex : 0;
     }
 
-    // ─── FIND FIRST SERVICE-SPECIFIC STEP (SKIP SERVICE SELECTION) ───
+    // Find First Service-Specific Step (Skip Service Selection)
     function findFirstServiceSpecificStep(service) {
         // First, look for the generic zip_code step that appears after any service selection
         const zipCodeStepIndex = CONFIG.steps.findIndex(step => 
@@ -415,7 +415,7 @@ jQuery(document).ready(function($) {
         return serviceStepIndex !== -1 ? serviceStepIndex : 0;
     }
 
-    // ─── UPDATE STEP URL ──────────────────────────────
+    // Update Step URL
     function updateStepURL(step) {
         try {
             // Don't update URL if we're in the service selection step 
@@ -439,7 +439,7 @@ jQuery(document).ready(function($) {
         }
     }
 
-    // ─── INITIALIZATION ───────────────────────────────
+    // Initialization
     initBookingSystem();
 
     function initBookingSystem() {
@@ -566,7 +566,7 @@ jQuery(document).ready(function($) {
 
     }
     
-    // ─── HASH NAVIGATION SUPPORT (NON-BREAKING) ──────
+    // Hash Navigation Support (Non-Breaking)
     function initHashNavigation() {
         try {
             function handleBrowserBack(event) {
@@ -625,7 +625,7 @@ jQuery(document).ready(function($) {
         }
     }
 
-    // ─── DYNAMIC BACKGROUND MANAGEMENT ──────────────
+    // Dynamic Background Management
     function updateBackground(service = null, stepId = null) {
         const $form = $('#booking-form');
         
@@ -867,7 +867,7 @@ jQuery(document).ready(function($) {
         preFetchCalendarDataIfNeeded();
     }
 
-    // ─── PRE-FETCHING OPTIMIZATION ─────────────────────
+    // Pre-Fetching Optimization──
     function preFetchCalendarDataIfNeeded() {
         // PERFORMANCE: Only pre-fetch if user is likely to reach calendar step
         const currentStep = CONFIG.steps[currentStepIndex];
@@ -896,7 +896,7 @@ jQuery(document).ready(function($) {
         }
     }
     
-    // ─── LAZY COMPANY CONFIGURATION ─────────────────────
+    // Lazy Company Configuration
     function setupCompanyConfiguration() {
         if (typeof BSP_Ajax !== 'undefined' && BSP_Ajax.companies) {
             CONFIG.companies = BSP_Ajax.companies;
@@ -1117,7 +1117,7 @@ jQuery(document).ready(function($) {
         updateNavigation($stepEl);
     }
 
-    // ─── VERIFICATION SECTION FOR ALL STEPS ──────
+    // Verification Section for All Steps
     function addVerificationSection($stepEl, serviceName) {
         // Remove any existing verification section first
         $stepEl.find('.verification-section').remove();
@@ -1599,7 +1599,7 @@ jQuery(document).ready(function($) {
         $stepEl.find('.btn-submit').prop('disabled', false);
     }
 
-    // ─── CALENDAR AND TIME SLOT MANAGEMENT ──────────
+    // Calendar and Time Slot Management
     function initializeCalendars() {
         // First get companies from backend and then initialize calendars
         if (typeof BSP_Ajax !== 'undefined' && BSP_Ajax.companies) {
@@ -1842,7 +1842,7 @@ jQuery(document).ready(function($) {
 
     }
 
-    // ─── REFRESH CALENDAR AVAILABILITY ─────────────────
+    // Refresh Calendar Availability
     function refreshCompanyCalendar(companyName) {
 
         
@@ -1878,7 +1878,7 @@ jQuery(document).ready(function($) {
         });
     }
 
-    // ─── REFRESH ALL COMPANIES AVAILABILITY AFTER BOOKING ─────
+    // Refresh All Companies Availability After Booking
     function refreshAllCompanyAvailability(callback) {
         const $allCalendars = $('.calendar-grid[data-company]');
         let calendarsToRefresh = $allCalendars.length;
@@ -1919,8 +1919,6 @@ jQuery(document).ready(function($) {
                         $calendar.data('availability-data', response.data[companyData.id]);
                         // Re-render the calendar
                         renderCalendarDays($calendar, response.data[companyData.id], companyData.name);
-                        
-                        console.log(`✅ Refreshed availability for ${companyName}`);
                     }
                 },
                 error: function(xhr, status, error) {
@@ -2198,7 +2196,7 @@ jQuery(document).ready(function($) {
         });
     }
 
-    // ─── 30-MINUTE BOOKING BUFFER SYSTEM ────────────────
+    // 30-Minute Booking Buffer System
     function isSlotBookableWithBuffer(slotTime, selectedDate) {
         // Get current browser time
         const now = new Date();
@@ -2238,7 +2236,7 @@ jQuery(document).ready(function($) {
         });
     }
 
-    // ─── SUMMARY POPULATION ──────────────────────────
+    // Summary Population────
     function populateSummary() {
         // Update service title
         $('#service-schedule-title').text(`${formState.service} Estimate Schedule`);
@@ -2301,7 +2299,7 @@ jQuery(document).ready(function($) {
         });
     }
 
-    // ─── NAVIGATION MANAGEMENT ───────────────────────
+    // Navigation Management────
     function updateNavigation($stepEl) {
         const $backBtn = $stepEl.find('.btn-back');
         const $nextBtn = $stepEl.find('.btn-next, .btn-submit');
@@ -2433,7 +2431,7 @@ jQuery(document).ready(function($) {
         }
     }
 
-    // ─── CLEAR FORM STATE AND REDIRECT ──────────────
+    // Clear Form State and Redirect
     function clearFormStateAndRedirect() {
         try {
             // Clear form state
@@ -2493,22 +2491,10 @@ jQuery(document).ready(function($) {
                 const inputSelector = getInputSelectorForStep(step.id);
                 const inputValue = $currentStep.find(inputSelector).val().trim();
                 
-                console.log('📝 Text step data collection:', {
-                    step_id: step.id,
-                    input_selector: inputSelector,
-                    raw_value: inputValue,
-                    is_address_step: step.id === 'address'
-                });
-                
                 // Special mapping for address field
                 if (step.id === 'address') {
                     formState.address = inputValue; // Store as 'address' for backend
                     formState.street_address = inputValue; // Also store as street_address for compatibility
-                    console.log('🏠 Address field captured:', {
-                        address: inputValue,
-                        stored_as_address: formState.address,
-                        stored_as_street_address: formState.street_address
-                    });
                 } else {
                     formState[step.id] = inputValue;
                 }
@@ -2572,11 +2558,6 @@ jQuery(document).ready(function($) {
                     formState.address = addressValue;
                     formState.street_address = addressValue;
                     formState.customer_address = addressValue;
-                    console.log('🏠 Address stored in multiple fields:', {
-                        address: formState.address,
-                        street_address: formState.street_address,
-                        customer_address: formState.customer_address
-                    });
                 } else {
                     console.warn('⚠️ No address field found in contact form');
                 }
@@ -2587,7 +2568,7 @@ jQuery(document).ready(function($) {
         }
     }
 
-    // ─── OPTIMIZED PROGRESS BAR UPDATE ─────────────────────────
+    // Optimized Progress Bar Update────
     function updateProgress() {
         // PERFORMANCE: Cache visible steps calculation
         if (!window.cachedVisibleSteps || window.lastFormState !== JSON.stringify(formState)) {
@@ -2620,7 +2601,7 @@ jQuery(document).ready(function($) {
         });
     }
     
-    // ─── CACHED VISIBLE STEPS CALCULATION ─────────────────────
+    // Cached Visible Steps Calculation────
     function calculateVisibleSteps() {
         let visibleSteps = [];
         
@@ -2662,7 +2643,7 @@ jQuery(document).ready(function($) {
         return visibleSteps.filter(step => step.id !== 'confirmation');
     }
 
-    // ─── UTILITY FUNCTIONS ───────────────────────────
+    // Utility Functions────
     function getCookie(name) {
         const nameEQ = name + "=";
         const ca = document.cookie.split(';');
@@ -2734,7 +2715,7 @@ jQuery(document).ready(function($) {
         return 3; // Always use step 3 to avoid conflicts with ZIP code step
     }
 
-    // ─── GLOBAL EVENT BINDING ────────────────────────
+    // Global Event Binding────
     function bindGlobalEvents() {
         // Form submission
         $(document).on('submit', 'form', function(e) {
@@ -2779,7 +2760,7 @@ jQuery(document).ready(function($) {
         });
     }
 
-    // ─── BOOKING SUBMISSION ──────────────────────────
+    // Booking Submission────
     function submitBooking() {
         // CRITICAL: Prevent double submissions
         if (isSubmissionInProgress) {
@@ -2817,23 +2798,12 @@ jQuery(document).ready(function($) {
         if (window.zipLookupService && (window.zipLookupService.currentCity || window.zipLookupService.currentState)) {
             bookingData.city = window.zipLookupService.currentCity || '';
             bookingData.state = window.zipLookupService.currentState || '';
-            console.log('🏙️ City/State from zipLookupService:', {
-                city: bookingData.city,
-                state: bookingData.state,
-                serviceLoaded: window.zipLookupService.isDataLoaded
-            });
         } else {
             // Fallback: check hidden form fields
             const cityInput = document.querySelector('input[name="city"], #city');
             const stateInput = document.querySelector('input[name="state"], #state');
             bookingData.city = cityInput ? cityInput.value : '';
             bookingData.state = stateInput ? stateInput.value : '';
-            console.log('🏙️ City/State from hidden form fields:', {
-                city: bookingData.city,
-                state: bookingData.state,
-                cityInputFound: !!cityInput,
-                stateInputFound: !!stateInput
-            });
         }
 
         // Additional fallback: check formState (including detected values from zip lookup)
@@ -2843,14 +2813,6 @@ jQuery(document).ready(function($) {
         if (!bookingData.state && (formState.state || formState.detectedState)) {
             bookingData.state = formState.state || formState.detectedState;
         }
-
-        // Final debug log for city/state data
-        console.log('🏙️ Final City/State values:', {
-            city: bookingData.city,
-            state: bookingData.state,
-            cityEmpty: !bookingData.city,
-            stateEmpty: !bookingData.state
-        });
 
         // Add marketing data from cookies and URL parameters
         const utmParams = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'gclid', 'referrer'];
@@ -2941,7 +2903,6 @@ jQuery(document).ready(function($) {
                     showErrorMessage(errorMessage);
                 },
                 complete: function() {
-                    console.log('🏁 AJAX request completed');
                     // Re-enable button regardless of success/failure
                     $('.btn-submit').prop('disabled', false).html('Confirm Booking');
                 }
@@ -3020,7 +2981,7 @@ jQuery(document).ready(function($) {
         }, 7000);
     }
 
-    // ─── OPTION ICON GENERATION ──────────────────────
+    // Option Icon Generation────
     function getOptionIcon(stepId, option) {
         const baseUrl = window.location.origin + '/wp-content/plugins/BookingPro/assets/images/service-specific/';
         
@@ -3144,7 +3105,7 @@ jQuery(document).ready(function($) {
         return `<div class="option-icon option-placeholder"></div>`;
     }
 
-    // ─── ZIP CODE CITY/STATE DISPLAY ─────────────────
+    // ZIP Code City/State Display────
     function displayZipCityState() {
         const $display = $('#zip-city-display');
         
@@ -3161,7 +3122,7 @@ jQuery(document).ready(function($) {
         }
     }
 
-    // ─── MULTIPLE APPOINTMENT MANAGEMENT ─────────────
+    // Multiple Appointment Management
     function updateNextButtonState() {
         // Enable next button if at least one appointment is selected
         const hasAppointments = selectedAppointments.length > 0;
@@ -3217,7 +3178,7 @@ jQuery(document).ready(function($) {
 
     }
     
-    // ─── EXPORT FOR GLOBAL ACCESS ────────────────────
+    // Export for Global Access────
     window.BookingSystem = {
         init: initBookingSystem,
         nextStep: nextStep,
@@ -3255,7 +3216,7 @@ jQuery(document).ready(function($) {
         nextStep();
     });
 
-    // ─── INCOMPLETE LEAD CAPTURE SYSTEM ──────────────────────────
+    // Incomplete Lead Capture System────
     
     /**
      * Capture incomplete lead data and send to server
@@ -3265,14 +3226,12 @@ jQuery(document).ready(function($) {
     function captureIncompleteLeadData(trigger, extraData = {}) {
         // CRITICAL SESSION MANAGEMENT: Don't capture if session is completed
         if (isSessionCompleted) {
-            console.log('🚫 BLOCKED: Lead capture blocked - session completed');
             return;
         }
         
         // Check if session cookie indicates completion
         const sessionId = getCookie('bsp_session_id');
         if (sessionId && sessionId.includes('_COMPLETED')) {
-            console.log('🚫 BLOCKED: Lead capture blocked - session marked as completed');
             isSessionCompleted = true; // Update flag for consistency
             return;
         }
@@ -3373,10 +3332,8 @@ jQuery(document).ready(function($) {
                 booking_time: leadData.booking_time
             });
         } else {
-            console.log('⚠️ No appointments available to add to lead capture');
+            // No appointments available
         }
-
-        console.log('📤 Lead Data to Send:', leadData);
 
         // Send to server
         if (typeof BSP_Ajax !== 'undefined' && BSP_Ajax.ajaxUrl) {
@@ -3385,7 +3342,7 @@ jQuery(document).ready(function($) {
                 type: 'POST',
                 data: leadData,
                 success: function(response) {
-                    console.log('✅ Lead data captured successfully:', response);
+                    // Lead data captured successfully
                 },
                 error: function(xhr, status, error) {
                     console.error('❌ Failed to capture lead data:', error);
@@ -3429,20 +3386,16 @@ jQuery(document).ready(function($) {
      * Remove event listeners and invalidate session after successful booking
      */
     function terminateSession() {
-        console.log('🔒 TERMINATING SESSION - Removing lead capture event listeners');
-        
         // Clear any pending lead capture timeouts
         if (window.leadCaptureTimeout) {
             clearTimeout(window.leadCaptureTimeout);
             window.leadCaptureTimeout = null;
-            console.log('⏰ Cleared leadCaptureTimeout');
         }
         
         // Clear any periodic lead capture if it exists
         if (window.leadCaptureInterval) {
             clearInterval(window.leadCaptureInterval);
             window.leadCaptureInterval = null;
-            console.log('⏰ Cleared leadCaptureInterval');
         }
         
         // COMPREHENSIVE CLEANUP: Clear all non-essential intervals and timeouts
@@ -3461,23 +3414,18 @@ jQuery(document).ready(function($) {
         // Clean up lead capture system if available
         if (window.bspLeadCapture && window.bspLeadCapture.LeadCapture && window.bspLeadCapture.LeadCapture.cleanup) {
             window.bspLeadCapture.LeadCapture.cleanup();
-            console.log('🧹 Lead capture system cleaned up');
         }
         
         // Remove beforeunload listener that captures incomplete leads
         $(window).off('beforeunload');
-        console.log('🚫 Removed beforeunload listener');
         
         // Remove form interaction listeners to prevent future lead capture
         $(document).off('input change', 'input, select, textarea');
         $(document).off('click', 'button, .btn');
-        console.log('🚫 Removed form interaction listeners');
         
         // Clear the session cookie to prevent future requests
         const currentSessionId = getOrCreateSessionId();
         setCookie('bsp_session_id', currentSessionId + '_COMPLETED', 0.1); // Short expire time
-        
-        console.log('✅ Session terminated successfully - no more incomplete lead webhooks will be sent');
     }
 
     /**
