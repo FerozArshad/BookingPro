@@ -25,8 +25,8 @@ jQuery(document).ready(function($) {
             
             // Windows questions
             { id: 'windows_action', depends_on: ['service', 'Windows'], type: 'single-choice', question: 'Are you Replacing or Repairing your Windows?', options: ['Replace', 'Repair'] },
-            { id: 'windows_replace_qty', depends_on: ['windows_action', 'Replace'], type: 'single-choice', question: 'How many Windows?', options: ['3–5', '6–9', '10+'] },
-            { id: 'windows_repair_needed', depends_on: ['windows_action', 'Repair'], type: 'single-choice', question: 'We don\'t have any window pros who service window repair projects.\nWould you want pricing to fully replace 3 or more window openings?', options: ['Yes', 'No'] },
+            { id: 'windows_replace_qty', depends_on: ['windows_action', 'Repair'], type: 'single-choice', question: 'How many Windows?', options: ['3–5', '6–9', '10+'] },
+            { id: 'windows_repair_needed', depends_on: ['windows_action', 'Replace'], type: 'single-choice', question: 'We don\'t have any window pros who service window repair projects.\nWould you want pricing to fully replace 3 or more window openings?', options: ['Yes', 'No'] },
             
             // Bathroom questions
             { id: 'bathroom_option', depends_on: ['service', 'Bathroom'], type: 'single-choice', question: 'Which Bathroom Service do you need?', options: ['Replace bath/shower', 'Remove & install new bathroom', 'New walk-in tub'] },
@@ -1584,19 +1584,51 @@ jQuery(document).ready(function($) {
             return;
         }
         
+        // Check if this is the final confirmation (booking completed)
+        const isBookingConfirmed = window.location.hash.includes('booking-confirmed');
+        
+        // Add confirmation message at the top if booking is confirmed
+        if (isBookingConfirmed) {
+            // Remove any existing confirmation message first
+            $stepEl.find('.booking-confirmation-message').remove();
+            
+            // Add the simple confirmation message at the top of Step 9
+            const confirmationMessage = `
+                <div class="booking-confirmation-message" style="text-align: center; margin-bottom: 30px; padding: 20px; background: rgba(121, 182, 47, 0.1); border-radius: 8px; border: 2px solid #79B62F;">
+                    <h2 style="color: #79B62F; margin-bottom: 10px; font-weight: 700; font-size: 26px !important;">Booking Confirmed!</h2>
+                    <p style="margin-bottom: 0; line-height: 1.6; font-size: 12px !important; color: #333;">Thank you for your booking. You will receive confirmation emails for each appointment shortly.</p>
+                </div>
+            `;
+            
+            // Insert at the beginning of the step content
+            $stepEl.find('.step-card').prepend(confirmationMessage);
+        }
+        
         // Populate summary
         populateSummary();
         
         // Update navigation and ensure submit button is enabled
         updateNavigation($stepEl);
         
-        // Add verification section for summary step
-        if (formState.service) {
-            addVerificationSection($stepEl, formState.service);
-        }
+        // ALWAYS HIDE NAVIGATION BUTTONS IN STEP 9 - Request Estimate handles submission
+        $stepEl.find('.btn-back, .btn-submit, .btn-next').hide();
+        $stepEl.find('.form-navigation').hide();
         
-        // Enable the submit button since we have appointments
-        $stepEl.find('.btn-submit').prop('disabled', false);
+        // COMMENTED OUT: Don't add verification section to final confirmation
+        // if (formState.service) {
+        //     addVerificationSection($stepEl, formState.service);
+        // }
+        
+        // Show appropriate message based on booking status
+        if (isBookingConfirmed) {
+            // Show success message for confirmed bookings
+            $stepEl.find('.confirmation-note').remove(); // Remove any existing notes
+            $stepEl.find('.step-card').append(`
+                <div class="confirmation-note" style="text-align: center; color: #79B62F; font-weight: 500;">
+                    ✅ Your booking has been submitted successfully
+                </div>
+            `);
+        }
     }
 
     // Calendar and Time Slot Management
@@ -1651,8 +1683,8 @@ jQuery(document).ready(function($) {
     }
     
     function bindCalendarEvents() {
-        // Bind date selection for all calendars
-        $(document).off('click', '.calendar-day').on('click', '.calendar-day', function(e) {
+        // Bind date selection for all calendars - FIXED with namespace to prevent conflicts
+        $(document).off('click.calendarDay', '.calendar-day').on('click.calendarDay', '.calendar-day', function(e) {
             e.preventDefault();
             e.stopPropagation();
             
@@ -1701,6 +1733,9 @@ jQuery(document).ready(function($) {
                 
                 updateNextButtonState();
                 updateAppointmentSummary();
+                
+                // Update request button states
+                setTimeout(updateRequestButtonStates, 50);
             } else {
                 // User selected a new date - select it
 
@@ -1708,6 +1743,9 @@ jQuery(document).ready(function($) {
                 
                 // Load time slots for selected date and company
                 loadTimeSlots($timeSlots, companyName, date);
+                
+                // Update request button states after loading time slots
+                setTimeout(updateRequestButtonStates, 100);
             }
         });
     }
@@ -1993,10 +2031,15 @@ jQuery(document).ready(function($) {
                     slotTitle = 'Click to select this time';
                 }
                 
+                // Find company data to ensure we have the company ID
+                const companyData = CONFIG.companies ? CONFIG.companies.find(c => c.name === company) : null;
+                const companyId = companyData ? companyData.id : '';
+                
                 const $slot = $(`
                     <div class="${slotClass}" 
                          data-time="${slot.time}" 
                          data-company="${company}" 
+                         data-company-id="${companyId}"
                          data-date="${date}"
                          ${!isFullyAvailable ? 'data-disabled="true"' : ''}
                          title="${slotTitle}">
@@ -2121,14 +2164,14 @@ jQuery(document).ready(function($) {
             });
         }
         
-        // Bind time selection
-        $timeSlots.off('click', '.time-slot').on('click', '.time-slot', function(e) {
+        // Bind time selection - FIXED to prevent duplicate handlers
+        // Use namespace to ensure proper cleanup and prevent conflicts
+        $timeSlots.off('click.timeSlot').on('click.timeSlot', '.time-slot', function(e) {
             e.preventDefault();
             e.stopPropagation();
             
             // Check if time slot is disabled/booked
             if ($(this).hasClass('disabled') || $(this).data('disabled')) {
-
                 return false;
             }
             
@@ -2198,6 +2241,9 @@ jQuery(document).ready(function($) {
             
             // Update visual feedback and company card states
             updateAppointmentSummary();
+            
+            // Update request button states (replaced duplicate event handler)
+            setTimeout(updateRequestButtonStates, 50);
         });
     }
 
@@ -2786,7 +2832,7 @@ jQuery(document).ready(function($) {
         // Validate that we have at least one appointment
         if (!selectedAppointments || selectedAppointments.length === 0) {
             showErrorMessage('Please select at least one appointment before submitting.');
-            isSubmissionInProgress = false; // Reset flag on error
+            isSubmissionInProgress = false;
             return;
         }
         
@@ -2880,11 +2926,60 @@ jQuery(document).ready(function($) {
                         
                         // Refresh availability data for all companies involved in the booking
                         refreshAllCompanyAvailability(() => {
-                            // Show success message after refreshing data
-                            showSuccessMessage(response.data);
+                            // Update URL to show booking confirmed state
+                            updateURLHash('booking-confirmed');
+                            
+                            // Check if we're already on Step 9 (called from Request Estimate)
+                            const $currentStep = $('.booking-step.active');
+                            const isAlreadyOnStep9 = $currentStep.length > 0 && $currentStep.find('#schedule-items').length > 0;
+                            
+                            if (isAlreadyOnStep9) {
+                                // We're already on Step 9 from Request Estimate - just update the message
+                                $currentStep.find('.request-estimate-processing').remove();
+                                
+                                // Add final success message
+                                const finalSuccessMessage = `
+                                    <div class="booking-confirmed-success" style="
+                                        background: #79B62F; 
+                                        color: white; 
+                                        padding: 20px; 
+                                        border-radius: 8px; 
+                                        margin-bottom: 20px;
+                                        text-align: center;
+                                        font-weight: 600;
+                                    ">
+                                        ✅ Booking Confirmed Successfully!<br>
+                                        <small style="font-weight: normal; opacity: 0.9;">
+                                            You will receive confirmation emails for each appointment shortly.<br>
+                                            Each company will call you within 24 hours to confirm appointment details.
+                                        </small>
+                                    </div>
+                                `;
+                                
+                                $currentStep.find('.step-card').prepend(finalSuccessMessage);
+                                
+                                // Hide the Confirm Booking button since booking is complete
+                                $currentStep.find('.btn-submit').hide();
+                                $currentStep.find('.form-navigation').hide();
+                                
+                            } else {
+                                // Normal flow - navigate to Step 9
+                                showSummaryStep();
+                            }
                         });
                     } else {
                         isSubmissionInProgress = false; // Reset on failure
+                        
+                        // Update any processing messages to show error
+                        $('.request-estimate-processing').each(function() {
+                            $(this).removeClass().addClass('request-estimate-error').css({
+                                'background': '#ff6b6b'
+                            }).html(`
+                                ❌ Booking Submission Failed<br>
+                                <small style="font-weight: normal; opacity: 0.9;">${response.data || 'Please try again or contact support.'}</small>
+                            `);
+                        });
+                        
                         showErrorMessage(response.data || 'Booking failed. Please try again.');
                     }
                 },
@@ -2914,6 +3009,16 @@ jQuery(document).ready(function($) {
                         errorMessage = `Error ${xhr.status}: Please try again or contact support.`;
                     }
                     
+                    // Update any processing messages to show error
+                    $('.request-estimate-processing').each(function() {
+                        $(this).removeClass().addClass('request-estimate-error').css({
+                            'background': '#ff6b6b'
+                        }).html(`
+                            ❌ Connection Error<br>
+                            <small style="font-weight: normal; opacity: 0.9;">${errorMessage}</small>
+                        `);
+                    });
+                    
                     showErrorMessage(errorMessage);
                 },
                 complete: function() {
@@ -2922,16 +3027,23 @@ jQuery(document).ready(function($) {
                 }
             });
         } else {
-            // Demo mode - show success without backend (faster)
+            // Demo mode - FIXED: Don't replace form, just go to Step 9
             setTimeout(() => {
-                showSuccessMessage({ 
-                    booking_id: 'DEMO-' + Date.now(),
-                    message: 'Booking submitted successfully (Demo Mode)'
-                });
-            }, 300); // Reduced from 1000ms to 300ms
+                // showSuccessMessage({ 
+                //     booking_id: 'DEMO-' + Date.now(),
+                //     message: 'Booking submitted successfully (Demo Mode)'
+                // });
+                
+                // Simply navigate to Step 9 (final confirmation step)
+                updateURLHash('booking-confirmed');
+                showSummaryStep();
+            }, 300);
         }
     }
     
+    // COMMENTED OUT: This function was replacing the entire form instead of using Step 9
+    // showSuccessMessage is now disabled - we use Step 9 for final confirmation
+    /*
     function showSuccessMessage(data) {
         // Update URL hash for booking confirmation
         updateURLHash('booking-confirmed');
@@ -2940,9 +3052,13 @@ jQuery(document).ready(function($) {
         $form.html(`
             <div class="success-message" style="position: relative; z-index: 2; text-align: center; padding: 120px 20px 50px; color: white;">
                 <div style="background: rgba(255, 255, 255, 0.3); border: 2px solid white; color: #333; padding: 40px; border-radius: 25px; max-width: 600px; margin: 0 auto; box-shadow: 0 10px 30px rgba(0,0,0,0.2);">
+                    
+                    <!-- Simple Booking Confirmed Message -->
+                    <h2 style="color: #79B62F; margin-bottom: 10px; font-weight: 700; font-size: 26px !important;">Booking Confirmed!</h2>
+                    <p style="margin-bottom: 20px; line-height: 1.6; font-size: 12px !important; color: #333;">Thank you for your booking. You will receive confirmation emails for each appointment shortly.</p>
+                    
+                    <!-- Keep existing appointment details -->
                     <div style="color: #79B62F; font-size: 72px; margin-bottom: 20px;">✅</div>
-                    <h2 style="color: #79B62F; margin-bottom: 20px; font-weight: 700; font-size: 52px !important;">Booking${selectedAppointments.length > 1 ? 's' : ''} Confirmed!</h2>
-                    <p style="margin-bottom: 20px; line-height: 1.6; font-size: 29px !important; color: white;">Thank you for your booking${selectedAppointments.length > 1 ? 's' : ''}. You will receive confirmation emails for each appointment shortly.</p>
                     
                     <div style="background: #e8f5e8; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #79B62F;">
                         <strong style="color: #79B62F; font-size: 29px !important;">Next Steps:</strong><br>
@@ -2952,10 +3068,11 @@ jQuery(document).ready(function($) {
             </div>
         `);
         
-        // Add verification section to confirmation screen
-        const service = formState.service || 'Service';
-        addVerificationSection($('#booking-form'), service);
+        // COMMENTED OUT: No longer adding verification section to confirmation screen
+        // const service = formState.service || 'Service';
+        // addVerificationSection($('#booking-form'), service);
     }
+    */
     
     function showErrorMessage(message) {
         $('.btn-submit').prop('disabled', false).html('Confirm Booking');
@@ -3200,18 +3317,24 @@ jQuery(document).ready(function($) {
         getState: () => formState
     };
 
-    // Add "Request Estimate" button functionality - Updated to work with appointment system
+    // Request Estimate button functionality - PRODUCTION VERSION
     $(document).on('click', '.btn-request-estimate', function() {
         const $button = $(this);
         const company = $button.data('company');
         const companyId = $button.data('company-id');
         
-        // Check if user has any appointments selected (not necessarily for this specific company)
+        // CRITICAL: Check if button is disabled - don't allow submission if disabled
+        if ($button.prop('disabled') || $button.hasClass('btn-disabled')) {
+            return false; // Silently ignore clicks on disabled buttons
+        }
+        
+        // Validate appointments exist
         if (selectedAppointments.length === 0) {
             alert('Please select at least one date and time before requesting an estimate.');
             return;
         }
    
+        // Find appointment for this company
         let companyAppointment = null;
         if (companyId) {
             companyAppointment = selectedAppointments.find(apt => apt.companyId == companyId);
@@ -3224,10 +3347,51 @@ jQuery(document).ready(function($) {
             alert('Please select a date and time for ' + company + ' before requesting an estimate.');
             return;
         }
+        
+        // Show loading state on ALL Request Estimate buttons
+        $('.btn-request-estimate').each(function() {
+            const $btn = $(this);
+            $btn.data('original-text', $btn.text());
+            $btn.prop('disabled', true).text('Processing...');
+        });
+        
+        // Store appointment data for form submission
         window.bookingFormData = window.bookingFormData || {};
         window.bookingFormData.selectedAppointments = selectedAppointments;
         
-        nextStep();
+        // Navigate to Step 9 (booking summary) first
+        currentStepIndex = CONFIG.steps.length - 1; // Go to last step (Step 9)
+        renderCurrentStep();
+        
+        // Show processing message at top of Step 9
+        setTimeout(() => {
+            const $stepEl = $('.booking-step.active');
+            
+            // Remove any existing messages
+            $stepEl.find('.request-estimate-success, .request-estimate-processing').remove();
+            
+            // Add processing message at the top
+            const processingMessage = `
+                <div class="request-estimate-processing" style="
+                    background: #ff9800; 
+                    color: white; 
+                    padding: 15px; 
+                    border-radius: 8px; 
+                    margin-bottom: 20px;
+                    text-align: center;
+                    font-weight: 600;
+                ">
+                    🔄 Submitting Your Booking Request...<br>
+                    <small style="font-weight: normal; opacity: 0.9;">Please wait while we process your appointment.</small>
+                </div>
+            `;
+            
+            $stepEl.find('.step-card').prepend(processingMessage);
+            
+            // Actually submit the booking in the background
+            submitBooking();
+            
+        }, 300); // Small delay to show Step 9 first
     });
 
     // Incomplete Lead Capture System────
@@ -3338,13 +3502,6 @@ jQuery(document).ready(function($) {
                 leadData.selected_date = selectedAppointments[0].date;
                 leadData.selected_time = selectedAppointments[0].time;
             }
-            
-            console.log('📅 Appointment fields added:', {
-                appointments: leadData.appointments,
-                company: leadData.company,
-                booking_date: leadData.booking_date,
-                booking_time: leadData.booking_time
-            });
         } else {
             // No appointments available
         }
@@ -3470,6 +3627,149 @@ jQuery(document).ready(function($) {
         expires.setTime(expires.getTime() + (days * 24 * 60 * 60 * 1000));
         document.cookie = name + '=' + value + ';expires=' + expires.toUTCString() + ';path=/';
     }
+
+    // ═══════════════════════════════════════════════════════════════════════════════════
+    // REQUEST ESTIMATE BUTTON FUNCTIONALITY
+    // ═══════════════════════════════════════════════════════════════════════════════════
+
+    /**
+     * Debug function to inspect DOM structure and selections
+     */
+    /**
+     * Update Request Estimate button states based on company and date/time selections
+     * Each button is enabled only when its specific company is selected AND date/time chosen
+     */
+    function updateRequestButtonStates() {
+        $('.btn-request-estimate').each(function() {
+            const $button = $(this);
+            const companyId = $button.data('company-id');
+            
+            // Check if this company has both date and time selected
+            const hasDateSelection = hasDateForCompany(companyId);
+            const hasTimeSelection = hasTimeForCompany(companyId);
+            
+            const isReady = hasDateSelection && hasTimeSelection;
+            
+            // Update button state
+            $button.prop('disabled', !isReady);
+            
+            // Add/remove visual classes
+            if (isReady) {
+                $button.removeClass('btn-disabled').addClass('btn-ready');
+            } else {
+                $button.removeClass('btn-ready').addClass('btn-disabled');
+            }
+        });
+        
+        // Add guidance message below Request Estimate buttons on Step 8
+        const $step8 = $('.booking-step[data-step="8"]');
+        if ($step8.length > 0 && $step8.hasClass('active')) {
+            // Remove any existing guidance message
+            $step8.find('.request-estimate-guidance').remove();
+            
+            // Add guidance message if any buttons are ready
+            const hasReadyButtons = $('.btn-request-estimate.btn-ready').length > 0;
+            if (hasReadyButtons) {
+                const guidanceMessage = `
+                    <div class="request-estimate-guidance" style="
+                        text-align: center; 
+                        color: #666; 
+                        font-style: italic; 
+                        margin-top: 25px;
+                        padding: 15px;
+                        background: rgba(255,255,255,0.1);
+                        border-radius: 8px;
+                        border-left: 4px solid #79B62F;
+                    ">
+                        💡 <strong>Ready to book?</strong> Click the "Request Estimate" button above for any company to submit your booking and proceed to confirmation.
+                    </div>
+                `;
+                $step8.find('.step-card').append(guidanceMessage);
+            }
+        }
+    }
+
+    /**
+     * Check if a specific company is selected (using correct classes)
+     */
+    function isCompanySelected(companyId) {
+        // Check if company card has any selections using correct classes
+        const $companyCard = $(`.company-card[data-company-id="${companyId}"]`);
+        const hasSelections = $companyCard.find('.calendar-day.selected, .time-slot.selected').length > 0;
+        
+        return hasSelections; // Simplified - if they have date/time, company is "selected"
+    }
+
+    /**
+     * Check if a date is selected for a specific company (using correct calendar-day class)
+     */
+    function hasDateForCompany(companyId) {
+        const $companyCard = $(`.company-card[data-company-id="${companyId}"]`);
+        
+        // Use the correct class from actual HTML structure: calendar-day.selected
+        const $selectedDates = $companyCard.find('.calendar-grid .calendar-day.selected');
+        
+        return $selectedDates.length > 0;
+    }
+
+    /**
+     * Check if a time is selected for a specific company (using correct time-slot class)
+     */
+    function hasTimeForCompany(companyId) {
+        const $companyCard = $(`.company-card[data-company-id="${companyId}"]`);
+        
+        // Use the correct class from actual HTML structure: time-slot.selected
+        const $selectedTimes = $companyCard.find('.time-slots .time-slot.selected');
+        
+        return $selectedTimes.length > 0;
+    }
+
+    /**
+     * Validate company selection before allowing submission
+     */
+    function validateCompanySelection(companyId) {
+        const hasSelection = isCompanySelected(companyId) && 
+                           hasDateForCompany(companyId) && 
+                           hasTimeForCompany(companyId);
+        
+        if (!hasSelection) {
+            // Show user-friendly error message
+            alert('Please select a date and time before requesting an estimate.');
+            return false;
+        }
+        
+        return true;
+    }
+
+    /**
+     * Hide navigation buttons after form submission as requested
+     */
+    function hideNavigationAfterSubmission() {
+        $('.btn-next, .btn-back, .btn-submit').hide();
+        $('.form-navigation').hide();
+        
+        // Update URL to show confirmation state
+        updateURLToConfirmation();
+    }
+
+    /**
+     * Update URL to show confirmation state (using existing system)
+     */
+    function updateURLToConfirmation() {
+        try {
+            // Use the existing system - first set to waiting, then will change to confirmed after submission
+            updateURLHash('waiting-booking-confirmation');
+        } catch (error) {
+            // Silently fail if URL manipulation fails
+            console.log('URL update failed:', error);
+        }
+    }
+
+    // Initialize Request Estimate functionality when document is ready
+    $(document).ready(function() {
+        // Initial button state update
+        updateRequestButtonStates();
+    });
 
     (function() {
     
