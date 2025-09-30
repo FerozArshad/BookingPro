@@ -166,23 +166,15 @@ class BSP_Frontend {
         // Legacy compatibility
         add_shortcode('booking_system_form', [$this, 'booking_form_shortcode']);
         
-        // Test shortcode to verify shortcode processing works
-        add_shortcode('bsp_test', [$this, 'test_shortcode']);
-        
-        if (function_exists('bsp_debug_log')) {
-            bsp_debug_log("Frontend shortcodes registered: booking_form, booking_calendar, booking_services, booking_system_form, bsp_test", 'FRONTEND');
+        // Only log if in debug mode
+        if (defined('WP_DEBUG') && WP_DEBUG && function_exists('bsp_debug_log')) {
+            bsp_debug_log("Frontend shortcodes registered", 'DEBUG');
         }
     }
     
     /**
-     * Test shortcode to verify shortcode processing works
+     * Display booking form
      */
-    public function test_shortcode($atts) {
-        if (function_exists('bsp_debug_log')) {
-            bsp_debug_log("TEST SHORTCODE EXECUTED!", 'SHORTCODE');
-        }
-        return '<div style="background: yellow; padding: 10px;">BSP Test Shortcode Working!</div>';
-    }
     
     /**
      * Booking form shortcode
@@ -210,13 +202,7 @@ class BSP_Frontend {
             $this->render_booking_form($atts);
             $output = ob_get_clean();
 
-            if (function_exists('bsp_debug_log')) {
-                bsp_debug_log("Booking form shortcode rendered, output length: " . strlen($output), 'SHORTCODE');
-            }
-
-            return $output;
-            
-        } catch (Exception $e) {
+            return $output;        } catch (Exception $e) {
             if (function_exists('bsp_debug_log')) {
                 bsp_debug_log("SHORTCODE ERROR: " . $e->getMessage(), 'ERROR', [
                     'file' => $e->getFile(),

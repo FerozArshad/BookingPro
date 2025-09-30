@@ -310,7 +310,6 @@ final class Booking_System_Pro_Final {
             if (class_exists('BSP_Safe_Variable_Integration')) {
                 $this->safe_integration = BSP_Safe_Variable_Integration::get_instance();
                 $this->components_loaded[] = 'safe_integration';
-                bsp_debug_log("Safe Variable Integration initialized", 'INIT');
             } else {
                 bsp_debug_log("BSP_Safe_Variable_Integration class not found", 'ERROR');
             }
@@ -319,7 +318,6 @@ final class Booking_System_Pro_Final {
             if (class_exists('BSP_UTM_Consistency_Manager')) {
                 $this->utm_manager = BSP_UTM_Consistency_Manager::get_instance();
                 $this->components_loaded[] = 'utm_manager';
-                bsp_debug_log("UTM Consistency Manager initialized", 'INIT');
             } else {
                 bsp_debug_log("BSP_UTM_Consistency_Manager class not found", 'ERROR');
             }
@@ -328,7 +326,6 @@ final class Booking_System_Pro_Final {
             if (class_exists('BSP_Lead_Data_Collector')) {
                 $this->lead_collector = BSP_Lead_Data_Collector::get_instance();
                 $this->components_loaded[] = 'lead_collector';
-                bsp_debug_log("Lead Data Collector initialized", 'INIT');
             } else {
                 bsp_debug_log("BSP_Lead_Data_Collector class not found", 'ERROR');
             }
@@ -337,7 +334,6 @@ final class Booking_System_Pro_Final {
             if (class_exists('BSP_Data_Processor_Unified')) {
                 $this->data_processor = BSP_Data_Processor_Unified::get_instance();
                 $this->components_loaded[] = 'data_processor';
-                bsp_debug_log("Unified Data Processor initialized", 'INIT');
             } else {
                 bsp_debug_log("BSP_Data_Processor_Unified class not found", 'ERROR');
             }
@@ -346,7 +342,6 @@ final class Booking_System_Pro_Final {
             if (class_exists('BSP_Lead_Conversion_Tracker')) {
                 $this->conversion_tracker = BSP_Lead_Conversion_Tracker::get_instance();
                 $this->components_loaded[] = 'conversion_tracker';
-                bsp_debug_log("Lead Conversion Tracker initialized", 'INIT');
             } else {
                 bsp_debug_log("BSP_Lead_Conversion_Tracker class not found", 'ERROR');
             }
@@ -355,7 +350,6 @@ final class Booking_System_Pro_Final {
             if (class_exists('BSP_Google_Sheets_Integration')) {
                 $this->sheets_integration = BSP_Google_Sheets_Integration::get_instance();
                 $this->components_loaded[] = 'sheets_integration';
-                bsp_debug_log("Google Sheets Integration initialized", 'INIT');
             } else {
                 bsp_debug_log("BSP_Google_Sheets_Integration class not found", 'ERROR');
             }

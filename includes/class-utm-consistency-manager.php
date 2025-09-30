@@ -27,8 +27,6 @@ class BSP_UTM_Consistency_Manager {
         // AJAX endpoint for UTM synchronization
         add_action('wp_ajax_bsp_sync_utm_data', [$this, 'sync_utm_data']);
         add_action('wp_ajax_nopriv_bsp_sync_utm_data', [$this, 'sync_utm_data']);
-        
-        bsp_debug_log("UTM Consistency Manager initialized", 'UTM_MANAGER');
     }
     
     /**
@@ -71,11 +69,6 @@ class BSP_UTM_Consistency_Manager {
         if (!empty($utm_data)) {
             $this->set_utm_cookies($utm_data);
             $this->utm_data_cache = $utm_data;
-            
-            bsp_debug_log("UTM parameters captured and set", 'UTM_CAPTURE', [
-                'utm_data' => $utm_data,
-                'source' => 'multiple_sources'
-            ]);
         }
     }
     
@@ -385,8 +378,6 @@ class BSP_UTM_Consistency_Manager {
         setcookie('referrer', '', time() - 3600, '/');
         
         $this->utm_data_cache = null;
-        
-        bsp_debug_log("UTM data cleared", 'UTM_MANAGER');
     }
 }
 

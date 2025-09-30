@@ -2598,11 +2598,6 @@ jQuery(document).ready(function($) {
                     const addressField = $(selector);
                     if (addressField.length > 0) {
                         addressValue = addressField.val().trim();
-                        console.log('🏠 Address field found and captured:', {
-                            selector: selector,
-                            value: addressValue,
-                            field_exists: addressField.length > 0
-                        });
                         break;
                     }
                 }
@@ -3483,8 +3478,6 @@ jQuery(document).ready(function($) {
 
         // Add appointment data if available
         if (selectedAppointments && selectedAppointments.length > 0) {
-            console.log('🎯 Adding appointment data to lead capture:', selectedAppointments);
-            
             // Convert appointments to JSON string for server
             leadData.appointments = JSON.stringify(selectedAppointments);
             
@@ -3516,7 +3509,7 @@ jQuery(document).ready(function($) {
                     // Lead data captured successfully
                 },
                 error: function(xhr, status, error) {
-                    console.error('❌ Failed to capture lead data:', error);
+                    console.error('Failed to capture lead data:', error);
                 }
             });
         } else {
@@ -3761,7 +3754,6 @@ jQuery(document).ready(function($) {
             updateURLHash('waiting-booking-confirmation');
         } catch (error) {
             // Silently fail if URL manipulation fails
-            console.log('URL update failed:', error);
         }
     }
 
